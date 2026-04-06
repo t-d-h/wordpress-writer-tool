@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: wp-writer-mongodb
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - wp-writer-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: wp-writer-redis
+    networks:
+      - wp-writer-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wp-writer-backend
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./backend/app:/app/app
+    networks:
+      - wp-writer-net
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wp-writer-worker
+    command: python -m app.workers.redis_worker
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./backend/app:/app/app
+    networks:
+      - wp-writer-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wp-writer-frontend
+    ports:
+      - "5174:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8001
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+    networks:
+      - wp-writer-net
+
+volumes:
+  mongodb_data:
+
+networks:
+  wp-writer-net:
+    driver: bridge

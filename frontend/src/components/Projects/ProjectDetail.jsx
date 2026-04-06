@@ -1,0 +1,245 @@
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineEye, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineArrowPath, HiOutlineRocketLaunch, HiOutlineStop } from 'react-icons/hi2'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages } from '../../api/client'
+
+export default function ProjectDetail() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [project, setProject] = useState(null)
+  const [stats, setStats] = useState({ draft: 0, waiting_approve: 0, published: 0, failed: 0, total: 0 })
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('content')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createMode, setCreateMode] = useState('single')
+  const [singleForm, setSingleForm] = useState({ topic: '', additional_requests: '' })
+  const [bulkForm, setBulkForm] = useState({ topics: '', additional_requests: '' })
+
+  useEffect(() => { load() }, [id])
+
+  const load = async () => {
+    try {
+      const [projRes, statsRes, postsRes] = await Promise.all([
+        getProject(id),
+        getProjectStats(id),
+        getPostsByProject(id),
+      ])
+      setProject(projRes.data)
+      setStats(statsRes.data)
+      setPosts(postsRes.data)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateSingle = async (e) => {
+    e.preventDefault()
+    try {
+      await createPost({ project_id: id, ...singleForm })
+      setShowCreateModal(false)
+      setSingleForm({ topic: '', additional_requests: '' })
+      load()
+    } catch (e) {
+      alert('Error: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
+  const handleCreateBulk = async (e) => {
+    e.preventDefault()
+    const topics = bulkForm.topics.split('\n').map(t => t.trim()).filter(Boolean)
+    if (topics.length === 0) { alert('Enter at least one topic'); return }
+    try {
+      await createBulkPosts({ project_id: id, topics, additional_requests: bulkForm.additional_requests })
+      setShowCreateModal(false)
+      setBulkForm({ topics: '', additional_requests: '' })
+      load()
+    } catch (e) {
+      alert('Error: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
+  const handleAction = async (action, postId) => {
+    try {
+      const actions = {
+        delete: () => { if (confirm('Delete this post?')) return deletePost(postId); return null },
+        publish: () => publishPost(postId),
+        unpublish: () => unpublishPost(postId),
+        outline: () => generateOutline(postId),
+        content: () => generateContent(postId),
+        thumbnail: () => generateThumbnail(postId),
+        section_images: () => generateSectionImages(postId),
+      }
+      const result = await actions[action]?.()
+      if (result !== null) load()
+    } catch (e) {
+      alert('Error: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
+  if (loading) return <div className="loading-page"><div className="loading-spinner" /></div>
+  if (!project) return <div className="empty-state"><div className="empty-state-title">Project not found</div></div>
+
+  const statCards = [
+    { key: 'published', label: 'Published', value: stats.published },
+    { key: 'waiting', label: 'Waiting Approve', value: stats.waiting_approve },
+    { key: 'draft', label: 'Draft', value: stats.draft },
+    { key: 'failed', label: 'Failed', value: stats.failed },
+  ]
+
+  return (
+    <div className="page-enter">
+      <div className="page-header">
+        <h1 className="page-title">{project.title}</h1>
+        <p className="page-description">{project.description || 'No description'} · {project.wp_site_name}</p>
+      </div>
+
+      <div className="tabs">
+        <button className={`tab ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>General</button>
+        <button className={`tab ${activeTab === 'content' ? 'active' : ''}`} onClick={() => setActiveTab('content')}>Content</button>
+      </div>
+
+      {activeTab === 'general' && (
+        <div className="stats-grid">
+          {statCards.map(c => (
+            <div key={c.key} className={`stat-card ${c.key}`}>
+              <div className="stat-label">{c.label}</div>
+              <div className="stat-value">{c.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'content' && (
+        <>
+          <div className="toolbar">
+            <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>{stats.total} post{stats.total !== 1 ? 's' : ''}</div>
+            <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
+              <HiOutlinePlus /> Create Post
+            </button>
+          </div>
+
+          {posts.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📝</div>
+              <div className="empty-state-title">No Posts Yet</div>
+              <div className="empty-state-text">Create your first post to get started</div>
+            </div>
+          ) : (
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Title / Topic</th>
+                    <th>Research</th>
+                    <th>Content</th>
+                    <th>Thumb</th>
+                    <th>Sections</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {posts.map(p => (
+                    <tr key={p.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.title || p.topic}
+                        </div>
+                      </td>
+                      <td><BoolBadge value={p.research_done} /></td>
+                      <td><BoolBadge value={p.content_done} /></td>
+                      <td><BoolBadge value={p.thumbnail_done} /></td>
+                      <td><BoolBadge value={p.sections_done} /></td>
+                      <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
+                      <td>
+                        <div className="action-buttons">
+                          <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)} title="View"><HiOutlineEye /></button>
+                          {p.research_done && !p.title && (
+                            <button className="action-btn" onClick={() => handleAction('outline', p.id)} title="Generate Outline"><HiOutlineArrowPath /></button>
+                          )}
+                          {p.title && !p.content_done && (
+                            <button className="action-btn" onClick={() => handleAction('content', p.id)} title="Generate Content"><HiOutlineArrowPath /></button>
+                          )}
+                          {p.title && !p.thumbnail_done && (
+                            <button className="action-btn" onClick={() => handleAction('thumbnail', p.id)} title="Generate Thumbnail"><HiOutlineArrowPath /></button>
+                          )}
+                          {p.content_done && p.status !== 'published' && (
+                            <button className="action-btn" onClick={() => handleAction('publish', p.id)} title="Publish"><HiOutlineRocketLaunch /></button>
+                          )}
+                          {p.status === 'published' && (
+                            <button className="action-btn" onClick={() => handleAction('unpublish', p.id)} title="Unpublish"><HiOutlineStop /></button>
+                          )}
+                          <button className="action-btn danger" onClick={() => handleAction('delete', p.id)} title="Delete"><HiOutlineTrash /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Create Post Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Create Post</h2>
+              <button className="modal-close" onClick={() => setShowCreateModal(false)}><HiOutlineXMark /></button>
+            </div>
+
+            <div className="tabs" style={{ marginBottom: 20 }}>
+              <button className={`tab ${createMode === 'single' ? 'active' : ''}`} onClick={() => setCreateMode('single')}>Single Post</button>
+              <button className={`tab ${createMode === 'bulk' ? 'active' : ''}`} onClick={() => setCreateMode('bulk')}>Bulk Posts</button>
+            </div>
+
+            {createMode === 'single' ? (
+              <form onSubmit={handleCreateSingle}>
+                <div className="form-group">
+                  <label className="form-label">Topic</label>
+                  <input className="form-input" placeholder="e.g. How to Improve Your Website SEO" value={singleForm.topic} onChange={e => setSingleForm({ ...singleForm, topic: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Additional Requests (Optional)</label>
+                  <textarea className="form-textarea" placeholder="Any specific requirements..." value={singleForm.additional_requests} onChange={e => setSingleForm({ ...singleForm, additional_requests: e.target.value })} />
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">Create &amp; Start Research</button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleCreateBulk}>
+                <div className="form-group">
+                  <label className="form-label">Topics (one per line)</label>
+                  <textarea className="form-textarea" style={{ minHeight: 150 }} placeholder={"Topic 1\nTopic 2\nTopic 3"} value={bulkForm.topics} onChange={e => setBulkForm({ ...bulkForm, topics: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Additional Requests (Optional)</label>
+                  <textarea className="form-textarea" placeholder="Applied to all posts..." value={bulkForm.additional_requests} onChange={e => setBulkForm({ ...bulkForm, additional_requests: e.target.value })} />
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">Create All &amp; Start Research</button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BoolBadge({ value }) {
+  return (
+    <span className={`bool-indicator ${value ? 'bool-true' : 'bool-false'}`}>
+      {value ? <HiOutlineCheckCircle /> : <HiOutlineXCircle />}
+    </span>
+  )
+}

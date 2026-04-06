@@ -1,0 +1,67 @@
+from fastapi import APIRouter, HTTPException
+from bson import ObjectId
+from datetime import datetime, timezone
+from app.database import wp_sites_col
+from app.models.wp_site import WPSiteCreate, WPSiteUpdate, WPSiteResponse
+
+router = APIRouter(prefix="/api/wp-sites", tags=["WordPress Sites"])
+
+
+def format_site(doc: dict) -> dict:
+    return WPSiteResponse(
+        id=str(doc["_id"]),
+        name=doc["name"],
+        url=doc["url"],
+        username=doc["username"],
+        api_key_preview="***" + doc["api_key"][-4:] if len(doc["api_key"]) >= 4 else "***",
+        created_at=doc["created_at"],
+    ).model_dump()
+
+
+@router.get("")
+async def list_sites():
+    sites = []
+    async for doc in wp_sites_col.find().sort("created_at", -1):
+        sites.append(format_site(doc))
+    return sites
+
+
+@router.get("/{site_id}")
+async def get_site(site_id: str):
+    doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Site not found")
+    return format_site(doc)
+
+
+@router.post("", status_code=201)
+async def create_site(data: WPSiteCreate):
+    doc = {
+        **data.model_dump(),
+        "created_at": datetime.now(timezone.utc),
+    }
+    result = await wp_sites_col.insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return format_site(doc)
+
+
+@router.put("/{site_id}")
+async def update_site(site_id: str, data: WPSiteUpdate):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    result = await wp_sites_col.update_one(
+        {"_id": ObjectId(site_id)}, {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Site not found")
+    doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    return format_site(doc)
+
+
+@router.delete("/{site_id}")
+async def delete_site(site_id: str):
+    result = await wp_sites_col.delete_one({"_id": ObjectId(site_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Site not found")
+    return {"message": "Site deleted"}
