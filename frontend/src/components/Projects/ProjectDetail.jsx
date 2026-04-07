@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineEye, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineArrowPath, HiOutlineRocketLaunch, HiOutlineStop } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages } from '../../api/client'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages, getProviders } from '../../api/client'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -13,21 +13,24 @@ export default function ProjectDetail() {
   const [activeTab, setActiveTab] = useState('content')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createMode, setCreateMode] = useState('single')
-  const [singleForm, setSingleForm] = useState({ topic: '', additional_requests: '' })
-  const [bulkForm, setBulkForm] = useState({ topics: '', additional_requests: '' })
+  const [singleForm, setSingleForm] = useState({ topic: '', additional_requests: '', ai_provider_id: '', model_name: '' })
+  const [bulkForm, setBulkForm] = useState({ topics: '', additional_requests: '', ai_provider_id: '', model_name: '' })
+  const [providers, setProviders] = useState([])
 
   useEffect(() => { load() }, [id])
 
   const load = async () => {
     try {
-      const [projRes, statsRes, postsRes] = await Promise.all([
+      const [projRes, statsRes, postsRes, providersRes] = await Promise.all([
         getProject(id),
         getProjectStats(id),
         getPostsByProject(id),
+        getProviders(),
       ])
       setProject(projRes.data)
       setStats(statsRes.data)
       setPosts(postsRes.data)
+      setProviders(providersRes.data)
     } catch (e) {
       console.error(e)
     } finally {
@@ -40,7 +43,7 @@ export default function ProjectDetail() {
     try {
       await createPost({ project_id: id, ...singleForm })
       setShowCreateModal(false)
-      setSingleForm({ topic: '', additional_requests: '' })
+      setSingleForm({ topic: '', additional_requests: '', ai_provider_id: '', model_name: '' })
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
@@ -52,9 +55,9 @@ export default function ProjectDetail() {
     const topics = bulkForm.topics.split('\n').map(t => t.trim()).filter(Boolean)
     if (topics.length === 0) { alert('Enter at least one topic'); return }
     try {
-      await createBulkPosts({ project_id: id, topics, additional_requests: bulkForm.additional_requests })
+      await createBulkPosts({ project_id: id, topics, additional_requests: bulkForm.additional_requests, ai_provider_id: bulkForm.ai_provider_id, model_name: bulkForm.model_name })
       setShowCreateModal(false)
-      setBulkForm({ topics: '', additional_requests: '' })
+      setBulkForm({ topics: '', additional_requests: '', ai_provider_id: '', model_name: '' })
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
@@ -76,6 +79,14 @@ export default function ProjectDetail() {
       if (result !== null) load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
+  const handleProviderChange = (providerId, formType) => {
+    if (formType === 'single') {
+      setSingleForm({ ...singleForm, ai_provider_id: providerId, model_name: '' })
+    } else {
+      setBulkForm({ ...bulkForm, ai_provider_id: providerId, model_name: '' })
     }
   }
 
@@ -201,6 +212,27 @@ export default function ProjectDetail() {
             {createMode === 'single' ? (
               <form onSubmit={handleCreateSingle}>
                 <div className="form-group">
+                  <label className="form-label">AI Provider</label>
+                  <select className="form-select" value={singleForm.ai_provider_id} onChange={e => handleProviderChange(e.target.value, 'single')}>
+                    <option value="">-- Use default provider --</option>
+                    {providers.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
+                    ))}
+                  </select>
+                </div>
+                {singleForm.ai_provider_id && (() => {
+                  const provider = providers.find(p => p.id === singleForm.ai_provider_id)
+                  if (provider && provider.provider_type === 'openai_compatible') {
+                    return (
+                      <div className="form-group">
+                        <label className="form-label">Model Name</label>
+                        <input className="form-input" placeholder="e.g. llama-3.3-70b-versatile" value={singleForm.model_name} onChange={e => setSingleForm({ ...singleForm, model_name: e.target.value })} />
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
+                <div className="form-group">
                   <label className="form-label">Topic</label>
                   <input className="form-input" placeholder="e.g. How to Improve Your Website SEO" value={singleForm.topic} onChange={e => setSingleForm({ ...singleForm, topic: e.target.value })} required />
                 </div>
@@ -210,11 +242,32 @@ export default function ProjectDetail() {
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">Create &amp; Start Research</button>
+                  <button type="submit" className="btn btn-primary">Create & Start Research</button>
                 </div>
               </form>
             ) : (
               <form onSubmit={handleCreateBulk}>
+                <div className="form-group">
+                  <label className="form-label">AI Provider</label>
+                  <select className="form-select" value={bulkForm.ai_provider_id} onChange={e => handleProviderChange(e.target.value, 'bulk')}>
+                    <option value="">-- Use default provider --</option>
+                    {providers.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
+                    ))}
+                  </select>
+                </div>
+                {bulkForm.ai_provider_id && (() => {
+                  const provider = providers.find(p => p.id === bulkForm.ai_provider_id)
+                  if (provider && provider.provider_type === 'openai_compatible') {
+                    return (
+                      <div className="form-group">
+                        <label className="form-label">Model Name</label>
+                        <input className="form-input" placeholder="e.g. llama-3.3-70b-versatile" value={bulkForm.model_name} onChange={e => setBulkForm({ ...bulkForm, model_name: e.target.value })} />
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
                 <div className="form-group">
                   <label className="form-label">Topics (one per line)</label>
                   <textarea className="form-textarea" style={{ minHeight: 150 }} placeholder={"Topic 1\nTopic 2\nTopic 3"} value={bulkForm.topics} onChange={e => setBulkForm({ ...bulkForm, topics: e.target.value })} required />
@@ -225,7 +278,7 @@ export default function ProjectDetail() {
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">Create All &amp; Start Research</button>
+                  <button type="submit" className="btn btn-primary">Create All & Start Research</button>
                 </div>
               </form>
             )}

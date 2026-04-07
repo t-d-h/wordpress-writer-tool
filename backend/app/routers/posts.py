@@ -15,6 +15,8 @@ def format_post(doc: dict) -> dict:
         project_id=doc["project_id"],
         topic=doc["topic"],
         additional_requests=doc.get("additional_requests", ""),
+        ai_provider_id=doc.get("ai_provider_id"),
+        model_name=doc.get("model_name"),
         title=doc.get("title"),
         meta_description=doc.get("meta_description"),
         outline=doc.get("outline"),
@@ -64,6 +66,8 @@ async def create_post(data: PostCreate):
         "project_id": data.project_id,
         "topic": data.topic,
         "additional_requests": data.additional_requests or "",
+        "ai_provider_id": data.ai_provider_id,
+        "model_name": data.model_name,
         "title": None,
         "meta_description": None,
         "outline": None,
@@ -76,7 +80,14 @@ async def create_post(data: PostCreate):
         "content_done": False,
         "thumbnail_done": False,
         "sections_done": False,
-        "token_usage": {"research": 0, "outline": 0, "content": 0, "thumbnail": 0, "section_images": 0, "total": 0},
+        "token_usage": {
+            "research": 0,
+            "outline": 0,
+            "content": 0,
+            "thumbnail": 0,
+            "section_images": 0,
+            "total": 0,
+        },
         "jobs": [],
         "created_at": datetime.now(timezone.utc),
         "wp_post_id": None,
@@ -96,29 +107,34 @@ async def create_post(data: PostCreate):
         "completed_at": None,
     }
     await posts_col.update_one(
-        {"_id": result.inserted_id},
-        {"$push": {"jobs": job_info}}
+        {"_id": result.inserted_id}, {"$push": {"jobs": job_info}}
     )
 
     # Store job in jobs collection for tracking
-    await jobs_col.insert_one({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": data.project_id,
-        "job_type": "research",
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc),
-    })
+    await jobs_col.insert_one(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": data.project_id,
+            "job_type": "research",
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc),
+        }
+    )
 
     # Publish job to Redis
-    await publish_job({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": data.project_id,
-        "job_type": "research",
-        "topic": data.topic,
-        "additional_requests": data.additional_requests or "",
-    })
+    await publish_job(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": data.project_id,
+            "job_type": "research",
+            "topic": data.topic,
+            "additional_requests": data.additional_requests or "",
+            "ai_provider_id": data.ai_provider_id,
+            "model_name": data.model_name,
+        }
+    )
 
     post_doc["jobs"] = [job_info]
     return format_post(post_doc)
@@ -137,6 +153,8 @@ async def create_bulk_posts(data: BulkPostCreate):
             project_id=data.project_id,
             topic=topic,
             additional_requests=data.additional_requests,
+            ai_provider_id=data.ai_provider_id,
+            model_name=data.model_name,
         )
         # Reuse single post creation logic
         post = await create_post(single)
@@ -152,7 +170,10 @@ async def update_post(post_id: str, data: PostUpdate):
         raise HTTPException(status_code=400, detail="No fields to update")
     # Convert sections to dicts if present
     if "sections" in update_data:
-        update_data["sections"] = [s.model_dump() if hasattr(s, 'model_dump') else s for s in update_data["sections"]]
+        update_data["sections"] = [
+            s.model_dump() if hasattr(s, "model_dump") else s
+            for s in update_data["sections"]
+        ]
     result = await posts_col.update_one(
         {"_id": ObjectId(post_id)}, {"$set": update_data}
     )
@@ -190,23 +211,26 @@ async def publish_post(post_id: str):
         "completed_at": None,
     }
     await posts_col.update_one(
-        {"_id": ObjectId(post_id)},
-        {"$push": {"jobs": job_info}}
+        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
     )
-    await jobs_col.insert_one({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "publish",
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc),
-    })
-    await publish_job({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "publish",
-    })
+    await jobs_col.insert_one(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "publish",
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc),
+        }
+    )
+    await publish_job(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "publish",
+        }
+    )
     return {"message": "Publish job queued", "job_id": job_id}
 
 
@@ -214,8 +238,7 @@ async def publish_post(post_id: str):
 async def unpublish_post(post_id: str):
     """Mark a post as draft."""
     result = await posts_col.update_one(
-        {"_id": ObjectId(post_id)},
-        {"$set": {"status": "draft"}}
+        {"_id": ObjectId(post_id)}, {"$set": {"status": "draft"}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -238,21 +261,29 @@ async def generate_outline(post_id: str):
         "started_at": None,
         "completed_at": None,
     }
-    await posts_col.update_one({"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}})
-    await jobs_col.insert_one({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "outline",
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc),
-    })
-    await publish_job({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "outline",
-    })
+    await posts_col.update_one(
+        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+    )
+    await jobs_col.insert_one(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "outline",
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc),
+        }
+    )
+    await publish_job(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "outline",
+            "ai_provider_id": doc.get("ai_provider_id"),
+            "model_name": doc.get("model_name"),
+        }
+    )
     return {"message": "Outline generation queued", "job_id": job_id}
 
 
@@ -272,21 +303,27 @@ async def generate_content(post_id: str):
         "started_at": None,
         "completed_at": None,
     }
-    await posts_col.update_one({"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}})
-    await jobs_col.insert_one({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "content",
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc),
-    })
-    await publish_job({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "content",
-    })
+    await posts_col.update_one(
+        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+    )
+    await jobs_col.insert_one(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "content",
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc),
+        }
+    )
+    await publish_job(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "content",
+        }
+    )
     return {"message": "Content generation queued", "job_id": job_id}
 
 
@@ -306,21 +343,29 @@ async def generate_thumbnail(post_id: str):
         "started_at": None,
         "completed_at": None,
     }
-    await posts_col.update_one({"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}})
-    await jobs_col.insert_one({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "thumbnail",
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc),
-    })
-    await publish_job({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "thumbnail",
-    })
+    await posts_col.update_one(
+        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+    )
+    await jobs_col.insert_one(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "thumbnail",
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc),
+        }
+    )
+    await publish_job(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "thumbnail",
+            "ai_provider_id": doc.get("ai_provider_id"),
+            "model_name": doc.get("model_name"),
+        }
+    )
     return {"message": "Thumbnail generation queued", "job_id": job_id}
 
 
@@ -340,19 +385,25 @@ async def generate_section_images(post_id: str):
         "started_at": None,
         "completed_at": None,
     }
-    await posts_col.update_one({"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}})
-    await jobs_col.insert_one({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "section_images",
-        "status": "pending",
-        "created_at": datetime.now(timezone.utc),
-    })
-    await publish_job({
-        "job_id": job_id,
-        "post_id": post_id,
-        "project_id": doc["project_id"],
-        "job_type": "section_images",
-    })
+    await posts_col.update_one(
+        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+    )
+    await jobs_col.insert_one(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "section_images",
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc),
+        }
+    )
+    await publish_job(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "section_images",
+        }
+    )
     return {"message": "Section images generation queued", "job_id": job_id}

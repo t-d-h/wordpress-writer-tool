@@ -13,12 +13,16 @@ class PostCreate(BaseModel):
     project_id: str
     topic: str
     additional_requests: Optional[str] = ""
+    ai_provider_id: Optional[str] = None
+    model_name: Optional[str] = None
 
 
 class BulkPostCreate(BaseModel):
     project_id: str
     topics: List[str]
     additional_requests: Optional[str] = ""
+    ai_provider_id: Optional[str] = None
+    model_name: Optional[str] = None
 
 
 class PostUpdate(BaseModel):
@@ -52,6 +56,8 @@ class PostResponse(BaseModel):
     project_id: str
     topic: str
     additional_requests: str
+    ai_provider_id: Optional[str] = None
+    model_name: Optional[str] = None
     title: Optional[str] = None
     meta_description: Optional[str] = None
     outline: Optional[Dict[str, Any]] = None

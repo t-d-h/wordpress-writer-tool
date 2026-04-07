@@ -2,21 +2,35 @@
 AI Service — handles research, outline, and content generation
 using OpenAI, Gemini, or Anthropic depending on the configured provider.
 """
+
 import json
+from bson import ObjectId
 from app.database import ai_providers_col
 
 
-async def _get_provider():
-    """Get the first available AI provider."""
+async def _get_provider(provider_id: str = None):
+    """Get an AI provider by ID, or the first available if no ID provided."""
+    if provider_id:
+        doc = await ai_providers_col.find_one({"_id": ObjectId(provider_id)})
+        if not doc:
+            raise Exception(f"AI provider not found: {provider_id}")
+        return doc
     doc = await ai_providers_col.find_one()
     if not doc:
         raise Exception("No AI provider configured. Please add one in Settings.")
     return doc
 
 
-async def _call_openai(api_key: str, prompt: str, system_prompt: str = "", base_url: str = None, model_name: str = "gpt-4o") -> tuple[str, int]:
+async def _call_openai(
+    api_key: str,
+    prompt: str,
+    system_prompt: str = "",
+    base_url: str = None,
+    model_name: str = "gpt-4o",
+) -> tuple[str, int]:
     """Call OpenAI or OpenAI-compatible API."""
     from openai import AsyncOpenAI
+
     client = AsyncOpenAI(api_key=api_key, base_url=base_url or None)
     messages = []
     if system_prompt:
@@ -31,9 +45,12 @@ async def _call_openai(api_key: str, prompt: str, system_prompt: str = "", base_
     return response.choices[0].message.content, tokens
 
 
-async def _call_gemini(api_key: str, prompt: str, system_prompt: str = "") -> tuple[str, int]:
+async def _call_gemini(
+    api_key: str, prompt: str, system_prompt: str = ""
+) -> tuple[str, int]:
     """Call Gemini API."""
     from google import genai
+
     client = genai.Client(api_key=api_key)
     full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
     response = client.models.generate_content(
@@ -42,13 +59,18 @@ async def _call_gemini(api_key: str, prompt: str, system_prompt: str = "") -> tu
     )
     tokens = 0
     if response.usage_metadata:
-        tokens = (response.usage_metadata.prompt_token_count or 0) + (response.usage_metadata.candidates_token_count or 0)
+        tokens = (response.usage_metadata.prompt_token_count or 0) + (
+            response.usage_metadata.candidates_token_count or 0
+        )
     return response.text, tokens
 
 
-async def _call_anthropic(api_key: str, prompt: str, system_prompt: str = "") -> tuple[str, int]:
+async def _call_anthropic(
+    api_key: str, prompt: str, system_prompt: str = ""
+) -> tuple[str, int]:
     """Call Anthropic API."""
     from anthropic import AsyncAnthropic
+
     client = AsyncAnthropic(api_key=api_key)
     kwargs = {
         "model": "claude-sonnet-4-20250514",
@@ -88,51 +110,98 @@ async def verify_api_key(provider_type: str, api_key: str, api_url: str = "") ->
 
         if provider_type == "openai":
             if "incorrect_api_key" in error_msg or "invalid_api_key" in error_msg:
-                return {"ok": False, "error": "Invalid OpenAI API key. Check your key and try again."}
+                return {
+                    "ok": False,
+                    "error": "Invalid OpenAI API key. Check your key and try again.",
+                }
             elif "insufficient_quota" in error_msg:
-                return {"ok": False, "error": "OpenAI API key is valid but account has insufficient quota."}
+                return {
+                    "ok": False,
+                    "error": "OpenAI API key is valid but account has insufficient quota.",
+                }
             elif "rate_limit" in error_msg:
-                return {"ok": False, "error": "OpenAI rate limit reached. Try again in a moment."}
+                return {
+                    "ok": False,
+                    "error": "OpenAI rate limit reached. Try again in a moment.",
+                }
         elif provider_type == "gemini":
             if "api_key_not_valid" in error_msg or "api key not valid" in error_msg:
-                return {"ok": False, "error": "Invalid Gemini API key. Check your key and try again."}
+                return {
+                    "ok": False,
+                    "error": "Invalid Gemini API key. Check your key and try again.",
+                }
             elif "quota" in error_msg:
-                return {"ok": False, "error": "Gemini API key is valid but account has exceeded quota."}
+                return {
+                    "ok": False,
+                    "error": "Gemini API key is valid but account has exceeded quota.",
+                }
         elif provider_type == "anthropic":
             if "invalid_api_key" in error_msg or "authentication_error" in error_msg:
-                return {"ok": False, "error": "Invalid Anthropic API key. Check your key and try again."}
+                return {
+                    "ok": False,
+                    "error": "Invalid Anthropic API key. Check your key and try again.",
+                }
             elif "overloaded" in error_msg:
-                return {"ok": False, "error": "Anthropic API is currently overloaded. Try again in a moment."}
+                return {
+                    "ok": False,
+                    "error": "Anthropic API is currently overloaded. Try again in a moment.",
+                }
         elif provider_type == "openai_compatible":
-            if "invalid_api_key" in error_msg or "incorrect_api_key" in error_msg or "authentication_error" in error_msg:
-                return {"ok": False, "error": "Invalid API key for the configured endpoint."}
+            if (
+                "invalid_api_key" in error_msg
+                or "incorrect_api_key" in error_msg
+                or "authentication_error" in error_msg
+            ):
+                return {
+                    "ok": False,
+                    "error": "Invalid API key for the configured endpoint.",
+                }
 
         return {"ok": False, "error": f"Verification failed: {str(e)}"}
 
 
-async def _call_ai(prompt: str, system_prompt: str = "") -> tuple[str, int]:
+async def _call_ai(
+    prompt: str,
+    system_prompt: str = "",
+    provider_id: str = None,
+    model_name: str = None,
+) -> tuple[str, int]:
     """Route to the appropriate AI provider."""
-    provider = await _get_provider()
+    provider = await _get_provider(provider_id)
     provider_type = provider["provider_type"]
     api_key = provider["api_key"]
 
     if provider_type == "openai":
-        return await _call_openai(api_key, prompt, system_prompt)
+        return await _call_openai(
+            api_key, prompt, system_prompt, model_name=model_name or "gpt-4o"
+        )
     elif provider_type == "gemini":
         return await _call_gemini(api_key, prompt, system_prompt)
     elif provider_type == "anthropic":
         return await _call_anthropic(api_key, prompt, system_prompt)
     elif provider_type == "openai_compatible":
         api_url = provider.get("api_url", "")
-        model_name = provider.get("model_name", "gpt-4o")
-        return await _call_openai(api_key, prompt, system_prompt, base_url=api_url, model_name=model_name)
+        return await _call_openai(
+            api_key,
+            prompt,
+            system_prompt,
+            base_url=api_url,
+            model_name=model_name or provider.get("model_name", "gpt-4o"),
+        )
     else:
         raise Exception(f"Unknown provider type: {provider_type}")
 
 
-async def research_topic(topic: str, additional_requests: str = "") -> tuple[dict, int]:
+async def research_topic(
+    topic: str,
+    additional_requests: str = "",
+    provider_id: str = None,
+    model_name: str = None,
+) -> tuple[dict, int]:
     """Research a topic: audience, keywords, key points to mention."""
-    system_prompt = "You are an expert SEO content researcher. Respond only in valid JSON."
+    system_prompt = (
+        "You are an expert SEO content researcher. Respond only in valid JSON."
+    )
     prompt = f"""Research the following topic for a WordPress blog post.
 
 Topic: {topic}
@@ -147,7 +216,7 @@ Provide your research as JSON with these keys:
     "competitors_angle": "what competitors typically cover on this topic"
 }}"""
 
-    text, tokens = await _call_ai(prompt, system_prompt)
+    text, tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
     # Parse JSON from response
     try:
         # Try to extract JSON from markdown code block if present
@@ -161,9 +230,17 @@ Provide your research as JSON with these keys:
     return data, tokens
 
 
-async def generate_outline(topic: str, research_data: dict, additional_requests: str = "") -> tuple[dict, int]:
+async def generate_outline(
+    topic: str,
+    research_data: dict,
+    additional_requests: str = "",
+    provider_id: str = None,
+    model_name: str = None,
+) -> tuple[dict, int]:
     """Generate a post outline: SEO title, meta description, intro, sections."""
-    system_prompt = "You are an expert SEO content strategist. Respond only in valid JSON."
+    system_prompt = (
+        "You are an expert SEO content strategist. Respond only in valid JSON."
+    )
     prompt = f"""Create a detailed blog post outline based on:
 
 Topic: {topic}
@@ -188,7 +265,7 @@ Create an outline as JSON:
     ]
 }}"""
 
-    text, tokens = await _call_ai(prompt, system_prompt)
+    text, tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
     try:
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
@@ -200,7 +277,15 @@ Create an outline as JSON:
     return data, tokens
 
 
-async def generate_section_content(topic: str, section_title: str, key_points: list, outline: dict, additional_requests: str = "") -> tuple[str, int]:
+async def generate_section_content(
+    topic: str,
+    section_title: str,
+    key_points: list,
+    outline: dict,
+    additional_requests: str = "",
+    provider_id: str = None,
+    model_name: str = None,
+) -> tuple[str, int]:
     """Generate content for a single section."""
     system_prompt = "You are an expert blog content writer. Write engaging, detailed, SEO-optimized content."
     prompt = f"""Write the content for a blog post section.
@@ -217,14 +302,22 @@ Include relevant examples and practical advice.
 Do NOT include the section title itself — just the body content.
 Format in HTML."""
 
-    text, tokens = await _call_ai(prompt, system_prompt)
+    text, tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
     return text, tokens
 
 
-async def generate_introduction(topic: str, outline: dict, additional_requests: str = "") -> tuple[str, int]:
+async def generate_introduction(
+    topic: str,
+    outline: dict,
+    additional_requests: str = "",
+    provider_id: str = None,
+    model_name: str = None,
+) -> tuple[str, int]:
     """Generate the introduction based on hook/problem/promise."""
     intro = outline.get("introduction", {})
-    system_prompt = "You are an expert blog content writer. Write engaging introductions."
+    system_prompt = (
+        "You are an expert blog content writer. Write engaging introductions."
+    )
     prompt = f"""Write the introduction for a blog post.
 
 Topic: {topic}
@@ -240,16 +333,24 @@ Write a compelling 150-300 word introduction that:
 3. Promises what the reader will learn
 Format in HTML."""
 
-    text, tokens = await _call_ai(prompt, system_prompt)
+    text, tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
     return text, tokens
 
 
-async def generate_full_content(topic: str, outline: dict, additional_requests: str = "") -> tuple[str, list, int]:
+async def generate_full_content(
+    topic: str,
+    outline: dict,
+    additional_requests: str = "",
+    provider_id: str = None,
+    model_name: str = None,
+) -> tuple[str, list, int]:
     """Generate the full post content from an outline. Returns (full_html, sections_list, total_tokens)."""
     total_tokens = 0
 
     # Generate introduction
-    intro_html, intro_tokens = await generate_introduction(topic, outline, additional_requests)
+    intro_html, intro_tokens = await generate_introduction(
+        topic, outline, additional_requests, provider_id, model_name
+    )
     total_tokens += intro_tokens
 
     sections = []
@@ -260,14 +361,22 @@ async def generate_full_content(topic: str, outline: dict, additional_requests: 
         sec_title = sec.get("title", "")
         key_points = sec.get("key_points", [])
         sec_content, sec_tokens = await generate_section_content(
-            topic, sec_title, key_points, outline, additional_requests
+            topic,
+            sec_title,
+            key_points,
+            outline,
+            additional_requests,
+            provider_id,
+            model_name,
         )
         total_tokens += sec_tokens
-        sections.append({
-            "title": sec_title,
-            "content": sec_content,
-            "image_url": None,
-        })
+        sections.append(
+            {
+                "title": sec_title,
+                "content": sec_content,
+                "image_url": None,
+            }
+        )
         full_html += f"\n<h2>{sec_title}</h2>\n{sec_content}"
 
     return full_html, sections, total_tokens
