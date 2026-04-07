@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineXMark } from 'react-icons/hi2'
-import { getSites, createSite, updateSite, deleteSite } from '../../api/client'
+import { getSites, createSite, updateSite, deleteSite, verifySite } from '../../api/client'
 
 export default function WPSites() {
   const [sites, setSites] = useState([])
@@ -8,6 +8,7 @@ export default function WPSites() {
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ name: '', url: '', username: '', api_key: '' })
+  const [verifying, setVerifying] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -52,6 +53,22 @@ export default function WPSites() {
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
+  const handleTestSite = async () => {
+    if (!form.url || !form.username || !form.api_key) {
+      alert('Please fill in Site URL, Username, and Application Password first.')
+      return
+    }
+    setVerifying(true)
+    try {
+      await verifySite(form)
+      alert('Connection successful! Site is reachable and credentials are valid.')
+    } catch (e) {
+      alert('Connection failed: ' + (e.response?.data?.detail || e.message))
+    } finally {
+      setVerifying(false)
     }
   }
 
@@ -140,7 +157,10 @@ export default function WPSites() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editingId ? 'Update' : 'Create'}</button>
+                <button type="button" className="btn btn-secondary" onClick={handleTestSite} disabled={verifying} style={{ opacity: verifying ? 0.6 : 1 }}>
+                  {verifying ? 'Testing...' : 'Test Connection'}
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={verifying}>{editingId ? 'Update' : 'Create'}</button>
               </div>
             </form>
           </div>

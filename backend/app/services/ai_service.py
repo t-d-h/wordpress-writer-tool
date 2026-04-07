@@ -62,6 +62,49 @@ async def _call_anthropic(api_key: str, prompt: str, system_prompt: str = "") ->
     return response.content[0].text, tokens
 
 
+async def verify_api_key(provider_type: str, api_key: str) -> dict:
+    """Verify an API key by making a minimal test call.
+    Returns {"ok": True} or {"ok": False, "error": "reason"}.
+    """
+    test_prompt = "Reply with exactly: OK"
+    try:
+        if provider_type == "openai":
+            text, _ = await _call_openai(api_key, test_prompt)
+        elif provider_type == "gemini":
+            text, _ = await _call_gemini(api_key, test_prompt)
+        elif provider_type == "anthropic":
+            text, _ = await _call_anthropic(api_key, test_prompt)
+        else:
+            return {"ok": False, "error": f"Unknown provider type: {provider_type}"}
+
+        if not text or not text.strip():
+            return {"ok": False, "error": "Received empty response from AI provider."}
+        return {"ok": True}
+
+    except Exception as e:
+        error_msg = str(e).lower()
+
+        if provider_type == "openai":
+            if "incorrect_api_key" in error_msg or "invalid_api_key" in error_msg:
+                return {"ok": False, "error": "Invalid OpenAI API key. Check your key and try again."}
+            elif "insufficient_quota" in error_msg:
+                return {"ok": False, "error": "OpenAI API key is valid but account has insufficient quota."}
+            elif "rate_limit" in error_msg:
+                return {"ok": False, "error": "OpenAI rate limit reached. Try again in a moment."}
+        elif provider_type == "gemini":
+            if "api_key_not_valid" in error_msg or "api key not valid" in error_msg:
+                return {"ok": False, "error": "Invalid Gemini API key. Check your key and try again."}
+            elif "quota" in error_msg:
+                return {"ok": False, "error": "Gemini API key is valid but account has exceeded quota."}
+        elif provider_type == "anthropic":
+            if "invalid_api_key" in error_msg or "authentication_error" in error_msg:
+                return {"ok": False, "error": "Invalid Anthropic API key. Check your key and try again."}
+            elif "overloaded" in error_msg:
+                return {"ok": False, "error": "Anthropic API is currently overloaded. Try again in a moment."}
+
+        return {"ok": False, "error": f"Verification failed: {str(e)}"}
+
+
 async def _call_ai(prompt: str, system_prompt: str = "") -> tuple[str, int]:
     """Route to the appropriate AI provider."""
     provider = await _get_provider()

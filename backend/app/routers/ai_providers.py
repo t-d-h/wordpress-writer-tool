@@ -1,10 +1,16 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from datetime import datetime, timezone
+from pydantic import BaseModel
 from app.database import ai_providers_col
 from app.models.ai_provider import AIProviderCreate, AIProviderUpdate, AIProviderResponse
 
 router = APIRouter(prefix="/api/ai-providers", tags=["AI Providers"])
+
+
+class AIVerifyRequest(BaseModel):
+    provider_type: str
+    api_key: str
 
 
 def format_provider(doc: dict) -> dict:
@@ -25,6 +31,16 @@ async def list_providers():
     return providers
 
 
+@router.post("/verify")
+async def verify_provider(data: AIVerifyRequest):
+    """Verify AI provider API key before saving."""
+    from app.services.ai_service import verify_api_key
+    result = await verify_api_key(data.provider_type, data.api_key)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
 @router.get("/{provider_id}")
 async def get_provider(provider_id: str):
     doc = await ai_providers_col.find_one({"_id": ObjectId(provider_id)})
@@ -35,6 +51,10 @@ async def get_provider(provider_id: str):
 
 @router.post("", status_code=201)
 async def create_provider(data: AIProviderCreate):
+    from app.services.ai_service import verify_api_key
+    result = await verify_api_key(data.provider_type, data.api_key)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
     doc = {
         **data.model_dump(),
         "created_at": datetime.now(timezone.utc),
@@ -49,6 +69,18 @@ async def update_provider(provider_id: str, data: AIProviderUpdate):
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
+
+    if any(k in update_data for k in ("api_key", "provider_type")):
+        existing = await ai_providers_col.find_one({"_id": ObjectId(provider_id)})
+        if not existing:
+            raise HTTPException(status_code=404, detail="Provider not found")
+        from app.services.ai_service import verify_api_key
+        verify_provider_type = update_data.get("provider_type", existing["provider_type"])
+        verify_api_key_val = update_data.get("api_key", existing["api_key"])
+        result = await verify_api_key(verify_provider_type, verify_api_key_val)
+        if not result["ok"]:
+            raise HTTPException(status_code=400, detail=result["error"])
+
     result = await ai_providers_col.update_one(
         {"_id": ObjectId(provider_id)}, {"$set": update_data}
     )

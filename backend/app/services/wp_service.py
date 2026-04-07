@@ -25,6 +25,42 @@ def _get_auth_header(username: str, api_key: str) -> dict:
     return {"Authorization": f"Basic {credentials}"}
 
 
+async def verify_wp_site(url: str, username: str, api_key: str) -> dict:
+    """Verify WordPress site connectivity and credentials.
+    Returns {"ok": True} or {"ok": False, "error": "reason"}.
+    """
+    base_url = url.rstrip("/")
+
+    # Step 1: Check REST API connectivity (no auth needed)
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{base_url}/wp-json/")
+    except httpx.ConnectError:
+        return {"ok": False, "error": f"Cannot reach {base_url}. Check the URL is correct and the site is online."}
+    except httpx.TimeoutException:
+        return {"ok": False, "error": f"Connection to {base_url} timed out. The site may be slow or unreachable."}
+    except httpx.RequestError as e:
+        return {"ok": False, "error": f"Failed to connect: {str(e)}"}
+
+    if resp.status_code != 200:
+        return {"ok": False, "error": f"WordPress REST API not available at {base_url}/wp-json/ (HTTP {resp.status_code}). Make sure WordPress REST API is enabled."}
+
+    # Step 2: Verify credentials via authenticated request
+    try:
+        auth_header = _get_auth_header(username, api_key)
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{base_url}/wp-json/wp/v2/users/me", headers=auth_header)
+    except httpx.RequestError as e:
+        return {"ok": False, "error": f"Failed during credential check: {str(e)}"}
+
+    if resp.status_code == 401 or resp.status_code == 403:
+        return {"ok": False, "error": "Authentication failed. Check your username and application password. Make sure Application Passwords are enabled in your WordPress user profile."}
+    if resp.status_code != 200:
+        return {"ok": False, "error": f"Credential verification failed with HTTP {resp.status_code}."}
+
+    return {"ok": True}
+
+
 async def upload_media(project_id: str, file_path: str, filename: str = None) -> dict:
     """Upload an image to WordPress media library. Returns media object."""
     wp_site = await _get_wp_site(project_id)

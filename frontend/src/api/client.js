@@ -12,12 +12,14 @@ export const getProviders = () => api.get('/ai-providers');
 export const createProvider = (data) => api.post('/ai-providers', data);
 export const updateProvider = (id, data) => api.put(`/ai-providers/${id}`, data);
 export const deleteProvider = (id) => api.delete(`/ai-providers/${id}`);
+export const verifyProvider = (data) => api.post('/ai-providers/verify', data);
 
 // WordPress Sites
 export const getSites = () => api.get('/wp-sites');
 export const createSite = (data) => api.post('/wp-sites', data);
 export const updateSite = (id, data) => api.put(`/wp-sites/${id}`, data);
 export const deleteSite = (id) => api.delete(`/wp-sites/${id}`);
+export const verifySite = (data) => api.post('/wp-sites/verify', data);
 
 // Projects
 export const getProjects = () => api.get('/projects');

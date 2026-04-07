@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineXMark } from 'react-icons/hi2'
-import { getProviders, createProvider, updateProvider, deleteProvider } from '../../api/client'
+import { getProviders, createProvider, updateProvider, deleteProvider, verifyProvider } from '../../api/client'
 
 export default function AIProviders() {
   const [providers, setProviders] = useState([])
@@ -8,6 +8,7 @@ export default function AIProviders() {
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ name: '', provider_type: 'gemini', api_key: '' })
+  const [verifying, setVerifying] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -52,6 +53,23 @@ export default function AIProviders() {
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
+  const handleTestProvider = async () => {
+    if (!form.provider_type || !form.api_key) {
+      alert('Please select a Provider and enter an API Key first.')
+      return
+    }
+    setVerifying(true)
+    try {
+      const { data } = await verifyProvider({ provider_type: form.provider_type, api_key: form.api_key })
+      const label = form.provider_type.charAt(0).toUpperCase() + form.provider_type.slice(1)
+      alert(`API key verified successfully! Connection to ${label} is working.`)
+    } catch (e) {
+      alert('Verification failed: ' + (e.response?.data?.detail || e.message))
+    } finally {
+      setVerifying(false)
     }
   }
 
@@ -142,7 +160,10 @@ export default function AIProviders() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editingId ? 'Update' : 'Create'}</button>
+                <button type="button" className="btn btn-secondary" onClick={handleTestProvider} disabled={verifying} style={{ opacity: verifying ? 0.6 : 1 }}>
+                  {verifying ? 'Testing...' : 'Test API Key'}
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={verifying}>{editingId ? 'Update' : 'Create'}</button>
               </div>
             </form>
           </div>

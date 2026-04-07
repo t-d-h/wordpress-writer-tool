@@ -26,6 +26,16 @@ async def list_sites():
     return sites
 
 
+@router.post("/verify")
+async def verify_site(data: WPSiteCreate):
+    """Verify WordPress site connectivity and credentials before saving."""
+    from app.services.wp_service import verify_wp_site
+    result = await verify_wp_site(data.url, data.username, data.api_key)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
 @router.get("/{site_id}")
 async def get_site(site_id: str):
     doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
@@ -36,6 +46,10 @@ async def get_site(site_id: str):
 
 @router.post("", status_code=201)
 async def create_site(data: WPSiteCreate):
+    from app.services.wp_service import verify_wp_site
+    result = await verify_wp_site(data.url, data.username, data.api_key)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
     doc = {
         **data.model_dump(),
         "created_at": datetime.now(timezone.utc),
@@ -50,6 +64,19 @@ async def update_site(site_id: str, data: WPSiteUpdate):
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
+
+    if any(k in update_data for k in ("url", "username", "api_key")):
+        existing = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+        if not existing:
+            raise HTTPException(status_code=404, detail="Site not found")
+        from app.services.wp_service import verify_wp_site
+        verify_url = update_data.get("url", existing["url"])
+        verify_username = update_data.get("username", existing["username"])
+        verify_api_key = update_data.get("api_key", existing["api_key"])
+        result = await verify_wp_site(verify_url, verify_username, verify_api_key)
+        if not result["ok"]:
+            raise HTTPException(status_code=400, detail=result["error"])
+
     result = await wp_sites_col.update_one(
         {"_id": ObjectId(site_id)}, {"$set": update_data}
     )
