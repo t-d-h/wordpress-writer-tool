@@ -18,6 +18,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: wp-writer-backend
+    network_mode: "host"
     ports:
       - "8001:8000"
     env_file:
@@ -29,6 +30,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    env_file:
+      - .env
+    network_mode: "host"
     container_name: wp-writer-worker
     command: python -m app.workers.redis_worker
     volumes:
@@ -39,6 +43,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: wp-writer-frontend
+    network_mode: "host"
     ports:
       - "5174:5173"
     env_file:
