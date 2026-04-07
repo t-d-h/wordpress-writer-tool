@@ -9,6 +9,7 @@ export default function AIProviders() {
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ name: '', provider_type: 'gemini', api_key: '' })
   const [verifying, setVerifying] = useState(false)
+  const [verifyResult, setVerifyResult] = useState(null)
 
   useEffect(() => { load() }, [])
 
@@ -58,16 +59,17 @@ export default function AIProviders() {
 
   const handleTestProvider = async () => {
     if (!form.provider_type || !form.api_key) {
-      alert('Please select a Provider and enter an API Key first.')
+      setVerifyResult({ ok: false, message: 'Please select a Provider and enter an API Key first.' })
       return
     }
     setVerifying(true)
+    setVerifyResult(null)
     try {
-      const { data } = await verifyProvider({ provider_type: form.provider_type, api_key: form.api_key })
+      await verifyProvider({ provider_type: form.provider_type, api_key: form.api_key })
       const label = form.provider_type.charAt(0).toUpperCase() + form.provider_type.slice(1)
-      alert(`API key verified successfully! Connection to ${label} is working.`)
+      setVerifyResult({ ok: true, message: `API key verified! Connection to ${label} is working.` })
     } catch (e) {
-      alert('Verification failed: ' + (e.response?.data?.detail || e.message))
+      setVerifyResult({ ok: false, message: e.response?.data?.detail || e.message })
     } finally {
       setVerifying(false)
     }
@@ -135,7 +137,7 @@ export default function AIProviders() {
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); setVerifyResult(null) }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">{editingId ? 'Edit' : 'Add'} AI Provider</h2>
@@ -156,7 +158,12 @@ export default function AIProviders() {
               </div>
               <div className="form-group">
                 <label className="form-label">API Key</label>
-                <input className="form-input" type="password" placeholder={editingId ? 'Leave blank to keep current' : 'Enter API key'} value={form.api_key} onChange={e => setForm({ ...form, api_key: e.target.value })} required={!editingId} />
+                <input className="form-input" type="password" placeholder={editingId ? 'Leave blank to keep current' : 'Enter API key'} value={form.api_key} onChange={e => { setForm({ ...form, api_key: e.target.value }); setVerifyResult(null) }} required={!editingId} />
+                {verifyResult && (
+                  <div style={{ fontSize: '13px', marginTop: '6px', padding: '6px 10px', borderRadius: '6px', background: verifyResult.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: verifyResult.ok ? 'var(--accent-primary, #22c55e)' : '#ef4444', border: `1px solid ${verifyResult.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
+                    {verifyResult.message}
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
