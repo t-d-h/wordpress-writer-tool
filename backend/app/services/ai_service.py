@@ -14,16 +14,16 @@ async def _get_provider():
     return doc
 
 
-async def _call_openai(api_key: str, prompt: str, system_prompt: str = "") -> tuple[str, int]:
-    """Call OpenAI API."""
+async def _call_openai(api_key: str, prompt: str, system_prompt: str = "", base_url: str = None, model_name: str = "gpt-4o") -> tuple[str, int]:
+    """Call OpenAI or OpenAI-compatible API."""
     from openai import AsyncOpenAI
-    client = AsyncOpenAI(api_key=api_key)
+    client = AsyncOpenAI(api_key=api_key, base_url=base_url or None)
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
     response = await client.chat.completions.create(
-        model="gpt-4o",
+        model=model_name,
         messages=messages,
         temperature=0.7,
     )
@@ -62,7 +62,7 @@ async def _call_anthropic(api_key: str, prompt: str, system_prompt: str = "") ->
     return response.content[0].text, tokens
 
 
-async def verify_api_key(provider_type: str, api_key: str) -> dict:
+async def verify_api_key(provider_type: str, api_key: str, api_url: str = "") -> dict:
     """Verify an API key by making a minimal test call.
     Returns {"ok": True} or {"ok": False, "error": "reason"}.
     """
@@ -74,6 +74,8 @@ async def verify_api_key(provider_type: str, api_key: str) -> dict:
             text, _ = await _call_gemini(api_key, test_prompt)
         elif provider_type == "anthropic":
             text, _ = await _call_anthropic(api_key, test_prompt)
+        elif provider_type == "openai_compatible":
+            text, _ = await _call_openai(api_key, test_prompt, base_url=api_url)
         else:
             return {"ok": False, "error": f"Unknown provider type: {provider_type}"}
 
@@ -101,6 +103,9 @@ async def verify_api_key(provider_type: str, api_key: str) -> dict:
                 return {"ok": False, "error": "Invalid Anthropic API key. Check your key and try again."}
             elif "overloaded" in error_msg:
                 return {"ok": False, "error": "Anthropic API is currently overloaded. Try again in a moment."}
+        elif provider_type == "openai_compatible":
+            if "invalid_api_key" in error_msg or "incorrect_api_key" in error_msg or "authentication_error" in error_msg:
+                return {"ok": False, "error": "Invalid API key for the configured endpoint."}
 
         return {"ok": False, "error": f"Verification failed: {str(e)}"}
 
@@ -117,6 +122,10 @@ async def _call_ai(prompt: str, system_prompt: str = "") -> tuple[str, int]:
         return await _call_gemini(api_key, prompt, system_prompt)
     elif provider_type == "anthropic":
         return await _call_anthropic(api_key, prompt, system_prompt)
+    elif provider_type == "openai_compatible":
+        api_url = provider.get("api_url", "")
+        model_name = provider.get("model_name", "gpt-4o")
+        return await _call_openai(api_key, prompt, system_prompt, base_url=api_url, model_name=model_name)
     else:
         raise Exception(f"Unknown provider type: {provider_type}")
 

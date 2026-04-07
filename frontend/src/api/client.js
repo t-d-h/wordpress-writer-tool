@@ -13,6 +13,7 @@ export const createProvider = (data) => api.post('/ai-providers', data);
 export const updateProvider = (id, data) => api.put(`/ai-providers/${id}`, data);
 export const deleteProvider = (id) => api.delete(`/ai-providers/${id}`);
 export const verifyProvider = (data) => api.post('/ai-providers/verify', data);
+export const fetchProviderModels = (data) => api.post('/ai-providers/fetch-models', data);
 
 // WordPress Sites
 export const getSites = () => api.get('/wp-sites');

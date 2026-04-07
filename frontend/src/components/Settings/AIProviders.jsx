@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineXMark } from 'react-icons/hi2'
-import { getProviders, createProvider, updateProvider, deleteProvider, verifyProvider } from '../../api/client'
+import { getProviders, createProvider, updateProvider, deleteProvider, verifyProvider, fetchProviderModels } from '../../api/client'
 
 export default function AIProviders() {
   const [providers, setProviders] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ name: '', provider_type: 'gemini', api_key: '' })
+  const [form, setForm] = useState({ name: '', provider_type: 'gemini', api_key: '', api_url: '', model_name: '' })
   const [verifying, setVerifying] = useState(false)
   const [verifyResult, setVerifyResult] = useState(null)
+  const [availableModels, setAvailableModels] = useState([])
+  const [fetchingModels, setFetchingModels] = useState(false)
 
   useEffect(() => { load() }, [])
 
@@ -28,13 +30,16 @@ export default function AIProviders() {
     e.preventDefault()
     try {
       if (editingId) {
-        await updateProvider(editingId, form)
+        const payload = { ...form }
+        if (!payload.api_key) delete payload.api_key
+        await updateProvider(editingId, payload)
       } else {
         await createProvider(form)
       }
       setShowModal(false)
       setEditingId(null)
-      setForm({ name: '', provider_type: 'gemini', api_key: '' })
+      setForm({ name: '', provider_type: 'gemini', api_key: '', api_url: '', model_name: '' })
+      setAvailableModels([])
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
@@ -43,7 +48,7 @@ export default function AIProviders() {
 
   const handleEdit = (p) => {
     setEditingId(p.id)
-    setForm({ name: p.name, provider_type: p.provider_type, api_key: '' })
+    setForm({ name: p.name, provider_type: p.provider_type, api_key: '', api_url: p.api_url || '', model_name: p.model_name || '' })
     setShowModal(true)
   }
 
@@ -64,9 +69,13 @@ export default function AIProviders() {
     }
     setVerifying(true)
     setVerifyResult(null)
+    const body = { provider_type: form.provider_type, api_key: form.api_key }
+    if (form.provider_type === 'openai_compatible') {
+      body.api_url = form.api_url
+    }
     try {
-      await verifyProvider({ provider_type: form.provider_type, api_key: form.api_key })
-      const label = form.provider_type.charAt(0).toUpperCase() + form.provider_type.slice(1)
+      await verifyProvider(body)
+      const label = form.provider_type === 'openai_compatible' ? 'OpenAI Compatible' : form.provider_type.charAt(0).toUpperCase() + form.provider_type.slice(1)
       setVerifyResult({ ok: true, message: `API key verified! Connection to ${label} is working.` })
     } catch (e) {
       setVerifyResult({ ok: false, message: e.response?.data?.detail || e.message })
@@ -75,7 +84,23 @@ export default function AIProviders() {
     }
   }
 
-  const providerLabels = { openai: 'OpenAI', gemini: 'Gemini', anthropic: 'Anthropic' }
+  const handleFetchModels = async () => {
+    if (!form.api_url || (!form.api_key && !editingId)) {
+      alert('Please enter an API URL and API Key first.')
+      return
+    }
+    setFetchingModels(true)
+    try {
+      const { data } = await fetchProviderModels({ api_url: form.api_url, api_key: form.api_key })
+      setAvailableModels(data.models)
+    } catch (e) {
+      alert('Failed to fetch models: ' + (e.response?.data?.detail || e.message))
+    } finally {
+      setFetchingModels(false)
+    }
+  }
+
+  const providerLabels = { openai: 'OpenAI', gemini: 'Gemini', anthropic: 'Anthropic', openai_compatible: 'OpenAI Compatible' }
 
   return (
     <div className="page-enter">
@@ -86,7 +111,7 @@ export default function AIProviders() {
 
       <div className="toolbar">
         <div />
-        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ name: '', provider_type: 'gemini', api_key: '' }); setShowModal(true) }}>
+        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ name: '', provider_type: 'gemini', api_key: '', api_url: '', model_name: '' }); setAvailableModels([]); setShowModal(true) }}>
           <HiOutlinePlus /> Add Provider
         </button>
       </div>
@@ -110,6 +135,7 @@ export default function AIProviders() {
                 <th>Name</th>
                 <th>Provider</th>
                 <th>API Key</th>
+                <th>Model</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -122,6 +148,7 @@ export default function AIProviders() {
                     <span className="status-badge status-completed">{providerLabels[p.provider_type]}</span>
                   </td>
                   <td style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>{p.api_key_preview}</td>
+                  <td style={{ color: 'var(--text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.model_name || '—'}</td>
                   <td style={{ color: 'var(--text-muted)' }}>{new Date(p.created_at).toLocaleDateString()}</td>
                   <td>
                     <div className="action-buttons">
@@ -154,8 +181,26 @@ export default function AIProviders() {
                   <option value="gemini">Gemini</option>
                   <option value="openai">OpenAI</option>
                   <option value="anthropic">Anthropic</option>
+                  <option value="openai_compatible">OpenAI Compatible</option>
                 </select>
               </div>
+              {form.provider_type === 'openai_compatible' && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">API URL</label>
+                    <input className="form-input" placeholder="e.g. https://api.groq.com/openai/v1" value={form.api_url} onChange={e => setForm({ ...form, api_url: e.target.value })} required />
+                  </div>
+                  {availableModels.length > 0 && (
+                    <div className="form-group">
+                      <label className="form-label">Model</label>
+                      <select className="form-select" value={form.model_name} onChange={e => setForm({ ...form, model_name: e.target.value })}>
+                        <option value="">-- select model --</option>
+                        {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                  )}
+                </>
+              )}
               <div className="form-group">
                 <label className="form-label">API Key</label>
                 <input className="form-input" type="password" placeholder={editingId ? 'Leave blank to keep current' : 'Enter API key'} value={form.api_key} onChange={e => { setForm({ ...form, api_key: e.target.value }); setVerifyResult(null) }} required={!editingId} />
@@ -170,7 +215,12 @@ export default function AIProviders() {
                 <button type="button" className="btn btn-secondary" onClick={handleTestProvider} disabled={verifying} style={{ opacity: verifying ? 0.6 : 1 }}>
                   {verifying ? 'Testing...' : 'Test API Key'}
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={verifying}>{editingId ? 'Update' : 'Create'}</button>
+                {form.provider_type === 'openai_compatible' && (
+                  <button type="button" className="btn btn-secondary" onClick={handleFetchModels} disabled={fetchingModels} style={{ opacity: fetchingModels ? 0.6 : 1 }}>
+                    {fetchingModels ? 'Loading...' : 'Fetch Models'}
+                  </button>
+                )}
+                <button type="submit" className="btn btn-primary" disabled={verifying || fetchingModels}>{editingId ? 'Update' : 'Create'}</button>
               </div>
             </form>
           </div>

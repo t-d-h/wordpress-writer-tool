@@ -11,6 +11,7 @@ router = APIRouter(prefix="/api/ai-providers", tags=["AI Providers"])
 class AIVerifyRequest(BaseModel):
     provider_type: str
     api_key: str
+    api_url: str = ""
 
 
 def format_provider(doc: dict) -> dict:
@@ -19,6 +20,8 @@ def format_provider(doc: dict) -> dict:
         name=doc["name"],
         provider_type=doc["provider_type"],
         api_key_preview="***" + doc["api_key"][-4:] if len(doc["api_key"]) >= 4 else "***",
+        api_url=doc.get("api_url", ""),
+        model_name=doc.get("model_name", ""),
         created_at=doc["created_at"],
     ).model_dump()
 
@@ -35,7 +38,7 @@ async def list_providers():
 async def verify_provider(data: AIVerifyRequest):
     """Verify AI provider API key before saving."""
     from app.services.ai_service import verify_api_key
-    result = await verify_api_key(data.provider_type, data.api_key)
+    result = await verify_api_key(data.provider_type, data.api_key, data.api_url)
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -52,7 +55,7 @@ async def get_provider(provider_id: str):
 @router.post("", status_code=201)
 async def create_provider(data: AIProviderCreate):
     from app.services.ai_service import verify_api_key
-    result = await verify_api_key(data.provider_type, data.api_key)
+    result = await verify_api_key(data.provider_type, data.api_key, data.api_url)
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
     doc = {
@@ -77,7 +80,8 @@ async def update_provider(provider_id: str, data: AIProviderUpdate):
         from app.services.ai_service import verify_api_key
         verify_provider_type = update_data.get("provider_type", existing["provider_type"])
         verify_api_key_val = update_data.get("api_key", existing["api_key"])
-        result = await verify_api_key(verify_provider_type, verify_api_key_val)
+        verify_api_url_val = update_data.get("api_url", existing.get("api_url", ""))
+        result = await verify_api_key(verify_provider_type, verify_api_key_val, verify_api_url_val)
         if not result["ok"]:
             raise HTTPException(status_code=400, detail=result["error"])
 
@@ -96,3 +100,24 @@ async def delete_provider(provider_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Provider not found")
     return {"message": "Provider deleted"}
+
+
+class FetchModelsRequest(BaseModel):
+    api_url: str
+    api_key: str
+
+
+@router.post("/fetch-models")
+async def fetch_models(data: FetchModelsRequest):
+    """Fetch available models from an OpenAI-compatible provider."""
+    from openai import AsyncOpenAI
+    base = data.api_url.rstrip("/")
+    if not base.endswith("/v1"):
+        base = base + "/v1"
+    try:
+        client = AsyncOpenAI(api_key=data.api_key, base_url=base)
+        resp = await client.models.list()
+        models = sorted([m.id for m in resp.data])
+        return {"models": models}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch models: {str(e)}")
