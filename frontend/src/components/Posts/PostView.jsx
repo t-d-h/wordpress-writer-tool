@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { HiOutlineArrowLeft, HiOutlineArrowPath, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles } from 'react-icons/hi2'
-import { getPost, publishPost, unpublishPost, generateThumbnail, generateThumbnailWithOptions, generateSectionImages, getJobsByPost, getProviders } from '../../api/client'
+import { getPost, publishPost, unpublishPost, generateThumbnail, generateThumbnailWithOptions, generateSectionImages, getJobsByPost, getProviders, uploadThumbnail } from '../../api/client'
 
 export default function PostView() {
   const { id } = useParams()

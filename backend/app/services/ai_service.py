@@ -236,10 +236,16 @@ async def generate_outline(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    target_section_count: int = None,
 ) -> tuple[dict, int]:
     """Generate a post outline: SEO title, meta description, intro, sections."""
     system_prompt = (
         "You are an expert SEO content strategist. Respond only in valid JSON."
+    )
+    section_count_hint = (
+        f"Create exactly {target_section_count} sections"
+        if target_section_count
+        else "Create 5-8 sections"
     )
     prompt = f"""Create a detailed blog post outline based on:
 
@@ -261,7 +267,7 @@ Create an outline as JSON:
             "title": "Section 1 Title",
             "key_points": ["point to cover", "another point"]
         }},
-        ...more sections (aim for 5-8 sections for a comprehensive post)
+        ...more sections ({section_count_hint} for a comprehensive post)
     ]
 }}"""
 
@@ -285,9 +291,15 @@ async def generate_section_content(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    target_word_count: int = None,
 ) -> tuple[str, int]:
     """Generate content for a single section."""
     system_prompt = "You are an expert blog content writer. Write engaging, detailed, SEO-optimized content."
+    word_count_hint = (
+        f"Write approximately {target_word_count} words"
+        if target_word_count
+        else "Write 400-800 words"
+    )
     prompt = f"""Write the content for a blog post section.
 
 Blog post topic: {topic}
@@ -296,7 +308,7 @@ Section title: {section_title}
 Key points to cover: {json.dumps(key_points)}
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
-Write 400-800 words of detailed, engaging content for this section.
+{word_count_hint} of detailed, engaging content for this section.
 Use subheadings (H3) where appropriate.
 Include relevant examples and practical advice.
 Do NOT include the section title itself — just the body content.
@@ -343,6 +355,7 @@ async def generate_full_content(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    target_word_count: int = None,
 ) -> tuple[str, list, int]:
     """Generate the full post content from an outline. Returns (full_html, sections_list, total_tokens)."""
     total_tokens = 0
@@ -357,6 +370,11 @@ async def generate_full_content(
     full_html = intro_html
 
     outline_sections = outline.get("sections", [])
+    # Calculate target words per section if target_word_count is provided
+    words_per_section = None
+    if target_word_count and len(outline_sections) > 0:
+        words_per_section = target_word_count // len(outline_sections)
+
     for sec in outline_sections:
         sec_title = sec.get("title", "")
         key_points = sec.get("key_points", [])
@@ -368,6 +386,7 @@ async def generate_full_content(
             additional_requests,
             provider_id,
             model_name,
+            words_per_section,
         )
         total_tokens += sec_tokens
         sections.append(

@@ -15,6 +15,15 @@ class PostCreate(BaseModel):
     additional_requests: Optional[str] = ""
     ai_provider_id: Optional[str] = None
     model_name: Optional[str] = None
+    auto_publish: bool = False
+    thumbnail_source: str = "ai"
+    thumbnail_provider_id: Optional[str] = None
+    thumbnail_model_name: Optional[str] = None
+    section_images_source: str = "ai"
+    section_images_provider_id: Optional[str] = None
+    section_images_model_name: Optional[str] = None
+    target_word_count: Optional[int] = None
+    target_section_count: Optional[int] = None
 
 
 class BulkPostCreate(BaseModel):
@@ -23,6 +32,15 @@ class BulkPostCreate(BaseModel):
     additional_requests: Optional[str] = ""
     ai_provider_id: Optional[str] = None
     model_name: Optional[str] = None
+    auto_publish: bool = False
+    thumbnail_source: str = "ai"
+    thumbnail_provider_id: Optional[str] = None
+    thumbnail_model_name: Optional[str] = None
+    section_images_source: str = "ai"
+    section_images_provider_id: Optional[str] = None
+    section_images_model_name: Optional[str] = None
+    target_word_count: Optional[int] = None
+    target_section_count: Optional[int] = None
 
 
 class PostUpdate(BaseModel):
@@ -58,6 +76,15 @@ class PostResponse(BaseModel):
     additional_requests: str
     ai_provider_id: Optional[str] = None
     model_name: Optional[str] = None
+    auto_publish: bool = False
+    thumbnail_source: str = "ai"
+    thumbnail_provider_id: Optional[str] = None
+    thumbnail_model_name: Optional[str] = None
+    section_images_source: str = "ai"
+    section_images_provider_id: Optional[str] = None
+    section_images_model_name: Optional[str] = None
+    target_word_count: Optional[int] = None
+    target_section_count: Optional[int] = None
     title: Optional[str] = None
     meta_description: Optional[str] = None
     outline: Optional[Dict[str, Any]] = None

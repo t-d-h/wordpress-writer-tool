@@ -1,11 +1,19 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Body
 from bson import ObjectId
 from datetime import datetime, timezone
 import uuid
 import os
+from pydantic import BaseModel
+from typing import List
 from app.database import posts_col, projects_col, jobs_col
 from app.models.post import PostCreate, BulkPostCreate, PostUpdate, PostResponse
 from app.redis_client import publish_job
+
+
+class ThumbnailRequest(BaseModel):
+    provider_id: str = None
+    model_name: str = None
+
 
 router = APIRouter(prefix="/api/posts", tags=["Posts"])
 
@@ -18,6 +26,15 @@ def format_post(doc: dict) -> dict:
         additional_requests=doc.get("additional_requests", ""),
         ai_provider_id=doc.get("ai_provider_id"),
         model_name=doc.get("model_name"),
+        auto_publish=doc.get("auto_publish", False),
+        thumbnail_source=doc.get("thumbnail_source", "ai"),
+        thumbnail_provider_id=doc.get("thumbnail_provider_id"),
+        thumbnail_model_name=doc.get("thumbnail_model_name"),
+        section_images_source=doc.get("section_images_source", "ai"),
+        section_images_provider_id=doc.get("section_images_provider_id"),
+        section_images_model_name=doc.get("section_images_model_name"),
+        target_word_count=doc.get("target_word_count"),
+        target_section_count=doc.get("target_section_count"),
         title=doc.get("title"),
         meta_description=doc.get("meta_description"),
         outline=doc.get("outline"),
@@ -69,6 +86,15 @@ async def create_post(data: PostCreate):
         "additional_requests": data.additional_requests or "",
         "ai_provider_id": data.ai_provider_id,
         "model_name": data.model_name,
+        "auto_publish": data.auto_publish,
+        "thumbnail_source": data.thumbnail_source,
+        "thumbnail_provider_id": data.thumbnail_provider_id,
+        "thumbnail_model_name": data.thumbnail_model_name,
+        "section_images_source": data.section_images_source,
+        "section_images_provider_id": data.section_images_provider_id,
+        "section_images_model_name": data.section_images_model_name,
+        "target_word_count": data.target_word_count,
+        "target_section_count": data.target_section_count,
         "title": None,
         "meta_description": None,
         "outline": None,
@@ -134,6 +160,8 @@ async def create_post(data: PostCreate):
             "additional_requests": data.additional_requests or "",
             "ai_provider_id": data.ai_provider_id,
             "model_name": data.model_name,
+            "target_section_count": data.target_section_count,
+            "target_word_count": data.target_word_count,
         }
     )
 
@@ -156,6 +184,15 @@ async def create_bulk_posts(data: BulkPostCreate):
             additional_requests=data.additional_requests,
             ai_provider_id=data.ai_provider_id,
             model_name=data.model_name,
+            auto_publish=data.auto_publish,
+            thumbnail_source=data.thumbnail_source,
+            thumbnail_provider_id=data.thumbnail_provider_id,
+            thumbnail_model_name=data.thumbnail_model_name,
+            section_images_source=data.section_images_source,
+            section_images_provider_id=data.section_images_provider_id,
+            section_images_model_name=data.section_images_model_name,
+            target_word_count=data.target_word_count,
+            target_section_count=data.target_section_count,
         )
         # Reuse single post creation logic
         post = await create_post(single)
@@ -329,13 +366,14 @@ async def generate_content(post_id: str):
 
 
 @router.post("/{post_id}/generate-thumbnail")
-async def generate_thumbnail(
-    post_id: str, provider_id: str = None, model_name: str = None
-):
+async def generate_thumbnail(post_id: str, request: ThumbnailRequest = None):
     """Queue thumbnail generation job with optional provider/model."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Post not found")
+
+    provider_id = request.provider_id if request else None
+    model_name = request.model_name if request else None
 
     job_id = str(uuid.uuid4())
     job_info = {
@@ -402,6 +440,46 @@ async def upload_thumbnail(post_id: str, file: UploadFile = File(...)):
     )
 
     return {"message": "Thumbnail uploaded", "thumbnail_url": filepath}
+
+
+@router.post("/{post_id}/upload-section-images")
+async def upload_section_images(post_id: str, files: List[UploadFile] = File(...)):
+    """Upload multiple section images for a post."""
+    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    uploaded_files = []
+    for file in files:
+        if not file.content_type or not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Only image files are allowed")
+
+        ext = file.filename.split(".")[-1] if file.filename else "jpg"
+        filename = f"{uuid.uuid4()}.{ext}"
+        filepath = f"/tmp/wp_images/{filename}"
+
+        os.makedirs("/tmp/wp_images", exist_ok=True)
+        with open(filepath, "wb") as f:
+            content = await file.read()
+            f.write(content)
+
+        uploaded_files.append(filepath)
+
+    # Store uploaded file paths in the post document
+    # They will be assigned to sections after outline generation
+    await posts_col.update_one(
+        {"_id": ObjectId(post_id)},
+        {
+            "$set": {
+                "uploaded_section_images": uploaded_files,
+            }
+        },
+    )
+
+    return {
+        "message": f"Uploaded {len(uploaded_files)} section images",
+        "files": uploaded_files,
+    }
 
 
 @router.post("/{post_id}/generate-section-images")

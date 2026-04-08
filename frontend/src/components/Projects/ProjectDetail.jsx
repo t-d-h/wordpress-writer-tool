@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages, getProviders } from '../../api/client'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages, getProviders, fetchProviderModels } from '../../api/client'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -13,9 +14,50 @@ export default function ProjectDetail() {
   const [activeTab, setActiveTab] = useState('content')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createMode, setCreateMode] = useState('single')
-  const [singleForm, setSingleForm] = useState({ topic: '', additional_requests: '', ai_provider_id: '', model_name: '' })
-  const [bulkForm, setBulkForm] = useState({ topics: '', additional_requests: '', ai_provider_id: '', model_name: '' })
+  const [singleForm, setSingleForm] = useState({
+    topic: '',
+    additional_requests: '',
+    ai_provider_id: '',
+    model_name: '',
+    auto_publish: false,
+    thumbnail_source: 'ai',
+    thumbnail_provider_id: '',
+    thumbnail_model_name: '',
+    section_images_source: 'ai',
+    section_images_provider_id: '',
+    section_images_model_name: '',
+    target_word_count: 500,
+    target_section_count: 4,
+    thumbnail_file: null,
+    section_image_files: []
+  })
+  const [bulkForm, setBulkForm] = useState({
+    topics: '',
+    additional_requests: '',
+    ai_provider_id: '',
+    model_name: '',
+    auto_publish: false,
+    thumbnail_source: 'ai',
+    thumbnail_provider_id: '',
+    thumbnail_model_name: '',
+    section_images_source: 'ai',
+    section_images_provider_id: '',
+    section_images_model_name: '',
+    target_word_count: 500,
+    target_section_count: 4,
+    thumbnail_file: null,
+    section_image_files: []
+  })
   const [providers, setProviders] = useState([])
+  const [contentModels, setContentModels] = useState([])
+  const [loadingContentModels, setLoadingContentModels] = useState(false)
+  const [contentModelError, setContentModelError] = useState(null)
+  const [thumbnailModels, setThumbnailModels] = useState([])
+  const [loadingThumbnailModels, setLoadingThumbnailModels] = useState(false)
+  const [thumbnailModelError, setThumbnailModelError] = useState(null)
+  const [sectionImagesModels, setSectionImagesModels] = useState([])
+  const [loadingSectionImagesModels, setLoadingSectionImagesModels] = useState(false)
+  const [sectionImagesModelError, setSectionImagesModelError] = useState(null)
 
   useEffect(() => { load() }, [id])
 
@@ -40,10 +82,67 @@ export default function ProjectDetail() {
 
   const handleCreateSingle = async (e) => {
     e.preventDefault()
+
+    if (singleForm.thumbnail_source === 'ai' && singleForm.thumbnail_provider_id) {
+      const provider = providers.find(p => p.id === singleForm.thumbnail_provider_id)
+      if (provider && provider.provider_type === 'openai_compatible' && !singleForm.thumbnail_model_name) {
+        alert('Please select a model for thumbnail generation')
+        return
+      }
+    }
+
+    if (singleForm.section_images_source === 'ai' && singleForm.section_images_provider_id) {
+      const provider = providers.find(p => p.id === singleForm.section_images_provider_id)
+      if (provider && provider.provider_type === 'openai_compatible' && !singleForm.section_images_model_name) {
+        alert('Please select a model for section image generation')
+        return
+      }
+    }
+
+    if (singleForm.ai_provider_id) {
+      const provider = providers.find(p => p.id === singleForm.ai_provider_id)
+      if (provider && provider.provider_type === 'openai_compatible' && !singleForm.model_name) {
+        alert('Please select a model for content generation')
+        return
+      }
+    }
+
     try {
-      await createPost({ project_id: id, ...singleForm })
+      const formData = new FormData()
+      formData.append('project_id', id)
+      formData.append('topic', singleForm.topic)
+      formData.append('additional_requests', singleForm.additional_requests)
+      if (singleForm.ai_provider_id) formData.append('ai_provider_id', singleForm.ai_provider_id)
+      if (singleForm.model_name) formData.append('model_name', singleForm.model_name)
+      formData.append('auto_publish', singleForm.auto_publish)
+      formData.append('thumbnail_source', singleForm.thumbnail_source)
+      if (singleForm.thumbnail_provider_id) formData.append('thumbnail_provider_id', singleForm.thumbnail_provider_id)
+      if (singleForm.thumbnail_model_name) formData.append('thumbnail_model_name', singleForm.thumbnail_model_name)
+      formData.append('section_images_source', singleForm.section_images_source)
+      if (singleForm.section_images_provider_id) formData.append('section_images_provider_id', singleForm.section_images_provider_id)
+      if (singleForm.section_images_model_name) formData.append('section_images_model_name', singleForm.section_images_model_name)
+      if (singleForm.target_word_count) formData.append('target_word_count', singleForm.target_word_count)
+      if (singleForm.target_section_count) formData.append('target_section_count', singleForm.target_section_count)
+
+      await createPost(Object.fromEntries(formData))
       setShowCreateModal(false)
-      setSingleForm({ topic: '', additional_requests: '', ai_provider_id: '', model_name: '' })
+      setSingleForm({
+        topic: '',
+        additional_requests: '',
+        ai_provider_id: '',
+        model_name: '',
+        auto_publish: false,
+        thumbnail_source: 'ai',
+        thumbnail_provider_id: '',
+        thumbnail_model_name: '',
+        section_images_source: 'ai',
+        section_images_provider_id: '',
+        section_images_model_name: '',
+        target_word_count: 500,
+        target_section_count: 4,
+        thumbnail_file: null,
+        section_image_files: []
+      })
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
@@ -54,10 +153,66 @@ export default function ProjectDetail() {
     e.preventDefault()
     const topics = bulkForm.topics.split('\n').map(t => t.trim()).filter(Boolean)
     if (topics.length === 0) { alert('Enter at least one topic'); return }
+
+    if (bulkForm.thumbnail_source === 'ai' && bulkForm.thumbnail_provider_id) {
+      const provider = providers.find(p => p.id === bulkForm.thumbnail_provider_id)
+      if (provider && provider.provider_type === 'openai_compatible' && !bulkForm.thumbnail_model_name) {
+        alert('Please select a model for thumbnail generation')
+        return
+      }
+    }
+
+    if (bulkForm.section_images_source === 'ai' && bulkForm.section_images_provider_id) {
+      const provider = providers.find(p => p.id === bulkForm.section_images_provider_id)
+      if (provider && provider.provider_type === 'openai_compatible' && !bulkForm.section_images_model_name) {
+        alert('Please select a model for section image generation')
+        return
+      }
+    }
+
+    if (bulkForm.ai_provider_id) {
+      const provider = providers.find(p => p.id === bulkForm.ai_provider_id)
+      if (provider && provider.provider_type === 'openai_compatible' && !bulkForm.model_name) {
+        alert('Please select a model for content generation')
+        return
+      }
+    }
+
     try {
-      await createBulkPosts({ project_id: id, topics, additional_requests: bulkForm.additional_requests, ai_provider_id: bulkForm.ai_provider_id, model_name: bulkForm.model_name })
+      await createBulkPosts({
+        project_id: id,
+        topics,
+        additional_requests: bulkForm.additional_requests,
+        ai_provider_id: bulkForm.ai_provider_id,
+        model_name: bulkForm.model_name,
+        auto_publish: bulkForm.auto_publish,
+        thumbnail_source: bulkForm.thumbnail_source,
+        thumbnail_provider_id: bulkForm.thumbnail_provider_id,
+        thumbnail_model_name: bulkForm.thumbnail_model_name,
+        section_images_source: bulkForm.section_images_source,
+        section_images_provider_id: bulkForm.section_images_provider_id,
+        section_images_model_name: bulkForm.section_images_model_name,
+        target_word_count: bulkForm.target_word_count,
+        target_section_count: bulkForm.target_section_count,
+      })
       setShowCreateModal(false)
-      setBulkForm({ topics: '', additional_requests: '', ai_provider_id: '', model_name: '' })
+      setBulkForm({
+        topics: '',
+        additional_requests: '',
+        ai_provider_id: '',
+        model_name: '',
+        auto_publish: false,
+        thumbnail_source: 'ai',
+        thumbnail_provider_id: '',
+        thumbnail_model_name: '',
+        section_images_source: 'ai',
+        section_images_provider_id: '',
+        section_images_model_name: '',
+        target_word_count: 500,
+        target_section_count: 4,
+        thumbnail_file: null,
+        section_image_files: []
+      })
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
@@ -87,6 +242,76 @@ export default function ProjectDetail() {
       setSingleForm({ ...singleForm, ai_provider_id: providerId, model_name: '' })
     } else {
       setBulkForm({ ...bulkForm, ai_provider_id: providerId, model_name: '' })
+    }
+  }
+
+  const fetchModelsForProvider = async (providerId, section) => {
+    const provider = providers.find(p => p.id === providerId)
+    if (!provider || provider.provider_type !== 'openai_compatible') {
+      if (section === 'content') {
+        setContentModels([])
+        setContentModelError(null)
+      } else if (section === 'thumbnail') {
+        setThumbnailModels([])
+        setThumbnailModelError(null)
+      } else if (section === 'section_images') {
+        setSectionImagesModels([])
+        setSectionImagesModelError(null)
+      }
+      return
+    }
+
+    if (section === 'content') {
+      setLoadingContentModels(true)
+      setContentModelError(null)
+    } else if (section === 'thumbnail') {
+      setLoadingThumbnailModels(true)
+      setThumbnailModelError(null)
+    } else if (section === 'section_images') {
+      setLoadingSectionImagesModels(true)
+      setSectionImagesModelError(null)
+    }
+
+    try {
+      const response = await fetchProviderModels({ provider_id: providerId })
+      const models = response.data.models || []
+      if (section === 'content') {
+        setContentModels(models)
+        if (models.length === 0) {
+          setContentModelError('No models available for this provider')
+        }
+      } else if (section === 'thumbnail') {
+        setThumbnailModels(models)
+        if (models.length === 0) {
+          setThumbnailModelError('No models available for this provider')
+        }
+      } else if (section === 'section_images') {
+        setSectionImagesModels(models)
+        if (models.length === 0) {
+          setSectionImagesModelError('No models available for this provider')
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch models:', e)
+      const errorMsg = 'Failed to fetch models. Please check your provider configuration.'
+      if (section === 'content') {
+        setContentModels([])
+        setContentModelError(errorMsg)
+      } else if (section === 'thumbnail') {
+        setThumbnailModels([])
+        setThumbnailModelError(errorMsg)
+      } else if (section === 'section_images') {
+        setSectionImagesModels([])
+        setSectionImagesModelError(errorMsg)
+      }
+    } finally {
+      if (section === 'content') {
+        setLoadingContentModels(false)
+      } else if (section === 'thumbnail') {
+        setLoadingThumbnailModels(false)
+      } else if (section === 'section_images') {
+        setLoadingSectionImagesModels(false)
+      }
     }
   }
 
@@ -228,27 +453,294 @@ export default function ProjectDetail() {
 
             {createMode === 'single' ? (
               <form onSubmit={handleCreateSingle}>
-                <div className="form-group">
-                  <label className="form-label">AI Provider</label>
-                  <select className="form-select" value={singleForm.ai_provider_id} onChange={e => handleProviderChange(e.target.value, 'single')}>
-                    <option value="">-- Use default provider --</option>
-                    {providers.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                    ))}
-                  </select>
+                {/* Publishing Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Publishing Options</h3>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={singleForm.auto_publish}
+                        onChange={e => setSingleForm({ ...singleForm, auto_publish: e.target.checked })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Auto-publish after content generation</span>
+                    </label>
+                    <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>If unchecked, post will be saved as draft</small>
+                  </div>
                 </div>
-                {singleForm.ai_provider_id && (() => {
-                  const provider = providers.find(p => p.id === singleForm.ai_provider_id)
-                  if (provider && provider.provider_type === 'openai_compatible') {
-                    return (
-                      <div className="form-group">
-                        <label className="form-label">Model Name</label>
-                        <input className="form-input" placeholder="e.g. llama-3.3-70b-versatile" value={singleForm.model_name} onChange={e => setSingleForm({ ...singleForm, model_name: e.target.value })} />
+
+                {/* Thumbnail Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Thumbnail Options</h3>
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="thumbnail_source"
+                        value="ai"
+                        checked={singleForm.thumbnail_source === 'ai'}
+                        onChange={e => setSingleForm({ ...singleForm, thumbnail_source: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Generate with AI</span>
+                    </label>
+                    {singleForm.thumbnail_source === 'ai' && (
+                      <div style={{ marginLeft: 24, marginTop: 8 }}>
+                        <div className="form-group" style={{ marginBottom: 8 }}>
+                          <label className="form-label">AI Provider</label>
+                          <select
+                            className="form-select"
+                            value={singleForm.thumbnail_provider_id}
+                            onChange={e => {
+                              setSingleForm({ ...singleForm, thumbnail_provider_id: e.target.value, thumbnail_model_name: '' })
+                              fetchModelsForProvider(e.target.value, 'thumbnail')
+                            }}
+                          >
+                            <option value="">-- Select provider --</option>
+                            {providers.filter(p => ['gemini', 'openai', 'openai_compatible'].includes(p.provider_type)).map(p => (
+                              <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
+                            ))}
+                          </select>
+                        </div>
+                        {singleForm.thumbnail_provider_id && (() => {
+                          const provider = providers.find(p => p.id === singleForm.thumbnail_provider_id)
+                          if (provider && provider.provider_type === 'openai_compatible') {
+                            return (
+                              <div className="form-group">
+                                <label className="form-label">Model Name</label>
+                                {loadingThumbnailModels ? (
+                                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
+                                ) : thumbnailModels.length > 0 ? (
+                                  <select
+                                    className="form-select"
+                                    value={singleForm.thumbnail_model_name}
+                                    onChange={e => setSingleForm({ ...singleForm, thumbnail_model_name: e.target.value })}
+                                  >
+                                    <option value="">-- Select model --</option>
+                                    {thumbnailModels.map(m => (
+                                      <option key={m.id} value={m.id}>{m.id}</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <div style={{ color: 'var(--error)', fontSize: 14 }}>
+                                    {thumbnailModelError || 'No models available for this provider'}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }
+                          return null
+                        })()}
                       </div>
-                    )
-                  }
-                  return null
-                })()}
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="thumbnail_source"
+                        value="upload"
+                        checked={singleForm.thumbnail_source === 'upload'}
+                        onChange={e => setSingleForm({ ...singleForm, thumbnail_source: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Upload Image</span>
+                    </label>
+                    {singleForm.thumbnail_source === 'upload' && (
+                      <div style={{ marginLeft: 24, marginTop: 8 }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={e => setSingleForm({ ...singleForm, thumbnail_file: e.target.files[0] })}
+                          style={{ fontSize: 14 }}
+                        />
+                        {singleForm.thumbnail_file && (
+                          <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>
+                            Selected: {singleForm.thumbnail_file.name}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Section Images Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Section Images Options</h3>
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="section_images_source"
+                        value="ai"
+                        checked={singleForm.section_images_source === 'ai'}
+                        onChange={e => setSingleForm({ ...singleForm, section_images_source: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Generate with AI</span>
+                    </label>
+                    {singleForm.section_images_source === 'ai' && (
+                      <div style={{ marginLeft: 24, marginTop: 8 }}>
+                        <div className="form-group" style={{ marginBottom: 8 }}>
+                          <label className="form-label">AI Provider</label>
+                          <select
+                            className="form-select"
+                            value={singleForm.section_images_provider_id}
+                            onChange={e => {
+                              setSingleForm({ ...singleForm, section_images_provider_id: e.target.value, section_images_model_name: '' })
+                              fetchModelsForProvider(e.target.value, 'section_images')
+                            }}
+                          >
+                            <option value="">-- Select provider --</option>
+                            {providers.filter(p => ['gemini', 'openai', 'openai_compatible'].includes(p.provider_type)).map(p => (
+                              <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
+                            ))}
+                          </select>
+                        </div>
+                        {singleForm.section_images_provider_id && (() => {
+                          const provider = providers.find(p => p.id === singleForm.section_images_provider_id)
+                          if (provider && provider.provider_type === 'openai_compatible') {
+                            return (
+                              <div className="form-group">
+                                <label className="form-label">Model Name</label>
+                                {loadingSectionImagesModels ? (
+                                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
+                                ) : sectionImagesModels.length > 0 ? (
+                                  <select
+                                    className="form-select"
+                                    value={singleForm.section_images_model_name}
+                                    onChange={e => setSingleForm({ ...singleForm, section_images_model_name: e.target.value })}
+                                  >
+                                    <option value="">-- Select model --</option>
+                                    {sectionImagesModels.map(m => (
+                                      <option key={m.id} value={m.id}>{m.id}</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <div style={{ color: 'var(--error)', fontSize: 14 }}>
+                                    {sectionImagesModelError || 'No models available for this provider'}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }
+                          return null
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="section_images_source"
+                        value="upload"
+                        checked={singleForm.section_images_source === 'upload'}
+                        onChange={e => setSingleForm({ ...singleForm, section_images_source: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Upload Images</span>
+                    </label>
+                    {singleForm.section_images_source === 'upload' && (
+                      <div style={{ marginLeft: 24, marginTop: 8 }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={e => setSingleForm({ ...singleForm, section_image_files: Array.from(e.target.files) })}
+                          style={{ fontSize: 14 }}
+                        />
+                        {singleForm.section_image_files.length > 0 && (
+                          <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>
+                            Selected {singleForm.section_image_files.length} image{singleForm.section_image_files.length !== 1 ? 's' : ''}
+                          </div>
+                        )}
+                        <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>Images will be assigned to sections in order after outline is generated</small>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Content Length Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Content Length Options</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div className="form-group">
+                      <label className="form-label">Target Word Count</label>
+                      <input
+                        className="form-input"
+                        type="number"
+                        value={singleForm.target_word_count}
+                        onChange={e => setSingleForm({ ...singleForm, target_word_count: parseInt(e.target.value) || 500 })}
+                        min={100}
+                        step={100}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Target Section Count</label>
+                      <input
+                        className="form-input"
+                        type="number"
+                        value={singleForm.target_section_count}
+                        onChange={e => setSingleForm({ ...singleForm, target_section_count: parseInt(e.target.value) || 4 })}
+                        min={2}
+                        max={20}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Provider for Content */}
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>AI Provider for Content</h3>
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label className="form-label">AI Provider</label>
+                    <select
+                      className="form-select"
+                      value={singleForm.ai_provider_id}
+                      onChange={e => {
+                        handleProviderChange(e.target.value, 'single')
+                        fetchModelsForProvider(e.target.value, 'content')
+                      }}
+                    >
+                      <option value="">-- Use default provider --</option>
+                      {providers.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
+                      ))}
+                    </select>
+                  </div>
+                  {singleForm.ai_provider_id && (() => {
+                    const provider = providers.find(p => p.id === singleForm.ai_provider_id)
+                    if (provider && provider.provider_type === 'openai_compatible') {
+                      return (
+                        <div className="form-group">
+                          <label className="form-label">Model Name</label>
+                          {loadingContentModels ? (
+                            <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
+                          ) : contentModels.length > 0 ? (
+                            <select
+                              className="form-select"
+                              value={singleForm.model_name}
+                              onChange={e => setSingleForm({ ...singleForm, model_name: e.target.value })}
+                            >
+                              <option value="">-- Select model --</option>
+                              {contentModels.map(m => (
+                                <option key={m.id} value={m.id}>{m.id}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <div style={{ color: 'var(--error)', fontSize: 14 }}>
+                              {contentModelError || 'No models available for this provider'}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
+                </div>
+
                 <div className="form-group">
                   <label className="form-label">Topic</label>
                   <input className="form-input" placeholder="e.g. How to Improve Your Website SEO" value={singleForm.topic} onChange={e => setSingleForm({ ...singleForm, topic: e.target.value })} required />
@@ -264,27 +756,295 @@ export default function ProjectDetail() {
               </form>
             ) : (
               <form onSubmit={handleCreateBulk}>
-                <div className="form-group">
-                  <label className="form-label">AI Provider</label>
-                  <select className="form-select" value={bulkForm.ai_provider_id} onChange={e => handleProviderChange(e.target.value, 'bulk')}>
-                    <option value="">-- Use default provider --</option>
-                    {providers.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                    ))}
-                  </select>
+                {/* Publishing Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Publishing Options</h3>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={bulkForm.auto_publish}
+                        onChange={e => setBulkForm({ ...bulkForm, auto_publish: e.target.checked })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Auto-publish after content generation</span>
+                    </label>
+                    <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>If unchecked, posts will be saved as draft</small>
+                  </div>
                 </div>
-                {bulkForm.ai_provider_id && (() => {
-                  const provider = providers.find(p => p.id === bulkForm.ai_provider_id)
-                  if (provider && provider.provider_type === 'openai_compatible') {
-                    return (
-                      <div className="form-group">
-                        <label className="form-label">Model Name</label>
-                        <input className="form-input" placeholder="e.g. llama-3.3-70b-versatile" value={bulkForm.model_name} onChange={e => setBulkForm({ ...bulkForm, model_name: e.target.value })} />
+
+                {/* Thumbnail Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Thumbnail Options</h3>
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="thumbnail_source"
+                        value="ai"
+                        checked={bulkForm.thumbnail_source === 'ai'}
+                        onChange={e => setBulkForm({ ...bulkForm, thumbnail_source: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Generate with AI</span>
+                    </label>
+                    {bulkForm.thumbnail_source === 'ai' && (
+                      <div style={{ marginLeft: 24, marginTop: 8 }}>
+                        <div className="form-group" style={{ marginBottom: 8 }}>
+                          <label className="form-label">AI Provider</label>
+                          <select
+                            className="form-select"
+                            value={bulkForm.thumbnail_provider_id}
+                            onChange={e => {
+                              setBulkForm({ ...bulkForm, thumbnail_provider_id: e.target.value, thumbnail_model_name: '' })
+                              fetchModelsForProvider(e.target.value, 'thumbnail')
+                            }}
+                          >
+                            <option value="">-- Select provider --</option>
+                            {providers.filter(p => ['gemini', 'openai', 'openai_compatible'].includes(p.provider_type)).map(p => (
+                              <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
+                            ))}
+                          </select>
+                        </div>
+                        {bulkForm.thumbnail_provider_id && (() => {
+                          const provider = providers.find(p => p.id === bulkForm.thumbnail_provider_id)
+                          if (provider && provider.provider_type === 'openai_compatible') {
+                            return (
+                              <div className="form-group">
+                                <label className="form-label">Model Name</label>
+                                {loadingThumbnailModels ? (
+                                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
+                                ) : thumbnailModels.length > 0 ? (
+                                  <select
+                                    className="form-select"
+                                    value={bulkForm.thumbnail_model_name}
+                                    onChange={e => setBulkForm({ ...bulkForm, thumbnail_model_name: e.target.value })}
+                                  >
+                                    <option value="">-- Select model --</option>
+                                    {thumbnailModels.map(m => (
+                                      <option key={m.id} value={m.id}>{m.id}</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <div style={{ color: 'var(--error)', fontSize: 14 }}>
+                                    {thumbnailModelError || 'No models available for this provider'}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }
+                          return null
+                        })()}
                       </div>
-                    )
-                  }
-                  return null
-                })()}
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="thumbnail_source"
+                        value="upload"
+                        checked={bulkForm.thumbnail_source === 'upload'}
+                        onChange={e => setBulkForm({ ...bulkForm, thumbnail_source: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Upload Image</span>
+                    </label>
+                    {bulkForm.thumbnail_source === 'upload' && (
+                      <div style={{ marginLeft: 24, marginTop: 8 }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={e => setBulkForm({ ...bulkForm, thumbnail_file: e.target.files[0] })}
+                          style={{ fontSize: 14 }}
+                        />
+                        {bulkForm.thumbnail_file && (
+                          <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>
+                            Selected: {bulkForm.thumbnail_file.name}
+                          </div>
+                        )}
+                        <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>Same image will be used for all posts</small>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Section Images Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Section Images Options</h3>
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="section_images_source"
+                        value="ai"
+                        checked={bulkForm.section_images_source === 'ai'}
+                        onChange={e => setBulkForm({ ...bulkForm, section_images_source: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Generate with AI</span>
+                    </label>
+                    {bulkForm.section_images_source === 'ai' && (
+                      <div style={{ marginLeft: 24, marginTop: 8 }}>
+                        <div className="form-group" style={{ marginBottom: 8 }}>
+                          <label className="form-label">AI Provider</label>
+                          <select
+                            className="form-select"
+                            value={bulkForm.section_images_provider_id}
+                            onChange={e => {
+                              setBulkForm({ ...bulkForm, section_images_provider_id: e.target.value, section_images_model_name: '' })
+                              fetchModelsForProvider(e.target.value, 'section_images')
+                            }}
+                          >
+                            <option value="">-- Select provider --</option>
+                            {providers.filter(p => ['gemini', 'openai', 'openai_compatible'].includes(p.provider_type)).map(p => (
+                              <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
+                            ))}
+                          </select>
+                        </div>
+                        {bulkForm.section_images_provider_id && (() => {
+                          const provider = providers.find(p => p.id === bulkForm.section_images_provider_id)
+                          if (provider && provider.provider_type === 'openai_compatible') {
+                            return (
+                              <div className="form-group">
+                                <label className="form-label">Model Name</label>
+                                {loadingSectionImagesModels ? (
+                                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
+                                ) : sectionImagesModels.length > 0 ? (
+                                  <select
+                                    className="form-select"
+                                    value={bulkForm.section_images_model_name}
+                                    onChange={e => setBulkForm({ ...bulkForm, section_images_model_name: e.target.value })}
+                                  >
+                                    <option value="">-- Select model --</option>
+                                    {sectionImagesModels.map(m => (
+                                      <option key={m.id} value={m.id}>{m.id}</option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <div style={{ color: 'var(--error)', fontSize: 14 }}>
+                                    {sectionImagesModelError || 'No models available for this provider'}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          }
+                          return null
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input
+                        type="radio"
+                        name="section_images_source"
+                        value="upload"
+                        checked={bulkForm.section_images_source === 'upload'}
+                        onChange={e => setBulkForm({ ...bulkForm, section_images_source: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Upload Images</span>
+                    </label>
+                    {bulkForm.section_images_source === 'upload' && (
+                      <div style={{ marginLeft: 24, marginTop: 8 }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={e => setBulkForm({ ...bulkForm, section_image_files: Array.from(e.target.files) })}
+                          style={{ fontSize: 14 }}
+                        />
+                        {bulkForm.section_image_files.length > 0 && (
+                          <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>
+                            Selected {bulkForm.section_image_files.length} image{bulkForm.section_image_files.length !== 1 ? 's' : ''}
+                          </div>
+                        )}
+                        <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>Same images will be used for all posts</small>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Content Length Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Content Length Options</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div className="form-group">
+                      <label className="form-label">Target Word Count</label>
+                      <input
+                        className="form-input"
+                        type="number"
+                        value={bulkForm.target_word_count}
+                        onChange={e => setBulkForm({ ...bulkForm, target_word_count: parseInt(e.target.value) || 500 })}
+                        min={100}
+                        step={100}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Target Section Count</label>
+                      <input
+                        className="form-input"
+                        type="number"
+                        value={bulkForm.target_section_count}
+                        onChange={e => setBulkForm({ ...bulkForm, target_section_count: parseInt(e.target.value) || 4 })}
+                        min={2}
+                        max={20}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Provider for Content */}
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>AI Provider for Content</h3>
+                  <div className="form-group" style={{ marginBottom: 12 }}>
+                    <label className="form-label">AI Provider</label>
+                    <select
+                      className="form-select"
+                      value={bulkForm.ai_provider_id}
+                      onChange={e => {
+                        handleProviderChange(e.target.value, 'bulk')
+                        fetchModelsForProvider(e.target.value, 'content')
+                      }}
+                    >
+                      <option value="">-- Use default provider --</option>
+                      {providers.map(p => (
+                        <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
+                      ))}
+                    </select>
+                  </div>
+                  {bulkForm.ai_provider_id && (() => {
+                    const provider = providers.find(p => p.id === bulkForm.ai_provider_id)
+                    if (provider && provider.provider_type === 'openai_compatible') {
+                      return (
+                        <div className="form-group">
+                          <label className="form-label">Model Name</label>
+                          {loadingContentModels ? (
+                            <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
+                          ) : contentModels.length > 0 ? (
+                            <select
+                              className="form-select"
+                              value={bulkForm.model_name}
+                              onChange={e => setBulkForm({ ...bulkForm, model_name: e.target.value })}
+                            >
+                              <option value="">-- Select model --</option>
+                              {contentModels.map(m => (
+                                <option key={m.id} value={m.id}>{m.id}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <div style={{ color: 'var(--error)', fontSize: 14 }}>
+                              {contentModelError || 'No models available for this provider'}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
+                </div>
+
                 <div className="form-group">
                   <label className="form-label">Topics (one per line)</label>
                   <textarea className="form-textarea" style={{ minHeight: 150 }} placeholder={"Topic 1\nTopic 2\nTopic 3"} value={bulkForm.topics} onChange={e => setBulkForm({ ...bulkForm, topics: e.target.value })} required />
@@ -312,4 +1072,8 @@ function BoolBadge({ value }) {
       {value ? <HiOutlineCheckCircle /> : <HiOutlineXCircle />}
     </span>
   )
+}
+
+BoolBadge.propTypes = {
+  value: PropTypes.bool.isRequired
 }

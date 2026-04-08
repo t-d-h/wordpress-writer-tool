@@ -56,6 +56,14 @@ export const generateThumbnailWithOptions = (id, providerId, modelName) =>
 
 export const generateSectionImages = (id) => api.post(`/posts/${id}/generate-section-images`);
 
+export const uploadSectionImages = (id, files) => {
+  const formData = new FormData();
+  files.forEach(file => formData.append('files', file));
+  return api.post(`/posts/${id}/upload-section-images`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
 // Jobs
 export const getDashboardStats = () => api.get('/jobs/dashboard-stats');
 export const getJob = (id) => api.get(`/jobs/${id}`);
