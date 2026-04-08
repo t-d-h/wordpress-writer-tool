@@ -1,19 +1,23 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from datetime import datetime, timezone
+from typing import Optional
 from app.database import projects_col, wp_sites_col, posts_col
 from app.models.project import ProjectCreate, ProjectUpdate, ProjectResponse
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
 
-def format_project(doc: dict, wp_site_name: str = None) -> dict:
+def format_project(
+    doc: dict, wp_site_name: Optional[str] = None, wp_site_url: Optional[str] = None
+) -> dict:
     return ProjectResponse(
         id=str(doc["_id"]),
         title=doc["title"],
         description=doc.get("description", ""),
         wp_site_id=doc["wp_site_id"],
         wp_site_name=wp_site_name,
+        wp_site_url=wp_site_url,
         created_at=doc["created_at"],
     ).model_dump()
 
@@ -24,7 +28,8 @@ async def list_projects():
     async for doc in projects_col.find().sort("created_at", -1):
         wp_site = await wp_sites_col.find_one({"_id": ObjectId(doc["wp_site_id"])})
         wp_name = wp_site["name"] if wp_site else "Unknown"
-        projects.append(format_project(doc, wp_name))
+        wp_url = wp_site["url"] if wp_site else None
+        projects.append(format_project(doc, wp_name, wp_url))
     return projects
 
 
@@ -35,7 +40,8 @@ async def get_project(project_id: str):
         raise HTTPException(status_code=404, detail="Project not found")
     wp_site = await wp_sites_col.find_one({"_id": ObjectId(doc["wp_site_id"])})
     wp_name = wp_site["name"] if wp_site else "Unknown"
-    return format_project(doc, wp_name)
+    wp_url = wp_site["url"] if wp_site else None
+    return format_project(doc, wp_name, wp_url)
 
 
 @router.get("/{project_id}/stats")
@@ -68,7 +74,7 @@ async def create_project(data: ProjectCreate):
     }
     result = await projects_col.insert_one(doc)
     doc["_id"] = result.inserted_id
-    return format_project(doc, wp_site["name"])
+    return format_project(doc, wp_site["name"], wp_site["url"])
 
 
 @router.put("/{project_id}")
@@ -78,7 +84,9 @@ async def update_project(project_id: str, data: ProjectUpdate):
         raise HTTPException(status_code=400, detail="No fields to update")
 
     if "wp_site_id" in update_data:
-        wp_site = await wp_sites_col.find_one({"_id": ObjectId(update_data["wp_site_id"])})
+        wp_site = await wp_sites_col.find_one(
+            {"_id": ObjectId(update_data["wp_site_id"])}
+        )
         if not wp_site:
             raise HTTPException(status_code=400, detail="WordPress site not found")
 
@@ -90,7 +98,8 @@ async def update_project(project_id: str, data: ProjectUpdate):
     doc = await projects_col.find_one({"_id": ObjectId(project_id)})
     wp_site = await wp_sites_col.find_one({"_id": ObjectId(doc["wp_site_id"])})
     wp_name = wp_site["name"] if wp_site else "Unknown"
-    return format_project(doc, wp_name)
+    wp_url = wp_site["url"] if wp_site else None
+    return format_project(doc, wp_name, wp_url)
 
 
 @router.delete("/{project_id}")

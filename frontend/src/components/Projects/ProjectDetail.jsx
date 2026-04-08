@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineEye, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineArrowPath, HiOutlineRocketLaunch, HiOutlineStop } from 'react-icons/hi2'
+import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle } from 'react-icons/hi2'
 import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages, getProviders } from '../../api/client'
 
 export default function ProjectDetail() {
@@ -156,9 +156,13 @@ export default function ProjectDetail() {
                   {posts.map(p => (
                     <tr key={p.id}>
                       <td>
-                        <div style={{ fontWeight: 600, maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <button 
+                          className="link-button" 
+                          onClick={() => navigate(`/posts/${p.id}`)}
+                          style={{ fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, textAlign: 'left', fontSize: 'inherit' }}
+                        >
                           {p.title || p.topic}
-                        </div>
+                        </button>
                       </td>
                       <td><BoolBadge value={p.research_done} /></td>
                       <td><BoolBadge value={p.content_done} /></td>
@@ -167,23 +171,36 @@ export default function ProjectDetail() {
                       <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
                       <td>
                         <div className="action-buttons">
-                          <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)} title="View"><HiOutlineEye /></button>
+                          <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)}>View</button>
                           {p.research_done && !p.title && (
-                            <button className="action-btn" onClick={() => handleAction('outline', p.id)} title="Generate Outline"><HiOutlineArrowPath /></button>
+                            <button className="action-btn" onClick={() => handleAction('outline', p.id)}>Generate</button>
                           )}
                           {p.title && !p.content_done && (
-                            <button className="action-btn" onClick={() => handleAction('content', p.id)} title="Generate Content"><HiOutlineArrowPath /></button>
+                            <button className="action-btn" onClick={() => handleAction('content', p.id)}>Generate</button>
                           )}
                           {p.title && !p.thumbnail_done && (
-                            <button className="action-btn" onClick={() => handleAction('thumbnail', p.id)} title="Generate Thumbnail"><HiOutlineArrowPath /></button>
+                            <button className="action-btn" onClick={() => handleAction('thumbnail', p.id)}>Generate</button>
                           )}
                           {p.content_done && p.status !== 'published' && (
-                            <button className="action-btn" onClick={() => handleAction('publish', p.id)} title="Publish"><HiOutlineRocketLaunch /></button>
+                            <button className="action-btn" onClick={() => handleAction('publish', p.id)}>Publish</button>
                           )}
                           {p.status === 'published' && (
-                            <button className="action-btn" onClick={() => handleAction('unpublish', p.id)} title="Unpublish"><HiOutlineStop /></button>
+                            <>
+                              <button className="action-btn" onClick={() => handleAction('unpublish', p.id)}>Unpublish</button>
+                              {p.wp_post_id && project.wp_site_url && (
+                                <a 
+                                  className="action-btn" 
+                                  href={`${project.wp_site_url}/?p=${p.wp_post_id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ textDecoration: 'none', display: 'inline-block' }}
+                                >
+                                  View on WordPress
+                                </a>
+                              )}
+                            </>
                           )}
-                          <button className="action-btn danger" onClick={() => handleAction('delete', p.id)} title="Delete"><HiOutlineTrash /></button>
+                          <button className="action-btn danger" onClick={() => handleAction('delete', p.id)}>Delete</button>
                         </div>
                       </td>
                     </tr>

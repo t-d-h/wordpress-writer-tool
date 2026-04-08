@@ -9,6 +9,8 @@ export default function ProjectList() {
   const [sites, setSites] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [form, setForm] = useState({ title: '', description: '', wp_site_id: '' })
 
   useEffect(() => { load() }, [])
@@ -42,9 +44,17 @@ export default function ProjectList() {
 
   const handleDelete = async (e, id) => {
     e.stopPropagation()
-    if (!confirm('Delete this project and all its posts?')) return
+    const project = projects.find(p => p.id === id)
+    setDeleteConfirm(project)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return
     try {
-      await deleteProject(id)
+      await deleteProject(deleteConfirm.id)
+      setShowDeleteModal(false)
+      setDeleteConfirm(null)
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
@@ -130,6 +140,25 @@ export default function ProjectList() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && deleteConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Delete Project</h2>
+              <button className="modal-close" onClick={() => setShowDeleteModal(false)}><HiOutlineXMark /></button>
+            </div>
+            <div style={{ padding: '24px 0' }}>
+              <p style={{ marginBottom: '16px' }}>Are you sure you want to delete <strong>{deleteConfirm.title}</strong>?</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>This will permanently delete the project and all its posts. This action cannot be undone.</p>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+              <button type="button" className="btn btn-primary danger" onClick={confirmDelete}>Delete</button>
+            </div>
           </div>
         </div>
       )}

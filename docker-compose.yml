@@ -28,15 +28,15 @@ services:
 
   worker:
     build:
-      context: ./backend
+      context: ./worker
       dockerfile: Dockerfile
     env_file:
       - .env
     network_mode: "host"
     container_name: wp-writer-worker
-    command: python -m app.workers.redis_worker
+    command: python -m app.main
     volumes:
-      - ./backend/app:/app/app
+      - ./worker/app:/app/app
 
   frontend:
     build:

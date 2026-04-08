@@ -2,12 +2,14 @@
 Redis Worker — listens for jobs on Redis pub/sub and dispatches them to task handlers.
 Run as: python -m app.workers.redis_worker
 """
+
 import asyncio
 import json
 import signal
 import sys
 import redis.asyncio as aioredis
 from app.config import settings
+from app.logging_config import setup_logging
 from app.workers.tasks import (
     run_research,
     run_outline,
@@ -16,6 +18,8 @@ from app.workers.tasks import (
     run_section_images,
     run_publish,
 )
+
+logger = setup_logging()
 
 TASK_MAP = {
     "research": run_research,
@@ -35,53 +39,61 @@ async def process_job(job_data: dict):
     handler = TASK_MAP.get(job_type)
 
     if not handler:
-        print(f"[WORKER] Unknown job type: {job_type}")
+        logger.error(f"Unknown job type: {job_type}")
         return
 
-    print(f"[WORKER] Processing {job_type} job: {job_data.get('job_id')}")
+    job_id = job_data.get("job_id")
+    logger.info(f"Received job: {job_type} (ID: {job_id})")
+    logger.info(f"Dispatching to handler: {job_type}")
+    logger.info(f"Job {job_id} started")
     try:
         await handler(job_data)
+        logger.info(f"Job {job_id} completed")
     except Exception as e:
-        print(f"[WORKER] Error processing job {job_data.get('job_id')}: {e}")
+        logger.error(f"Job {job_id} failed: {e}")
+        logger.exception("Full stack trace:")
 
 
 async def main():
     global running
-    print("[WORKER] Starting Redis worker...")
-    print(f"[WORKER] Connecting to Redis at {settings.REDIS_URL}")
+    logger.info("Starting Redis worker...")
+    logger.info(f"Connecting to Redis at {settings.REDIS_URL}")
 
     redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
     pubsub = redis.pubsub()
     await pubsub.subscribe("wp_writer:jobs")
 
-    print("[WORKER] Subscribed to wp_writer:jobs channel. Waiting for jobs...")
+    logger.info("Subscribed to wp_writer:jobs channel. Waiting for jobs...")
 
     while running:
         try:
-            message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+            message = await pubsub.get_message(
+                ignore_subscribe_messages=True, timeout=1.0
+            )
             if message and message["type"] == "message":
                 try:
                     job_data = json.loads(message["data"])
                     # Run job in a separate task so we can process multiple jobs concurrently
                     asyncio.create_task(process_job(job_data))
                 except json.JSONDecodeError:
-                    print(f"[WORKER] Invalid JSON received: {message['data']}")
+                    logger.error(f"Invalid JSON received: {message['data']}")
             else:
                 await asyncio.sleep(0.1)
         except asyncio.CancelledError:
             break
         except Exception as e:
-            print(f"[WORKER] Error: {e}")
+            logger.error(f"Error: {e}")
+            logger.exception("Full stack trace:")
             await asyncio.sleep(1)
 
     await pubsub.unsubscribe("wp_writer:jobs")
     await redis.close()
-    print("[WORKER] Worker stopped.")
+    logger.info("Worker stopped.")
 
 
 def handle_shutdown(signum, frame):
     global running
-    print(f"\n[WORKER] Received signal {signum}, shutting down...")
+    logger.info(f"Received signal {signum}, shutting down...")
     running = False
 
 

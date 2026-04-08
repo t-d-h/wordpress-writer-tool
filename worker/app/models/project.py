@@ -21,5 +21,4 @@ class ProjectResponse(BaseModel):
     description: str
     wp_site_id: str
     wp_site_name: Optional[str] = None
-    wp_site_url: Optional[str] = None
     created_at: datetime

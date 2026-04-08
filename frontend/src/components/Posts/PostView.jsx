@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { HiOutlineArrowLeft, HiOutlineArrowPath, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle } from 'react-icons/hi2'
-import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages, getJobsByPost } from '../../api/client'
+import { getPost, publishPost, unpublishPost, generateThumbnail, generateSectionImages, getJobsByPost } from '../../api/client'
 
 export default function PostView() {
   const { id } = useParams()
@@ -13,7 +13,6 @@ export default function PostView() {
   useEffect(() => { load() }, [id])
 
   useEffect(() => {
-    // Auto-refresh while jobs are running
     const hasRunning = jobs.some(j => j.status === 'pending' || j.status === 'running')
     if (hasRunning) {
       const interval = setInterval(load, 3000)
@@ -38,8 +37,6 @@ export default function PostView() {
       const actions = {
         publish: () => publishPost(id),
         unpublish: () => unpublishPost(id),
-        outline: () => generateOutline(id),
-        content: () => generateContent(id),
         thumbnail: () => generateThumbnail(id),
         section_images: () => generateSectionImages(id),
       }
@@ -77,63 +74,75 @@ export default function PostView() {
 
       <div className="page-header">
         <h1 className="page-title">{post.title || post.topic}</h1>
-        <p className="page-description">
+        <div className="page-header-actions">
           <span className={`status-badge status-${post.status}`}>{post.status.replace('_', ' ')}</span>
-        </p>
+          {post.content_done && post.status !== 'published' && (
+            <button className="btn btn-success btn-sm" onClick={() => handleAction('publish')}><HiOutlineRocketLaunch /> Publish</button>
+          )}
+          {post.status === 'published' && (
+            <button className="btn btn-danger btn-sm" onClick={() => handleAction('unpublish')}><HiOutlineStop /> Unpublish</button>
+          )}
+          {post.title && !post.thumbnail_done && (
+            <button className="btn btn-secondary btn-sm" onClick={() => handleAction('thumbnail')}><HiOutlineArrowPath /> Generate Thumbnail</button>
+          )}
+          {post.content_done && !post.sections_done && (
+            <button className="btn btn-secondary btn-sm" onClick={() => handleAction('section_images')}><HiOutlineArrowPath /> Generate Section Images</button>
+          )}
+        </div>
       </div>
 
-      {/* Pipeline Progress */}
+      <div className="token-usage" style={{ marginBottom: 24 }}>
+        <div className="token-item">
+          <div className="token-label">Research</div>
+          <div className="token-value">{(tu.research || 0).toLocaleString()}</div>
+        </div>
+        <div className="token-item">
+          <div className="token-label">Outline</div>
+          <div className="token-value">{(tu.outline || 0).toLocaleString()}</div>
+        </div>
+        <div className="token-item">
+          <div className="token-label">Content</div>
+          <div className="token-value">{(tu.content || 0).toLocaleString()}</div>
+        </div>
+        <div className="token-item">
+          <div className="token-label">Thumbnail</div>
+          <div className="token-value">{(tu.thumbnail || 0).toLocaleString()}</div>
+        </div>
+        <div className="token-item">
+          <div className="token-label">Section Images</div>
+          <div className="token-value">{(tu.section_images || 0).toLocaleString()}</div>
+        </div>
+        <div className="token-item">
+          <div className="token-label">Total</div>
+          <div className="token-value">{(tu.total || 0).toLocaleString()}</div>
+        </div>
+      </div>
+
       <div className="card" style={{ marginBottom: 24 }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Pipeline Progress</h3>
         <div className="pipeline-steps">
-          {pipelineSteps.map(step => {
+          {pipelineSteps.map((step, index) => {
             const status = getStepStatus(step.key)
             const cls = step.done ? 'done' : status === 'running' ? 'active' : status === 'failed' ? 'error' : ''
+            const isLast = index === pipelineSteps.length - 1
             return (
-              <div key={step.key} className={`pipeline-step ${cls}`}>
-                {step.done ? <HiOutlineCheckCircle /> : status === 'running' ? <span className="loading-spinner" style={{ width: 14, height: 14 }} /> : status === 'failed' ? <HiOutlineXCircle /> : <HiOutlineClock />}
-                {step.label}
+              <div key={step.key} className="pipeline-step-wrapper">
+                <div className={`pipeline-step ${cls}`}>
+                  <div className="pipeline-step-icon">
+                    {step.done ? <HiOutlineCheckCircle /> : status === 'running' ? <span className="loading-spinner" style={{ width: 20, height: 20 }} /> : status === 'failed' ? <HiOutlineXCircle /> : <HiOutlineClock />}
+                  </div>
+                  <div className="pipeline-step-label">{step.label}</div>
+                  <div className="pipeline-step-status">
+                    {status === 'running' ? 'Running...' : status === 'failed' ? 'Failed' : step.done ? 'Completed' : 'Pending'}
+                  </div>
+                </div>
+                {!isLast && <div className="pipeline-connector" />}
               </div>
             )
           })}
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-        {post.research_done && !post.outline && (
-          <button className="btn btn-secondary" onClick={() => handleAction('outline')}><HiOutlineArrowPath /> Generate Outline</button>
-        )}
-        {post.outline && !post.content_done && (
-          <button className="btn btn-secondary" onClick={() => handleAction('content')}><HiOutlineArrowPath /> Generate Content</button>
-        )}
-        {post.title && !post.thumbnail_done && (
-          <button className="btn btn-secondary" onClick={() => handleAction('thumbnail')}><HiOutlineArrowPath /> Generate Thumbnail</button>
-        )}
-        {post.content_done && !post.sections_done && (
-          <button className="btn btn-secondary" onClick={() => handleAction('section_images')}><HiOutlineArrowPath /> Generate Section Images</button>
-        )}
-        {post.content_done && post.status !== 'published' && (
-          <button className="btn btn-success" onClick={() => handleAction('publish')}><HiOutlineRocketLaunch /> Publish</button>
-        )}
-        {post.status === 'published' && (
-          <button className="btn btn-danger" onClick={() => handleAction('unpublish')}><HiOutlineStop /> Unpublish</button>
-        )}
-      </div>
-
-      {/* Token Usage */}
-      {tu.total > 0 && (
-        <div className="token-usage" style={{ marginBottom: 24 }}>
-          {Object.entries(tu).map(([key, val]) => (
-            <div key={key} className="token-item">
-              <div className="token-label">{key}</div>
-              <div className="token-value">{val.toLocaleString()}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Research Data */}
       {post.research_data && (
         <div className="card" style={{ marginBottom: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Research</h3>
@@ -164,7 +173,6 @@ export default function PostView() {
         </div>
       )}
 
-      {/* Outline */}
       {post.outline && (
         <div className="card" style={{ marginBottom: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Outline</h3>
@@ -194,7 +202,6 @@ export default function PostView() {
         </div>
       )}
 
-      {/* Content Preview */}
       {post.content && (
         <div className="card" style={{ marginBottom: 24 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Content Preview</h3>
@@ -202,7 +209,6 @@ export default function PostView() {
         </div>
       )}
 
-      {/* Jobs History */}
       {jobs.length > 0 && (
         <div className="card">
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Job History</h3>

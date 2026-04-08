@@ -10,6 +10,9 @@ from bson import ObjectId
 from app.database import posts_col, jobs_col
 from app.redis_client import set_job_status
 from app.services import ai_service, image_service, wp_service
+from app.logging_config import setup_logging
+
+logger = setup_logging()
 
 
 async def _update_job_status(job_id: str, post_id: str, status: str, error: str = None):
@@ -62,6 +65,8 @@ async def run_research(job_data: dict):
     post_id = job_data["post_id"]
 
     try:
+        logger.info(f"[RESEARCH] Starting research for post {post_id}")
+
         await _update_job_status(job_id, post_id, "running")
 
         topic = job_data["topic"]
@@ -69,17 +74,26 @@ async def run_research(job_data: dict):
         provider_id = job_data.get("ai_provider_id")
         model_name = job_data.get("model_name")
 
-        research_data, tokens = await ai_service.research_topic(
+        logger.info(f"[RESEARCH] Topic: {topic}")
+        logger.info(f"[RESEARCH] Additional requests: {additional}")
+        logger.info(f"[RESEARCH] Using AI provider: {provider_id}")
+        logger.info(f"[RESEARCH] Calling AI model: {model_name}")
+
+        research_data, total_tokens = await ai_service.research_topic(
             topic, additional, provider_id, model_name
         )
 
+        logger.info(f"[RESEARCH] AI call completed, {total_tokens} tokens used")
+        logger.info(f"[RESEARCH] Generated {len(research_data)} research points")
+
+        logger.info(f"[RESEARCH] Updating database with research data")
         await posts_col.update_one(
             {"_id": ObjectId(post_id)},
             {
                 "$set": {
                     "research_data": research_data,
                     "research_done": True,
-                    "token_usage.research": tokens,
+                    "token_usage.research": total_tokens,
                 }
             },
         )
@@ -93,11 +107,11 @@ async def run_research(job_data: dict):
         )
 
         await _update_job_status(job_id, post_id, "completed")
-        print(f"[TASK] Research completed for post {post_id}")
+        logger.info(f"[RESEARCH] Research completed successfully")
 
     except Exception as e:
-        print(f"[TASK] Research failed for post {post_id}: {e}")
-        traceback.print_exc()
+        logger.error(f"[RESEARCH] Research failed for post {post_id}: {e}")
+        logger.exception("[RESEARCH] Full stack trace:")
         await _update_job_status(job_id, post_id, "failed", str(e))
 
 
@@ -107,6 +121,8 @@ async def run_outline(job_data: dict):
     post_id = job_data["post_id"]
 
     try:
+        logger.info(f"[OUTLINE] Starting outline generation for post {post_id}")
+
         await _update_job_status(job_id, post_id, "running")
 
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
@@ -119,10 +135,21 @@ async def run_outline(job_data: dict):
         provider_id = post.get("ai_provider_id")
         model_name = post.get("model_name")
 
+        logger.info(f"[OUTLINE] Topic: {topic}")
+        logger.info(f"[OUTLINE] Using research data with {len(research_data)} points")
+        logger.info(f"[OUTLINE] Calling AI provider: {provider_id}")
+        logger.info(f"[OUTLINE] Calling AI model: {model_name}")
+
         outline, tokens = await ai_service.generate_outline(
             topic, research_data, additional, provider_id, model_name
         )
 
+        logger.info(f"[OUTLINE] AI call completed, {tokens} tokens used")
+        logger.info(
+            f"[OUTLINE] Generated outline with {len(outline.get('sections', []))} sections"
+        )
+
+        logger.info(f"[OUTLINE] Updating database with outline")
         await posts_col.update_one(
             {"_id": ObjectId(post_id)},
             {
@@ -144,11 +171,11 @@ async def run_outline(job_data: dict):
         )
 
         await _update_job_status(job_id, post_id, "completed")
-        print(f"[TASK] Outline completed for post {post_id}")
+        logger.info(f"[OUTLINE] Outline completed successfully")
 
     except Exception as e:
-        print(f"[TASK] Outline failed for post {post_id}: {e}")
-        traceback.print_exc()
+        logger.error(f"[OUTLINE] Outline failed for post {post_id}: {e}")
+        logger.exception("[OUTLINE] Full stack trace:")
         await _update_job_status(job_id, post_id, "failed", str(e))
 
 
@@ -158,6 +185,8 @@ async def run_content(job_data: dict):
     post_id = job_data["post_id"]
 
     try:
+        logger.info(f"[CONTENT] Starting content generation for post {post_id}")
+
         await _update_job_status(job_id, post_id, "running")
 
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
@@ -170,13 +199,29 @@ async def run_content(job_data: dict):
         provider_id = post.get("ai_provider_id")
         model_name = post.get("model_name")
 
+        logger.info(f"[CONTENT] Topic: {topic}")
+        logger.info(
+            f"[CONTENT] Outline has {len(outline.get('sections', []))} sections"
+        )
+        logger.info(f"[CONTENT] Calling AI provider: {provider_id}")
+        logger.info(f"[CONTENT] Calling AI model: {model_name}")
+
         if not outline:
             raise Exception("No outline found. Generate outline first.")
 
-        full_html, sections, tokens = await ai_service.generate_full_content(
+        (
+            full_html,
+            sections,
+            total_tokens,
+        ) = await ai_service.generate_full_content(
             topic, outline, additional, provider_id, model_name
         )
 
+        logger.info(f"[CONTENT] AI call completed, {total_tokens} tokens used")
+        logger.info(f"[CONTENT] Generated {len(full_html)} characters of content")
+        logger.info(f"[CONTENT] Generated {len(sections)} sections")
+
+        logger.info(f"[CONTENT] Updating database with content")
         await posts_col.update_one(
             {"_id": ObjectId(post_id)},
             {
@@ -185,7 +230,7 @@ async def run_content(job_data: dict):
                     "sections": sections,
                     "content_done": True,
                     "sections_done": True,
-                    "token_usage.content": tokens,
+                    "token_usage.content": total_tokens,
                 }
             },
         )
@@ -199,11 +244,11 @@ async def run_content(job_data: dict):
         )
 
         await _update_job_status(job_id, post_id, "completed")
-        print(f"[TASK] Content generated for post {post_id}")
+        logger.info(f"[CONTENT] Content generation completed successfully")
 
     except Exception as e:
-        print(f"[TASK] Content failed for post {post_id}: {e}")
-        traceback.print_exc()
+        logger.error(f"[CONTENT] Content failed for post {post_id}: {e}")
+        logger.exception("[CONTENT] Full stack trace:")
         await _update_job_status(job_id, post_id, "failed", str(e))
 
 
@@ -213,16 +258,26 @@ async def run_thumbnail(job_data: dict):
     post_id = job_data["post_id"]
 
     try:
+        logger.info(f"[THUMBNAIL] Starting thumbnail generation for post {post_id}")
+
         await _update_job_status(job_id, post_id, "running")
 
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
         if not post:
             raise Exception("Post not found")
 
-        filepath = await image_service.generate_thumbnail(
-            post["topic"], post.get("title", post["topic"])
-        )
+        topic = post["topic"]
+        title = post.get("title", topic)
 
+        logger.info(f"[THUMBNAIL] Topic: {topic}")
+        logger.info(f"[THUMBNAIL] Title: {title}")
+        logger.info(f"[THUMBNAIL] Calling image service")
+
+        filepath = await image_service.generate_thumbnail(topic, title)
+
+        logger.info(f"[THUMBNAIL] Generated thumbnail: {filepath}")
+
+        logger.info(f"[THUMBNAIL] Updating database")
         await posts_col.update_one(
             {"_id": ObjectId(post_id)},
             {
@@ -234,11 +289,11 @@ async def run_thumbnail(job_data: dict):
         )
 
         await _update_job_status(job_id, post_id, "completed")
-        print(f"[TASK] Thumbnail generated for post {post_id}")
+        logger.info(f"[THUMBNAIL] Thumbnail completed successfully")
 
     except Exception as e:
-        print(f"[TASK] Thumbnail failed for post {post_id}: {e}")
-        traceback.print_exc()
+        logger.error(f"[THUMBNAIL] Thumbnail failed for post {post_id}: {e}")
+        logger.exception("[THUMBNAIL] Full stack trace:")
         await _update_job_status(job_id, post_id, "failed", str(e))
 
 
@@ -248,6 +303,8 @@ async def run_section_images(job_data: dict):
     post_id = job_data["post_id"]
 
     try:
+        logger.info(f"[SECTION_IMAGES] Starting section images for post {post_id}")
+
         await _update_job_status(job_id, post_id, "running")
 
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
@@ -255,23 +312,30 @@ async def run_section_images(job_data: dict):
             raise Exception("Post not found")
 
         sections = post.get("sections", [])
+        logger.info(f"[SECTION_IMAGES] Found {len(sections)} sections")
+
         for i, section in enumerate(sections):
             if section.get("title"):
+                logger.info(
+                    f"[SECTION_IMAGES] Generating image for section {i + 1}/{len(sections)}: {section['title']}"
+                )
                 filepath = await image_service.generate_section_image(
                     post["topic"], section["title"]
                 )
+                logger.info(f"[SECTION_IMAGES] Generated image: {filepath}")
                 sections[i]["image_url"] = filepath
 
+        logger.info(f"[SECTION_IMAGES] Updating database")
         await posts_col.update_one(
             {"_id": ObjectId(post_id)}, {"$set": {"sections": sections}}
         )
 
         await _update_job_status(job_id, post_id, "completed")
-        print(f"[TASK] Section images generated for post {post_id}")
+        logger.info(f"[SECTION_IMAGES] Section images completed successfully")
 
     except Exception as e:
-        print(f"[TASK] Section images failed for post {post_id}: {e}")
-        traceback.print_exc()
+        logger.error(f"[SECTION_IMAGES] Section images failed for post {post_id}: {e}")
+        logger.exception("[SECTION_IMAGES] Full stack trace:")
         await _update_job_status(job_id, post_id, "failed", str(e))
 
 
@@ -282,27 +346,40 @@ async def run_publish(job_data: dict):
     project_id = job_data["project_id"]
 
     try:
+        logger.info(f"[PUBLISH] Starting publish for post {post_id}")
+
         await _update_job_status(job_id, post_id, "running")
 
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
         if not post:
             raise Exception("Post not found")
 
+        content = post.get("content", "")
+        logger.info(f"[PUBLISH] Post has {len(content)} characters")
+
         # Upload thumbnail if exists
         thumbnail_media_id = None
         if post.get("thumbnail_url"):
+            logger.info(f"[PUBLISH] Thumbnail exists: True")
+            logger.info(f"[PUBLISH] Uploading thumbnail to WordPress...")
             try:
                 media = await wp_service.upload_media(project_id, post["thumbnail_url"])
                 thumbnail_media_id = media.get("id")
-            except Exception as e:
-                print(
-                    f"[TASK] Thumbnail upload failed: {e}, continuing without thumbnail"
+                logger.info(
+                    f"[PUBLISH] Thumbnail uploaded, media ID: {thumbnail_media_id}"
                 )
+            except Exception as e:
+                logger.warning(
+                    f"[PUBLISH] Thumbnail upload failed: {e}, continuing without thumbnail"
+                )
+        else:
+            logger.info(f"[PUBLISH] Thumbnail exists: False")
 
         # Build final content with section images
         content = post.get("content", "")
 
         # Create or update WP post
+        logger.info(f"[PUBLISH] Creating/updating WordPress post...")
         if post.get("wp_post_id"):
             wp_post = await wp_service.update_wp_post(
                 project_id,
@@ -322,6 +399,9 @@ async def run_publish(job_data: dict):
                 status="publish",
             )
 
+        logger.info(f"[PUBLISH] WordPress post ID: {wp_post.get('id')}")
+
+        logger.info(f"[PUBLISH] Updating database with WP post ID")
         await posts_col.update_one(
             {"_id": ObjectId(post_id)},
             {
@@ -333,13 +413,11 @@ async def run_publish(job_data: dict):
         )
 
         await _update_job_status(job_id, post_id, "completed")
-        print(
-            f"[TASK] Post {post_id} published to WordPress (WP ID: {wp_post.get('id')})"
-        )
+        logger.info(f"[PUBLISH] Publish completed successfully")
 
     except Exception as e:
-        print(f"[TASK] Publish failed for post {post_id}: {e}")
-        traceback.print_exc()
+        logger.error(f"[PUBLISH] Publish failed for post {post_id}: {e}")
+        logger.exception("[PUBLISH] Full stack trace:")
         await posts_col.update_one(
             {"_id": ObjectId(post_id)}, {"$set": {"status": "failed"}}
         )
