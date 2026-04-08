@@ -14,6 +14,11 @@ export const updateProvider = (id, data) => api.put(`/ai-providers/${id}`, data)
 export const deleteProvider = (id) => api.delete(`/ai-providers/${id}`);
 export const verifyProvider = (data) => api.post('/ai-providers/verify', data);
 export const fetchProviderModels = (data) => api.post('/ai-providers/fetch-models', data);
+export const getProviderModels = (id) => api.get(`/ai-providers/${id}/models`);
+
+// Default Models
+export const getDefaultModels = () => api.get('/default-models');
+export const updateDefaultModels = (data) => api.put('/default-models', data);
 
 // WordPress Sites
 export const getSites = () => api.get('/wp-sites');

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages, getProviders, fetchProviderModels } from '../../api/client'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages, getProviders, getProviderModels, getDefaultModels } from '../../api/client'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -58,21 +58,165 @@ export default function ProjectDetail() {
   const [sectionImagesModels, setSectionImagesModels] = useState([])
   const [loadingSectionImagesModels, setLoadingSectionImagesModels] = useState(false)
   const [sectionImagesModelError, setSectionImagesModelError] = useState(null)
+  const [defaultModels, setDefaultModels] = useState({
+    writing_provider_id: '',
+    writing_model_name: '',
+    image_provider_id: '',
+    image_model_name: '',
+    video_provider_id: '',
+    video_model_name: '',
+  })
 
   useEffect(() => { load() }, [id])
 
+  useEffect(() => {
+    if (showCreateModal) {
+      // Initialize form with default values when opening modal
+      if (createMode === 'single') {
+        setSingleForm({
+          topic: '',
+          additional_requests: '',
+          ai_provider_id: defaultModels.writing_provider_id || '',
+          model_name: defaultModels.writing_model_name || '',
+          auto_publish: false,
+          thumbnail_source: 'ai',
+          thumbnail_provider_id: defaultModels.image_provider_id || '',
+          thumbnail_model_name: defaultModels.image_model_name || '',
+          section_images_source: 'ai',
+          section_images_provider_id: defaultModels.image_provider_id || '',
+          section_images_model_name: defaultModels.image_model_name || '',
+          target_word_count: 500,
+          target_section_count: 4,
+          thumbnail_file: null,
+          section_image_files: []
+        })
+      } else {
+        setBulkForm({
+          topics: '',
+          additional_requests: '',
+          ai_provider_id: defaultModels.writing_provider_id || '',
+          model_name: defaultModels.writing_model_name || '',
+          auto_publish: false,
+          thumbnail_source: 'ai',
+          thumbnail_provider_id: defaultModels.image_provider_id || '',
+          thumbnail_model_name: defaultModels.image_model_name || '',
+          section_images_source: 'ai',
+          section_images_provider_id: defaultModels.image_provider_id || '',
+          section_images_model_name: defaultModels.image_model_name || '',
+          target_word_count: 500,
+          target_section_count: 4,
+          thumbnail_file: null,
+          section_image_files: []
+        })
+      }
+
+      // Fetch models for the default providers
+      const fetchDefaultModels = async () => {
+        if (createMode === 'single') {
+          if (defaultModels.writing_provider_id) {
+            await fetchModelsForProvider(defaultModels.writing_provider_id, 'content')
+          }
+          if (defaultModels.image_provider_id) {
+            await fetchModelsForProvider(defaultModels.image_provider_id, 'thumbnail')
+          }
+          if (defaultModels.image_provider_id) {
+            await fetchModelsForProvider(defaultModels.image_provider_id, 'section_images')
+          }
+        } else {
+          if (defaultModels.writing_provider_id) {
+            await fetchModelsForProvider(defaultModels.writing_provider_id, 'content')
+          }
+          if (defaultModels.image_provider_id) {
+            await fetchModelsForProvider(defaultModels.image_provider_id, 'thumbnail')
+          }
+          if (defaultModels.image_provider_id) {
+            await fetchModelsForProvider(defaultModels.image_provider_id, 'section_images')
+          }
+        }
+      }
+      fetchDefaultModels()
+    } else {
+      // Reset form when closing modal
+      setSingleForm({
+        topic: '',
+        additional_requests: '',
+        ai_provider_id: '',
+        model_name: '',
+        auto_publish: false,
+        thumbnail_source: 'ai',
+        thumbnail_provider_id: '',
+        thumbnail_model_name: '',
+        section_images_source: 'ai',
+        section_images_provider_id: '',
+        section_images_model_name: '',
+        target_word_count: 500,
+        target_section_count: 4,
+        thumbnail_file: null,
+        section_image_files: []
+      })
+      setBulkForm({
+        topics: '',
+        additional_requests: '',
+        ai_provider_id: '',
+        model_name: '',
+        auto_publish: false,
+        thumbnail_source: 'ai',
+        thumbnail_provider_id: '',
+        thumbnail_model_name: '',
+        section_images_source: 'ai',
+        section_images_provider_id: '',
+        section_images_model_name: '',
+        target_word_count: 500,
+        target_section_count: 4,
+        thumbnail_file: null,
+        section_image_files: []
+      })
+    }
+  }, [showCreateModal, createMode, defaultModels])
+
   const load = async () => {
     try {
-      const [projRes, statsRes, postsRes, providersRes] = await Promise.all([
+      const [projRes, statsRes, postsRes, providersRes, defaultsRes] = await Promise.all([
         getProject(id),
         getProjectStats(id),
         getPostsByProject(id),
         getProviders(),
+        getDefaultModels(),
       ])
       setProject(projRes.data)
       setStats(statsRes.data)
       setPosts(postsRes.data)
       setProviders(providersRes.data)
+      if (defaultsRes.data && defaultsRes.data.id) {
+        setDefaultModels({
+          writing_provider_id: defaultsRes.data.writing_provider_id || '',
+          writing_model_name: defaultsRes.data.writing_model_name || '',
+          image_provider_id: defaultsRes.data.image_provider_id || '',
+          image_model_name: defaultsRes.data.image_model_name || '',
+          video_provider_id: defaultsRes.data.video_provider_id || '',
+          video_model_name: defaultsRes.data.video_model_name || '',
+        })
+        
+        setSingleForm(prev => ({
+          ...prev,
+          ai_provider_id: defaultsRes.data.writing_provider_id || '',
+          model_name: defaultsRes.data.writing_model_name || '',
+          thumbnail_provider_id: defaultsRes.data.image_provider_id || '',
+          thumbnail_model_name: defaultsRes.data.image_model_name || '',
+          section_images_provider_id: defaultsRes.data.image_provider_id || '',
+          section_images_model_name: defaultsRes.data.image_model_name || '',
+        }))
+        
+        setBulkForm(prev => ({
+          ...prev,
+          ai_provider_id: defaultsRes.data.writing_provider_id || '',
+          model_name: defaultsRes.data.writing_model_name || '',
+          thumbnail_provider_id: defaultsRes.data.image_provider_id || '',
+          thumbnail_model_name: defaultsRes.data.image_model_name || '',
+          section_images_provider_id: defaultsRes.data.image_provider_id || '',
+          section_images_model_name: defaultsRes.data.image_model_name || '',
+        }))
+      }
     } catch (e) {
       console.error(e)
     } finally {
@@ -273,7 +417,7 @@ export default function ProjectDetail() {
     }
 
     try {
-      const response = await fetchProviderModels({ provider_id: providerId })
+      const response = await getProviderModels(providerId)
       const models = response.data.models || []
       if (section === 'content') {
         setContentModels(models)

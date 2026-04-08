@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon } from 'react-icons/hi2'
+import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles } from 'react-icons/hi2'
 
 export default function Sidebar() {
   const location = useLocation()
@@ -81,6 +81,10 @@ export default function Sidebar() {
               <NavLink to="/settings/wp-sites" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                 <HiOutlineGlobeAlt className="nav-icon" />
                 <span>WordPress Sites</span>
+              </NavLink>
+              <NavLink to="/settings/default-models" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                <HiOutlineSparkles className="nav-icon" />
+                <span>Default Models</span>
               </NavLink>
             </div>
           )}

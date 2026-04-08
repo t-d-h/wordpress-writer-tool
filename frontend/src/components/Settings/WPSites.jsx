@@ -28,7 +28,9 @@ export default function WPSites() {
     e.preventDefault()
     try {
       if (editingId) {
-        await updateSite(editingId, form)
+        const payload = { ...form }
+        if (!payload.api_key) delete payload.api_key
+        await updateSite(editingId, payload)
       } else {
         await createSite(form)
       }
