@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight } from 'react-icons/hi2'
+import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon } from 'react-icons/hi2'
 import { getProjects } from '../api/client'
 
 export default function Sidebar() {
@@ -12,9 +12,18 @@ export default function Sidebar() {
   const [projectsOpen, setProjectsOpen] = useState(
     location.pathname.startsWith('/projects')
   )
+  const [isDark, setIsDark] = useState(true)
 
   useEffect(() => {
     loadProjects()
+  }, [])
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light')
+    setIsDark(initialTheme === 'dark')
+    document.documentElement.setAttribute('data-theme', initialTheme)
   }, [])
 
   const loadProjects = async () => {
@@ -26,6 +35,13 @@ export default function Sidebar() {
     }
   }
 
+  const toggleTheme = () => {
+    const newTheme = isDark ? 'light' : 'dark'
+    setIsDark(!isDark)
+    document.documentElement.setAttribute('data-theme', newTheme)
+    localStorage.setItem('theme', newTheme)
+  }
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -34,6 +50,25 @@ export default function Sidebar() {
           <div className="sidebar-title">WP Writer</div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>AI-Powered</div>
         </div>
+        <button
+          onClick={toggleTheme}
+          className="btn-icon"
+          style={{
+            marginLeft: 'auto',
+            background: 'var(--bg-glass)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: 'var(--radius-sm)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? <HiOutlineSun size={18} /> : <HiOutlineMoon size={18} />}
+        </button>
       </div>
 
       <nav className="sidebar-nav">
@@ -43,26 +78,6 @@ export default function Sidebar() {
           <HiOutlineHome className="nav-icon" />
           <span>Dashboard</span>
         </NavLink>
-
-        <div className="nav-section">
-          <div className="nav-item" onClick={() => setSettingsOpen(!settingsOpen)}>
-            <HiOutlineCog6Tooth className="nav-icon" />
-            <span>Settings</span>
-            {settingsOpen ? <HiOutlineChevronDown style={{ marginLeft: 'auto', fontSize: 14 }} /> : <HiOutlineChevronRight style={{ marginLeft: 'auto', fontSize: 14 }} />}
-          </div>
-          {settingsOpen && (
-            <div className="nav-children">
-              <NavLink to="/settings/ai-providers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                <HiOutlineCpuChip className="nav-icon" />
-                <span>AI Providers</span>
-              </NavLink>
-              <NavLink to="/settings/wp-sites" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                <HiOutlineGlobeAlt className="nav-icon" />
-                <span>WordPress Sites</span>
-              </NavLink>
-            </div>
-          )}
-        </div>
 
         <div className="nav-section">
           <div className="nav-item" onClick={() => setProjectsOpen(!projectsOpen)}>
@@ -87,6 +102,26 @@ export default function Sidebar() {
                   </NavLink>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+
+        <div className="nav-section">
+          <div className="nav-item" onClick={() => setSettingsOpen(!settingsOpen)}>
+            <HiOutlineCog6Tooth className="nav-icon" />
+            <span>Settings</span>
+            {settingsOpen ? <HiOutlineChevronDown style={{ marginLeft: 'auto', fontSize: 14 }} /> : <HiOutlineChevronRight style={{ marginLeft: 'auto', fontSize: 14 }} />}
+          </div>
+          {settingsOpen && (
+            <div className="nav-children">
+              <NavLink to="/settings/ai-providers" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                <HiOutlineCpuChip className="nav-icon" />
+                <span>AI Providers</span>
+              </NavLink>
+              <NavLink to="/settings/wp-sites" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                <HiOutlineGlobeAlt className="nav-icon" />
+                <span>WordPress Sites</span>
+              </NavLink>
             </div>
           )}
         </div>
