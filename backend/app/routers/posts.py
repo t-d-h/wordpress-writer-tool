@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from bson import ObjectId
 from datetime import datetime, timezone
 import uuid
+import os
 from app.database import posts_col, projects_col, jobs_col
 from app.models.post import PostCreate, BulkPostCreate, PostUpdate, PostResponse
 from app.redis_client import publish_job
@@ -328,8 +329,10 @@ async def generate_content(post_id: str):
 
 
 @router.post("/{post_id}/generate-thumbnail")
-async def generate_thumbnail(post_id: str):
-    """Queue thumbnail generation job."""
+async def generate_thumbnail(
+    post_id: str, provider_id: str = None, model_name: str = None
+):
+    """Queue thumbnail generation job with optional provider/model."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -362,11 +365,43 @@ async def generate_thumbnail(post_id: str):
             "post_id": post_id,
             "project_id": doc["project_id"],
             "job_type": "thumbnail",
-            "ai_provider_id": doc.get("ai_provider_id"),
-            "model_name": doc.get("model_name"),
+            "ai_provider_id": provider_id or doc.get("ai_provider_id"),
+            "model_name": model_name or doc.get("model_name"),
         }
     )
     return {"message": "Thumbnail generation queued", "job_id": job_id}
+
+
+@router.post("/{post_id}/upload-thumbnail")
+async def upload_thumbnail(post_id: str, file: UploadFile = File(...)):
+    """Upload a thumbnail image for a post."""
+    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+
+    ext = file.filename.split(".")[-1] if file.filename else "jpg"
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = f"/tmp/wp_images/{filename}"
+
+    os.makedirs("/tmp/wp_images", exist_ok=True)
+    with open(filepath, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    await posts_col.update_one(
+        {"_id": ObjectId(post_id)},
+        {
+            "$set": {
+                "thumbnail_url": filepath,
+                "thumbnail_done": True,
+            }
+        },
+    )
+
+    return {"message": "Thumbnail uploaded", "thumbnail_url": filepath}
 
 
 @router.post("/{post_id}/generate-section-images")

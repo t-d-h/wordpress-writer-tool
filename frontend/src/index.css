@@ -658,6 +658,11 @@ tbody tr:last-child td {
   border-bottom-color: var(--accent-primary);
 }
 
+.tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* === Post pipeline === */
 .pipeline-steps {
   display: flex;
@@ -704,6 +709,21 @@ tbody tr:last-child td {
   background: rgba(225,112,85,0.15);
 }
 
+.pipeline-step.clickable {
+  cursor: pointer;
+}
+
+.pipeline-step.clickable:hover {
+  border-color: var(--accent-primary);
+  background: rgba(108,92,231,0.1);
+}
+
+.pipeline-step.expanded {
+  border-color: var(--accent-primary);
+  background: rgba(108,92,231,0.15);
+  box-shadow: 0 0 20px rgba(108,92,231,0.3);
+}
+
 .pipeline-step-icon {
   font-size: 32px;
   margin-bottom: 8px;
@@ -737,6 +757,28 @@ tbody tr:last-child td {
 .pipeline-step-wrapper:not(:last-child) .pipeline-step.done + .pipeline-connector,
 .pipeline-step-wrapper:not(:last-child) .pipeline-step.active + .pipeline-connector {
   background: var(--success);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 2000px;
+    transform: translateY(0);
+  }
+}
+
+.file-upload:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-glass-hover);
+}
+
+.file-upload:active {
+  transform: scale(0.98);
 }
 
 /* === Token usage === */
@@ -949,6 +991,11 @@ tbody tr:last-child td {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 @keyframes pulse {
