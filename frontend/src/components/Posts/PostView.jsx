@@ -111,8 +111,8 @@ export default function PostView() {
     { key: 'research', label: 'Research', done: post.research_done },
     { key: 'outline', label: 'Outline', done: !!post.outline },
     { key: 'content', label: 'Content', done: post.content_done },
-    { key: 'thumbnail', label: 'Thumbnail', done: post.thumbnail_done },
-    { key: 'section_images', label: 'Section Images', done: post.sections_done },
+    { key: 'thumbnail', label: 'Thumbnail', done: post.thumbnail_done || !!post.thumbnail_url },
+    { key: 'section_images', label: 'Section Images', done: post.sections_done || (post.sections && post.sections.some(s => s.image_url)) },
   ]
 
   const getStepStatus = (key) => {
