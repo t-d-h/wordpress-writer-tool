@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineGlobeAlt } from 'react-icons/hi2'
-import { getProjects, createProject, deleteProject, getSites } from '../../api/client'
+import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineGlobeAlt, HiOutlinePencil } from 'react-icons/hi2'
+import { getProjects, createProject, deleteProject, updateProject, getSites } from '../../api/client'
 
 export default function ProjectList() {
   const navigate = useNavigate()
@@ -11,7 +11,9 @@ export default function ProjectList() {
   const [showModal, setShowModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', wp_site_id: '' })
+  const [editForm, setEditForm] = useState({ id: '', title: '', description: '', wp_site_id: '' })
 
   useEffect(() => { load() }, [])
 
@@ -37,6 +39,32 @@ export default function ProjectList() {
       setShowModal(false)
       setForm({ title: '', description: '', wp_site_id: sites[0]?.id || '' })
       navigate(`/projects/${data.id}`)
+    } catch (e) {
+      alert('Error: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
+  const openEdit = (e, project) => {
+    e.stopPropagation()
+    setEditForm({
+      id: project.id,
+      title: project.title,
+      description: project.description || '',
+      wp_site_id: project.wp_site_id
+    })
+    setShowEditModal(true)
+  }
+
+  const handleUpdate = async (e) => {
+    e.preventDefault()
+    try {
+      await updateProject(editForm.id, {
+        title: editForm.title,
+        description: editForm.description,
+        wp_site_id: editForm.wp_site_id
+      })
+      setShowEditModal(false)
+      load() // Reload list without navigating away
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
     }
@@ -92,12 +120,16 @@ export default function ProjectList() {
             <div key={p.id} className="project-card" onClick={() => navigate(`/projects/${p.id}`)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div className="project-card-title">{p.title}</div>
-                <button className="action-btn danger" onClick={e => handleDelete(e, p.id)} title="Delete"><HiOutlineTrash /></button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="action-btn" onClick={e => openEdit(e, p)} title="Edit"><HiOutlinePencil /></button>
+                  <button className="action-btn danger" onClick={e => handleDelete(e, p.id)} title="Delete"><HiOutlineTrash /></button>
+                </div>
               </div>
               <div className="project-card-desc">{p.description || 'No description'}</div>
               <div className="project-card-meta">
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <HiOutlineGlobeAlt /> {p.wp_site_name}
+                  {p.wp_site_url && <span style={{ color: 'var(--text-muted)', fontSize: '0.9em', marginLeft: 4 }}>({p.wp_site_url})</span>}
                 </span>
                 <span>{new Date(p.created_at).toLocaleDateString()}</span>
               </div>
@@ -140,6 +172,37 @@ export default function ProjectList() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Edit Project</h2>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}><HiOutlineXMark /></button>
+            </div>
+            <form onSubmit={handleUpdate}>
+              <div className="form-group">
+                <label className="form-label">Project Title</label>
+                <input className="form-input" placeholder="e.g. Tech Blog Q1 2025" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <textarea className="form-textarea" placeholder="Optional description..." value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">WordPress Site</label>
+                <select className="form-select" value={editForm.wp_site_id} onChange={e => setEditForm({ ...editForm, wp_site_id: e.target.value })} required>
+                  {sites.map(s => <option key={s.id} value={s.id}>{s.name} ({s.url})</option>)}
+                </select>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Save Changes</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
