@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
-import Dashboard from './components/Dashboard'
 import AIProviders from './components/Settings/AIProviders'
 import WPSites from './components/Settings/WPSites'
 import DefaultModels from './components/Settings/DefaultModels'
@@ -12,7 +11,7 @@ function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="/settings/ai-providers" element={<AIProviders />} />
         <Route path="/settings/wp-sites" element={<WPSites />} />
         <Route path="/settings/default-models" element={<DefaultModels />} />

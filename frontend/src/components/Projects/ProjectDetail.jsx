@@ -268,7 +268,7 @@ export default function ProjectDetail() {
       if (singleForm.target_word_count) formData.append('target_word_count', singleForm.target_word_count)
       if (singleForm.target_section_count) formData.append('target_section_count', singleForm.target_section_count)
 
-      await createPost(Object.fromEntries(formData))
+      const response = await createPost(Object.fromEntries(formData))
       setShowCreateModal(false)
       setSingleForm({
         topic: '',
@@ -288,6 +288,9 @@ export default function ProjectDetail() {
         section_image_files: []
       })
       load()
+      if (response?.data?.id) {
+        navigate(`/posts/${response.data.id}`)
+      }
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
     }

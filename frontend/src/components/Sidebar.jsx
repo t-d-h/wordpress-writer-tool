@@ -56,11 +56,6 @@ export default function Sidebar() {
       <nav className="sidebar-nav">
         <div className="sidebar-subtitle">Menu</div>
 
-        <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <HiOutlineHome className="nav-icon" />
-          <span>Dashboard</span>
-        </NavLink>
-
         <NavLink to="/projects" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <HiOutlineFolderOpen className="nav-icon" />
           <span>Projects</span>
