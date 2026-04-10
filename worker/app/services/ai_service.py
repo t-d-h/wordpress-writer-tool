@@ -285,6 +285,7 @@ async def generate_section_content(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    target_words: int = 500,
 ) -> tuple[str, int]:
     """Generate content for a single section."""
     system_prompt = "You are an expert blog content writer. Write engaging, detailed, SEO-optimized content."
@@ -296,7 +297,7 @@ Section title: {section_title}
 Key points to cover: {json.dumps(key_points)}
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
-Write 400-800 words of detailed, engaging content for this section.
+Write approximately {target_words} words of detailed, engaging content for this section.
 Use subheadings (H3) where appropriate.
 Include relevant examples and practical advice.
 Do NOT include the section title itself — just the body content.
@@ -312,6 +313,7 @@ async def generate_introduction(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    target_words: int = 200,
 ) -> tuple[str, int]:
     """Generate the introduction based on hook/problem/promise."""
     intro = outline.get("introduction", {})
@@ -327,7 +329,7 @@ Problem to present: {intro.get("problem", "")}
 Promise to make: {intro.get("promise", "")}
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
-Write a compelling 150-300 word introduction that:
+Write a compelling {target_words} word introduction that:
 1. Opens with an engaging hook
 2. Presents the problem
 3. Promises what the reader will learn
@@ -343,20 +345,33 @@ async def generate_full_content(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    target_word_count: int = None,
 ) -> tuple[str, list, int]:
     """Generate the full post content from an outline. Returns (full_html, sections_list, total_tokens)."""
     total_tokens = 0
 
+    outline_sections = outline.get("sections", [])
+    num_sections = len(outline_sections)
+    
+    intro_words = 200
+    section_words = 500
+    
+    if target_word_count:
+        if num_sections > 0:
+            intro_words = max(100, int(target_word_count * 0.1))
+            section_words = max(100, int((target_word_count * 0.9) / num_sections))
+        else:
+            intro_words = target_word_count
+
     # Generate introduction
     intro_html, intro_tokens = await generate_introduction(
-        topic, outline, additional_requests, provider_id, model_name
+        topic, outline, additional_requests, provider_id, model_name, intro_words
     )
     total_tokens += intro_tokens
 
     sections = []
     full_html = intro_html
 
-    outline_sections = outline.get("sections", [])
     for sec in outline_sections:
         sec_title = sec.get("title", "")
         key_points = sec.get("key_points", [])
@@ -368,6 +383,7 @@ async def generate_full_content(
             additional_requests,
             provider_id,
             model_name,
+            section_words,
         )
         total_tokens += sec_tokens
         sections.append(
