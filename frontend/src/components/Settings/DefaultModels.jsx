@@ -18,38 +18,55 @@ export default function DefaultModels() {
   const [fetchingModels, setFetchingModels] = useState({})
 
   useEffect(() => {
-    loadProviders()
-    loadDefaults()
-  }, [])
+    const init = async () => {
+      try {
+        const { data: provs } = await getProviders()
+        setProviders(provs)
+        
+        try {
+          const { data } = await getDefaultModels()
+          if (data.id) {
+            setDefaults({
+              writing_provider_id: data.writing_provider_id || '',
+              writing_model_name: data.writing_model_name || '',
+              image_provider_id: data.image_provider_id || '',
+              image_model_name: data.image_model_name || '',
+              video_provider_id: data.video_provider_id || '',
+              video_model_name: data.video_model_name || '',
+            })
 
-  const loadProviders = async () => {
-    try {
-      const { data } = await getProviders()
-      setProviders(data)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadDefaults = async () => {
-    try {
-      const { data } = await getDefaultModels()
-      if (data.id) {
-        setDefaults({
-          writing_provider_id: data.writing_provider_id || '',
-          writing_model_name: data.writing_model_name || '',
-          image_provider_id: data.image_provider_id || '',
-          image_model_name: data.image_model_name || '',
-          video_provider_id: data.video_provider_id || '',
-          video_model_name: data.video_model_name || '',
-        })
+            // Now fetch models for the loaded defaults
+            const sections = ['writing', 'image', 'video']
+            for (const section of sections) {
+              const provId = data[`${section}_provider_id`]
+              if (provId) {
+                const provider = provs.find(p => p.id === provId)
+                if (provider && provider.provider_type === 'openai_compatible') {
+                  setFetchingModels(prev => ({ ...prev, [section]: true }))
+                  try {
+                    const { data: mData } = await getProviderModels(provId)
+                    setAvailableModels(prev => ({ ...prev, [section]: mData.models || [] }))
+                  } catch (e) {
+                    console.error('Failed to fetch models for', section, e)
+                    setAvailableModels(prev => ({ ...prev, [section]: [] }))
+                  } finally {
+                    setFetchingModels(prev => ({ ...prev, [section]: false }))
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error loading default models:', e)
+        }
+      } catch (e) {
+        console.error('Error loading providers:', e)
+      } finally {
+        setLoading(false)
       }
-    } catch (e) {
-      console.error(e)
     }
-  }
+    init()
+  }, [])
 
   const handleSave = async (e) => {
     e.preventDefault()
