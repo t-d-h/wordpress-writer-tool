@@ -750,55 +750,6 @@ export default function ProjectDetail() {
                   </div>
                 </div>
 
-                {/* AI Provider for Content */}
-                <div style={{ marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>AI Provider for Content</h3>
-                  <div className="form-group" style={{ marginBottom: 12 }}>
-                    <label className="form-label">AI Provider</label>
-                    <select
-                      className="form-select"
-                      value={singleForm.ai_provider_id}
-                      onChange={e => {
-                        handleProviderChange(e.target.value, 'single')
-                        fetchModelsForProvider(e.target.value, 'content')
-                      }}
-                    >
-                      <option value="">-- Use default provider --</option>
-                      {providers.map(p => (
-                        <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                      ))}
-                    </select>
-                  </div>
-                  {singleForm.ai_provider_id && (() => {
-                    const provider = providers.find(p => p.id === singleForm.ai_provider_id)
-                    if (provider && provider.provider_type === 'openai_compatible') {
-                      return (
-                        <div className="form-group">
-                          <label className="form-label">Model Name</label>
-                          {loadingContentModels ? (
-                            <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
-                          ) : contentModels.length > 0 ? (
-                            <select
-                              className="form-select"
-                              value={singleForm.model_name}
-                              onChange={e => setSingleForm({ ...singleForm, model_name: e.target.value })}
-                            >
-                              <option value="">-- Select model --</option>
-                              {contentModels.map(m => (
-                                <option key={m.id} value={m.id}>{m.id}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div style={{ color: 'var(--error)', fontSize: 14 }}>
-                              {contentModelError || 'No models available for this provider'}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    }
-                    return null
-                  })()}
-                </div>
 
                 <div className="form-group">
                   <label className="form-label">Topic</label>
@@ -966,55 +917,6 @@ export default function ProjectDetail() {
                   </div>
                 </div>
 
-                {/* AI Provider for Content */}
-                <div style={{ marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>AI Provider for Content</h3>
-                  <div className="form-group" style={{ marginBottom: 12 }}>
-                    <label className="form-label">AI Provider</label>
-                    <select
-                      className="form-select"
-                      value={bulkForm.ai_provider_id}
-                      onChange={e => {
-                        handleProviderChange(e.target.value, 'bulk')
-                        fetchModelsForProvider(e.target.value, 'content')
-                      }}
-                    >
-                      <option value="">-- Use default provider --</option>
-                      {providers.map(p => (
-                        <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                      ))}
-                    </select>
-                  </div>
-                  {bulkForm.ai_provider_id && (() => {
-                    const provider = providers.find(p => p.id === bulkForm.ai_provider_id)
-                    if (provider && provider.provider_type === 'openai_compatible') {
-                      return (
-                        <div className="form-group">
-                          <label className="form-label">Model Name</label>
-                          {loadingContentModels ? (
-                            <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
-                          ) : contentModels.length > 0 ? (
-                            <select
-                              className="form-select"
-                              value={bulkForm.model_name}
-                              onChange={e => setBulkForm({ ...bulkForm, model_name: e.target.value })}
-                            >
-                              <option value="">-- Select model --</option>
-                              {contentModels.map(m => (
-                                <option key={m.id} value={m.id}>{m.id}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <div style={{ color: 'var(--error)', fontSize: 14 }}>
-                              {contentModelError || 'No models available for this provider'}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    }
-                    return null
-                  })()}
-                </div>
 
                 <div className="form-group">
                   <label className="form-label">Topics (one per line)</label>
