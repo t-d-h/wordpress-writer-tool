@@ -60,8 +60,7 @@ export default function ProjectList() {
     try {
       await updateProject(editForm.id, {
         title: editForm.title,
-        description: editForm.description,
-        wp_site_id: editForm.wp_site_id
+        description: editForm.description
       })
       setShowEditModal(false)
       load() // Reload list without navigating away
@@ -191,12 +190,6 @@ export default function ProjectList() {
               <div className="form-group">
                 <label className="form-label">Description</label>
                 <textarea className="form-textarea" placeholder="Optional description..." value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">WordPress Site</label>
-                <select className="form-select" value={editForm.wp_site_id} onChange={e => setEditForm({ ...editForm, wp_site_id: e.target.value })} required>
-                  {sites.map(s => <option key={s.id} value={s.id}>{s.name} ({s.url})</option>)}
-                </select>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
