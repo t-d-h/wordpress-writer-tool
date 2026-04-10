@@ -633,52 +633,8 @@ export default function ProjectDetail() {
                       <span>Generate with AI</span>
                     </label>
                     {singleForm.thumbnail_source === 'ai' && (
-                      <div style={{ marginLeft: 24, marginTop: 8 }}>
-                        <div className="form-group" style={{ marginBottom: 8 }}>
-                          <label className="form-label">AI Provider</label>
-                          <select
-                            className="form-select"
-                            value={singleForm.thumbnail_provider_id}
-                            onChange={e => {
-                              setSingleForm({ ...singleForm, thumbnail_provider_id: e.target.value, thumbnail_model_name: '' })
-                              fetchModelsForProvider(e.target.value, 'thumbnail')
-                            }}
-                          >
-                            <option value="">-- Select provider --</option>
-                            {providers.filter(p => ['gemini', 'openai', 'openai_compatible'].includes(p.provider_type)).map(p => (
-                              <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                            ))}
-                          </select>
-                        </div>
-                        {singleForm.thumbnail_provider_id && (() => {
-                          const provider = providers.find(p => p.id === singleForm.thumbnail_provider_id)
-                          if (provider && provider.provider_type === 'openai_compatible') {
-                            return (
-                              <div className="form-group">
-                                <label className="form-label">Model Name</label>
-                                {loadingThumbnailModels ? (
-                                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
-                                ) : thumbnailModels.length > 0 ? (
-                                  <select
-                                    className="form-select"
-                                    value={singleForm.thumbnail_model_name}
-                                    onChange={e => setSingleForm({ ...singleForm, thumbnail_model_name: e.target.value })}
-                                  >
-                                    <option value="">-- Select model --</option>
-                                    {thumbnailModels.map(m => (
-                                      <option key={m.id} value={m.id}>{m.id}</option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <div style={{ color: 'var(--error)', fontSize: 14 }}>
-                                    {thumbnailModelError || 'No models available for this provider'}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          }
-                          return null
-                        })()}
+                      <div style={{ marginLeft: 24, marginTop: 8, color: 'var(--text-muted)', fontSize: 13 }}>
+                        Will be generated using default model settings
                       </div>
                     )}
                   </div>
@@ -728,52 +684,8 @@ export default function ProjectDetail() {
                       <span>Generate with AI</span>
                     </label>
                     {singleForm.section_images_source === 'ai' && (
-                      <div style={{ marginLeft: 24, marginTop: 8 }}>
-                        <div className="form-group" style={{ marginBottom: 8 }}>
-                          <label className="form-label">AI Provider</label>
-                          <select
-                            className="form-select"
-                            value={singleForm.section_images_provider_id}
-                            onChange={e => {
-                              setSingleForm({ ...singleForm, section_images_provider_id: e.target.value, section_images_model_name: '' })
-                              fetchModelsForProvider(e.target.value, 'section_images')
-                            }}
-                          >
-                            <option value="">-- Select provider --</option>
-                            {providers.filter(p => ['gemini', 'openai', 'openai_compatible'].includes(p.provider_type)).map(p => (
-                              <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                            ))}
-                          </select>
-                        </div>
-                        {singleForm.section_images_provider_id && (() => {
-                          const provider = providers.find(p => p.id === singleForm.section_images_provider_id)
-                          if (provider && provider.provider_type === 'openai_compatible') {
-                            return (
-                              <div className="form-group">
-                                <label className="form-label">Model Name</label>
-                                {loadingSectionImagesModels ? (
-                                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
-                                ) : sectionImagesModels.length > 0 ? (
-                                  <select
-                                    className="form-select"
-                                    value={singleForm.section_images_model_name}
-                                    onChange={e => setSingleForm({ ...singleForm, section_images_model_name: e.target.value })}
-                                  >
-                                    <option value="">-- Select model --</option>
-                                    {sectionImagesModels.map(m => (
-                                      <option key={m.id} value={m.id}>{m.id}</option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <div style={{ color: 'var(--error)', fontSize: 14 }}>
-                                    {sectionImagesModelError || 'No models available for this provider'}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          }
-                          return null
-                        })()}
+                      <div style={{ marginLeft: 24, marginTop: 8, color: 'var(--text-muted)', fontSize: 13 }}>
+                        Will be generated using default model settings
                       </div>
                     )}
                   </div>
@@ -936,52 +848,8 @@ export default function ProjectDetail() {
                       <span>Generate with AI</span>
                     </label>
                     {bulkForm.thumbnail_source === 'ai' && (
-                      <div style={{ marginLeft: 24, marginTop: 8 }}>
-                        <div className="form-group" style={{ marginBottom: 8 }}>
-                          <label className="form-label">AI Provider</label>
-                          <select
-                            className="form-select"
-                            value={bulkForm.thumbnail_provider_id}
-                            onChange={e => {
-                              setBulkForm({ ...bulkForm, thumbnail_provider_id: e.target.value, thumbnail_model_name: '' })
-                              fetchModelsForProvider(e.target.value, 'thumbnail')
-                            }}
-                          >
-                            <option value="">-- Select provider --</option>
-                            {providers.filter(p => ['gemini', 'openai', 'openai_compatible'].includes(p.provider_type)).map(p => (
-                              <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                            ))}
-                          </select>
-                        </div>
-                        {bulkForm.thumbnail_provider_id && (() => {
-                          const provider = providers.find(p => p.id === bulkForm.thumbnail_provider_id)
-                          if (provider && provider.provider_type === 'openai_compatible') {
-                            return (
-                              <div className="form-group">
-                                <label className="form-label">Model Name</label>
-                                {loadingThumbnailModels ? (
-                                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
-                                ) : thumbnailModels.length > 0 ? (
-                                  <select
-                                    className="form-select"
-                                    value={bulkForm.thumbnail_model_name}
-                                    onChange={e => setBulkForm({ ...bulkForm, thumbnail_model_name: e.target.value })}
-                                  >
-                                    <option value="">-- Select model --</option>
-                                    {thumbnailModels.map(m => (
-                                      <option key={m.id} value={m.id}>{m.id}</option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <div style={{ color: 'var(--error)', fontSize: 14 }}>
-                                    {thumbnailModelError || 'No models available for this provider'}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          }
-                          return null
-                        })()}
+                      <div style={{ marginLeft: 24, marginTop: 8, color: 'var(--text-muted)', fontSize: 13 }}>
+                        Will be generated using default model settings
                       </div>
                     )}
                   </div>
@@ -1032,52 +900,8 @@ export default function ProjectDetail() {
                       <span>Generate with AI</span>
                     </label>
                     {bulkForm.section_images_source === 'ai' && (
-                      <div style={{ marginLeft: 24, marginTop: 8 }}>
-                        <div className="form-group" style={{ marginBottom: 8 }}>
-                          <label className="form-label">AI Provider</label>
-                          <select
-                            className="form-select"
-                            value={bulkForm.section_images_provider_id}
-                            onChange={e => {
-                              setBulkForm({ ...bulkForm, section_images_provider_id: e.target.value, section_images_model_name: '' })
-                              fetchModelsForProvider(e.target.value, 'section_images')
-                            }}
-                          >
-                            <option value="">-- Select provider --</option>
-                            {providers.filter(p => ['gemini', 'openai', 'openai_compatible'].includes(p.provider_type)).map(p => (
-                              <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                            ))}
-                          </select>
-                        </div>
-                        {bulkForm.section_images_provider_id && (() => {
-                          const provider = providers.find(p => p.id === bulkForm.section_images_provider_id)
-                          if (provider && provider.provider_type === 'openai_compatible') {
-                            return (
-                              <div className="form-group">
-                                <label className="form-label">Model Name</label>
-                                {loadingSectionImagesModels ? (
-                                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
-                                ) : sectionImagesModels.length > 0 ? (
-                                  <select
-                                    className="form-select"
-                                    value={bulkForm.section_images_model_name}
-                                    onChange={e => setBulkForm({ ...bulkForm, section_images_model_name: e.target.value })}
-                                  >
-                                    <option value="">-- Select model --</option>
-                                    {sectionImagesModels.map(m => (
-                                      <option key={m.id} value={m.id}>{m.id}</option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <div style={{ color: 'var(--error)', fontSize: 14 }}>
-                                    {sectionImagesModelError || 'No models available for this provider'}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          }
-                          return null
-                        })()}
+                      <div style={{ marginLeft: 24, marginTop: 8, color: 'var(--text-muted)', fontSize: 13 }}>
+                        Will be generated using default model settings
                       </div>
                     )}
                   </div>
