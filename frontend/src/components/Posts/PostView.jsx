@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { HiOutlineArrowLeft, HiOutlineArrowPath, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles } from 'react-icons/hi2'
-import { getPost, publishPost, unpublishPost, generateThumbnail, generateThumbnailWithOptions, generateSectionImages, getJobsByPost, getProviders, uploadThumbnail } from '../../api/client'
+import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, generateSectionImages, getJobsByPost, getProviders, uploadThumbnail } from '../../api/client'
 
 export default function PostView() {
   const { id } = useParams()
@@ -49,6 +49,8 @@ export default function PostView() {
       const actions = {
         publish: () => publishPost(id),
         unpublish: () => unpublishPost(id),
+        outline: () => generateOutline(id),
+        content: () => generateContent(id),
         thumbnail: () => generateThumbnail(id),
         section_images: () => generateSectionImages(id),
       }
@@ -131,6 +133,12 @@ export default function PostView() {
         <h1 className="page-title">{post.title || post.topic}</h1>
         <div className="page-header-actions">
           <span className={`status-badge status-${post.status}`}>{post.status.replace('_', ' ')}</span>
+          {post.research_done && !post.outline && (
+            <button className="btn btn-secondary btn-sm" onClick={() => handleAction('outline')} disabled={getStepStatus('outline') === 'running'}><HiOutlineRocketLaunch /> Generate Outline</button>
+          )}
+          {post.outline && !post.content_done && (
+            <button className="btn btn-secondary btn-sm" onClick={() => handleAction('content')} disabled={getStepStatus('content') === 'running'}><HiOutlineRocketLaunch /> Generate Content</button>
+          )}
           {post.content_done && post.status !== 'published' && (
             <button className="btn btn-success btn-sm" onClick={() => handleAction('publish')}><HiOutlineRocketLaunch /> Publish</button>
           )}
