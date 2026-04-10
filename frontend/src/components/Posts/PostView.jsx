@@ -113,6 +113,7 @@ export default function PostView() {
     { key: 'content', label: 'Content', done: post.content_done },
     { key: 'thumbnail', label: 'Thumbnail', done: post.thumbnail_done || !!post.thumbnail_url },
     { key: 'section_images', label: 'Section Images', done: post.sections_done || (post.sections && post.sections.some(s => s.image_url)) },
+    { key: 'publish', label: 'Upload to WordPress', done: post.status === 'published' },
   ]
 
   const getStepStatus = (key) => {
@@ -394,6 +395,28 @@ export default function PostView() {
                   <img src={section.image_url} alt={section.title} style={{ maxWidth: '100%', borderRadius: 'var(--radius-md)' }} />
                 </div>
               ))}
+            </>
+          )}
+          {expandedStage === 'publish' && (
+            <>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Upload to WordPress</h3>
+              {post.status === 'published' ? (
+                <div style={{ padding: 16, background: 'rgba(39, 174, 96, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(39, 174, 96, 0.2)' }}>
+                  This post has been successfully published to WordPress.
+                  {post.wp_post_id && <div style={{ marginTop: 8, fontSize: 14 }}>Post ID: {post.wp_post_id}</div>}
+                </div>
+              ) : (
+                <div style={{ padding: 16, background: 'var(--bg-glass)', color: 'var(--text-muted)', borderRadius: 'var(--radius-md)' }}>
+                  Post has not been uploaded to WordPress yet.
+                  {post.content_done && (
+                    <div style={{ marginTop: 16 }}>
+                      <button className="btn btn-success" onClick={() => handleAction('publish')} disabled={getStepStatus('publish') === 'running'}>
+                        <HiOutlineRocketLaunch /> Publish Now
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
