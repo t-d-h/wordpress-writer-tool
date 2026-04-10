@@ -160,20 +160,29 @@ export default function DefaultModels() {
             <label className="form-label">Default Model Name</label>
             {fetchingModels[sectionKey] ? (
               <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Loading models...</div>
-            ) : availableModels[sectionKey] && availableModels[sectionKey].length > 0 ? (
-              <select
-                className="form-select"
-                value={defaults[modelNameField]}
-                onChange={e => setDefaults({ ...defaults, [modelNameField]: e.target.value })}
-              >
-                <option value="">-- Select model --</option>
-                {availableModels[sectionKey].map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
             ) : (
-              <div style={{ color: 'var(--error)', fontSize: 14 }}>
-                No models available for this provider
+              <div>
+                <input
+                  type="text"
+                  className="form-input"
+                  style={{ width: '100%' }}
+                  placeholder="Enter or select model name"
+                  value={defaults[modelNameField]}
+                  onChange={e => setDefaults({ ...defaults, [modelNameField]: e.target.value })}
+                  list={`${sectionKey}-models`}
+                />
+                {availableModels[sectionKey] && availableModels[sectionKey].length > 0 && (
+                  <datalist id={`${sectionKey}-models`}>
+                    {availableModels[sectionKey].map(m => (
+                      <option key={m} value={m} />
+                    ))}
+                  </datalist>
+                )}
+                {(!availableModels[sectionKey] || availableModels[sectionKey].length === 0) && (
+                  <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>
+                    Type the exact model name. No models were automatically found for this provider.
+                  </small>
+                )}
               </div>
             )}
           </div>
