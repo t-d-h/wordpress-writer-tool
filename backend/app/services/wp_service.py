@@ -1,6 +1,7 @@
 """
 WordPress Service — publish/update posts via the WordPress REST API.
 """
+
 import base64
 import httpx
 import os
@@ -36,38 +37,64 @@ async def verify_wp_site(url: str, username: str, api_key: str) -> dict:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.get(f"{base_url}/wp-json/")
     except httpx.ConnectError:
-        return {"ok": False, "error": f"Cannot reach {base_url}. Check the URL is correct and the site is online."}
+        return {
+            "ok": False,
+            "error": f"Cannot reach {base_url}. Check the URL is correct and the site is online.",
+        }
     except httpx.TimeoutException:
-        return {"ok": False, "error": f"Connection to {base_url} timed out. The site may be slow or unreachable."}
+        return {
+            "ok": False,
+            "error": f"Connection to {base_url} timed out. The site may be slow or unreachable.",
+        }
     except httpx.RequestError as e:
         return {"ok": False, "error": f"Failed to connect: {str(e)}"}
 
     if resp.status_code != 200:
-        return {"ok": False, "error": f"WordPress REST API not available at {base_url}/wp-json/ (HTTP {resp.status_code}). Make sure WordPress REST API is enabled."}
+        return {
+            "ok": False,
+            "error": f"WordPress REST API not available at {base_url}/wp-json/ (HTTP {resp.status_code}). Make sure WordPress REST API is enabled.",
+        }
 
     # Step 2: Verify credentials via authenticated request
     try:
         auth_header = _get_auth_header(username, api_key)
         async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(f"{base_url}/wp-json/wp/v2/users/me", headers=auth_header)
+            resp = await client.get(
+                f"{base_url}/wp-json/wp/v2/users/me", headers=auth_header
+            )
     except httpx.RequestError as e:
         return {"ok": False, "error": f"Failed during credential check: {str(e)}"}
 
     if resp.status_code == 401 or resp.status_code == 403:
-        return {"ok": False, "error": "Authentication failed. Check your username and application password. Make sure Application Passwords are enabled in your WordPress user profile."}
+        return {
+            "ok": False,
+            "error": "Authentication failed. Check your username and application password. Make sure Application Passwords are enabled in your WordPress user profile.",
+        }
     if resp.status_code != 200:
-        return {"ok": False, "error": f"Credential verification failed with HTTP {resp.status_code}."}
+        return {
+            "ok": False,
+            "error": f"Credential verification failed with HTTP {resp.status_code}.",
+        }
 
     return {"ok": True}
 
 
 async def upload_media(project_id: str, file_path: str, filename: str = None) -> dict:
     """Upload an image to WordPress media library. Returns media object."""
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    logger.info(f"[UPLOAD_MEDIA] Starting upload for project {project_id}")
+    logger.info(f"[UPLOAD_MEDIA] File path: {file_path}")
+
     wp_site = await _get_wp_site(project_id)
-    headers = _get_auth_header(wp_site["username"], wp_site["api_key"])
+    auth_header = _get_auth_header(wp_site["username"], wp_site["api_key"])
 
     if not filename:
         filename = os.path.basename(file_path)
+
+    logger.info(f"[UPLOAD_MEDIA] Filename: {filename}")
 
     # Determine content type
     ext = filename.rsplit(".", 1)[-1].lower()
@@ -80,18 +107,41 @@ async def upload_media(project_id: str, file_path: str, filename: str = None) ->
     }
     content_type = content_type_map.get(ext, "image/png")
 
-    headers["Content-Disposition"] = f'attachment; filename="{filename}"'
-    headers["Content-Type"] = content_type
+    logger.info(f"[UPLOAD_MEDIA] Content type: {content_type}")
 
+    # Check if file exists
+    if not os.path.exists(file_path):
+        logger.error(f"[UPLOAD_MEDIA] File not found: {file_path}")
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    # Check file size
+    file_size = os.path.getsize(file_path)
+    logger.info(f"[UPLOAD_MEDIA] File size: {file_size} bytes")
+
+    # Read file data
     with open(file_path, "rb") as f:
         file_data = f.read()
 
+    logger.info(f"[UPLOAD_MEDIA] Read {len(file_data)} bytes from file")
+
     url = f"{wp_site['url'].rstrip('/')}/wp-json/wp/v2/media"
+    logger.info(f"[UPLOAD_MEDIA] Uploading to: {url}")
+
+    # Use multipart/form-data encoding as required by WordPress REST API
+    # Only include Authorization header - let httpx handle Content-Type and Content-Disposition
+    files = {"file": (filename, file_data, content_type)}
+    headers = {
+        "Authorization": auth_header["Authorization"],
+    }
 
     async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(url, headers=headers, content=file_data)
+        response = await client.post(url, headers=headers, files=files)
+        logger.info(f"[UPLOAD_MEDIA] Response status: {response.status_code}")
+        logger.info(f"[UPLOAD_MEDIA] Response body: {response.text[:500]}")
         response.raise_for_status()
-        return response.json()
+        result = response.json()
+        logger.info(f"[UPLOAD_MEDIA] Upload successful, media ID: {result.get('id')}")
+        return result
 
 
 async def create_wp_post(

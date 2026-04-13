@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Body
+from fastapi.responses import FileResponse
 from bson import ObjectId
 from datetime import datetime, timezone
 import uuid
@@ -30,9 +31,6 @@ def format_post(doc: dict) -> dict:
         thumbnail_source=doc.get("thumbnail_source", "ai"),
         thumbnail_provider_id=doc.get("thumbnail_provider_id"),
         thumbnail_model_name=doc.get("thumbnail_model_name"),
-        section_images_source=doc.get("section_images_source", "ai"),
-        section_images_provider_id=doc.get("section_images_provider_id"),
-        section_images_model_name=doc.get("section_images_model_name"),
         target_word_count=doc.get("target_word_count"),
         target_section_count=doc.get("target_section_count"),
         title=doc.get("title"),
@@ -46,11 +44,11 @@ def format_post(doc: dict) -> dict:
         research_done=doc.get("research_done", False),
         content_done=doc.get("content_done", False),
         thumbnail_done=doc.get("thumbnail_done", False),
-        sections_done=doc.get("sections_done", False),
         token_usage=doc.get("token_usage", {}),
         jobs=doc.get("jobs", []),
         created_at=doc["created_at"],
         wp_post_id=doc.get("wp_post_id"),
+        wp_post_url=doc.get("wp_post_url"),
     ).model_dump()
 
 
@@ -90,9 +88,6 @@ async def create_post(data: PostCreate):
         "thumbnail_source": data.thumbnail_source,
         "thumbnail_provider_id": data.thumbnail_provider_id,
         "thumbnail_model_name": data.thumbnail_model_name,
-        "section_images_source": data.section_images_source,
-        "section_images_provider_id": data.section_images_provider_id,
-        "section_images_model_name": data.section_images_model_name,
         "target_word_count": data.target_word_count,
         "target_section_count": data.target_section_count,
         "title": None,
@@ -106,18 +101,17 @@ async def create_post(data: PostCreate):
         "research_done": False,
         "content_done": False,
         "thumbnail_done": False,
-        "sections_done": False,
         "token_usage": {
             "research": 0,
             "outline": 0,
             "content": 0,
             "thumbnail": 0,
-            "section_images": 0,
             "total": 0,
         },
         "jobs": [],
         "created_at": datetime.now(timezone.utc),
         "wp_post_id": None,
+        "wp_post_url": None,
     }
     result = await posts_col.insert_one(post_doc)
     post_id = str(result.inserted_id)
@@ -188,9 +182,6 @@ async def create_bulk_posts(data: BulkPostCreate):
             thumbnail_source=data.thumbnail_source,
             thumbnail_provider_id=data.thumbnail_provider_id,
             thumbnail_model_name=data.thumbnail_model_name,
-            section_images_source=data.section_images_source,
-            section_images_provider_id=data.section_images_provider_id,
-            section_images_model_name=data.section_images_model_name,
             target_word_count=data.target_word_count,
             target_section_count=data.target_section_count,
         )
@@ -230,14 +221,20 @@ async def delete_post(post_id: str):
     return {"message": "Post deleted"}
 
 
+class PublishRequest(BaseModel):
+    force_publish: bool = False
+
+
 @router.post("/{post_id}/publish")
-async def publish_post(post_id: str):
+async def publish_post(post_id: str, request: PublishRequest = None):
     """Queue a publish job for a post."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Post not found")
     if not doc.get("content"):
         raise HTTPException(status_code=400, detail="Post has no content to publish")
+
+    force_publish = request.force_publish if request else False
 
     job_id = str(uuid.uuid4())
     job_info = {
@@ -267,6 +264,7 @@ async def publish_post(post_id: str):
             "post_id": post_id,
             "project_id": doc["project_id"],
             "job_type": "publish",
+            "force_publish": force_publish,
         }
     )
     return {"message": "Publish job queued", "job_id": job_id}
@@ -274,13 +272,60 @@ async def publish_post(post_id: str):
 
 @router.post("/{post_id}/unpublish")
 async def unpublish_post(post_id: str):
-    """Mark a post as draft."""
+    """Unpublish a post from WordPress (set to draft)."""
+    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    # Create an unpublish job entry
+    job_id = str(uuid.uuid4())
+    job_info = {
+        "job_id": job_id,
+        "job_type": "unpublish",
+        "status": "completed",
+        "error": None,
+        "started_at": datetime.now(timezone.utc),
+        "completed_at": datetime.now(timezone.utc),
+    }
+    await posts_col.update_one(
+        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+    )
+    await jobs_col.insert_one(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "unpublish",
+            "status": "completed",
+            "created_at": datetime.now(timezone.utc),
+            "started_at": datetime.now(timezone.utc),
+            "completed_at": datetime.now(timezone.utc),
+        }
+    )
+
+    # If post has a WordPress post ID, update it to draft status
+    if doc.get("wp_post_id"):
+        from app.services import wp_service
+
+        try:
+            await wp_service.update_wp_post(
+                doc["project_id"],
+                doc["wp_post_id"],
+                title=doc.get("title"),
+                content=doc.get("content", ""),
+                status="draft",
+            )
+        except Exception as e:
+            # Log error but continue with database update
+            print(f"Warning: Failed to update WordPress post: {e}")
+
+    # Update database status
     result = await posts_col.update_one(
         {"_id": ObjectId(post_id)}, {"$set": {"status": "draft"}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Post not found")
-    return {"message": "Post unpublished"}
+    return {"message": "Post unpublished", "job_id": job_id}
 
 
 @router.post("/{post_id}/generate-outline")
@@ -429,94 +474,122 @@ async def upload_thumbnail(post_id: str, file: UploadFile = File(...)):
         content = await file.read()
         f.write(content)
 
-    await posts_col.update_one(
-        {"_id": ObjectId(post_id)},
-        {
-            "$set": {
-                "thumbnail_url": filepath,
-                "thumbnail_done": True,
-            }
-        },
-    )
+    # Resize to 150x150 square
+    from app.utils.image_utils import resize_to_square
 
-    return {"message": "Thumbnail uploaded", "thumbnail_url": filepath}
+    resized_path = resize_to_square(filepath, size=150)
 
-
-@router.post("/{post_id}/upload-section-images")
-async def upload_section_images(post_id: str, files: List[UploadFile] = File(...)):
-    """Upload multiple section images for a post."""
-    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Post not found")
-
-    uploaded_files = []
-    for file in files:
-        if not file.content_type or not file.content_type.startswith("image/"):
-            raise HTTPException(status_code=400, detail="Only image files are allowed")
-
-        ext = file.filename.split(".")[-1] if file.filename else "jpg"
-        filename = f"{uuid.uuid4()}.{ext}"
-        filepath = f"/tmp/wp_images/{filename}"
-
-        os.makedirs("/tmp/wp_images", exist_ok=True)
-        with open(filepath, "wb") as f:
-            content = await file.read()
-            f.write(content)
-
-        uploaded_files.append(filepath)
-
-    # Store uploaded file paths in the post document
-    # They will be assigned to sections after outline generation
-    await posts_col.update_one(
-        {"_id": ObjectId(post_id)},
-        {
-            "$set": {
-                "uploaded_section_images": uploaded_files,
-            }
-        },
-    )
-
-    return {
-        "message": f"Uploaded {len(uploaded_files)} section images",
-        "files": uploaded_files,
-    }
-
-
-@router.post("/{post_id}/generate-section-images")
-async def generate_section_images(post_id: str):
-    """Queue section images generation job."""
-    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Post not found")
-
+    # Create a completed job entry for tracking
     job_id = str(uuid.uuid4())
     job_info = {
         "job_id": job_id,
-        "job_type": "section_images",
-        "status": "pending",
+        "job_type": "thumbnail",
+        "status": "completed",
         "error": None,
-        "started_at": None,
-        "completed_at": None,
+        "started_at": datetime.now(timezone.utc),
+        "completed_at": datetime.now(timezone.utc),
     }
+
     await posts_col.update_one(
-        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+        {"_id": ObjectId(post_id)},
+        {
+            "$set": {
+                "thumbnail_url": resized_path,
+                "thumbnail_done": True,
+            },
+            "$push": {"jobs": job_info},
+        },
     )
+
+    # Store job in jobs collection for tracking
     await jobs_col.insert_one(
         {
             "job_id": job_id,
             "post_id": post_id,
             "project_id": doc["project_id"],
-            "job_type": "section_images",
-            "status": "pending",
+            "job_type": "thumbnail",
+            "status": "completed",
             "created_at": datetime.now(timezone.utc),
+            "started_at": datetime.now(timezone.utc),
+            "completed_at": datetime.now(timezone.utc),
         }
     )
-    await publish_job(
-        {
-            "job_id": job_id,
-            "post_id": post_id,
-            "project_id": doc["project_id"],
-            "job_type": "section_images",
+
+    return {"message": "Thumbnail uploaded and resized", "thumbnail_url": resized_path}
+
+
+@router.get("/{post_id}/thumbnail")
+async def get_thumbnail(post_id: str):
+    """Serve the thumbnail image for a post."""
+    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    thumbnail_url = doc.get("thumbnail_url")
+    if not thumbnail_url:
+        raise HTTPException(status_code=404, detail="No thumbnail found for this post")
+
+    if not os.path.exists(thumbnail_url):
+        raise HTTPException(
+            status_code=404, detail="Thumbnail file not found on server"
+        )
+
+    return FileResponse(thumbnail_url)
+
+
+@router.post("/{post_id}/update-thumbnail-to-wp")
+async def update_thumbnail_to_wp(post_id: str):
+    """Upload thumbnail to WordPress and set as featured image."""
+    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    if not doc.get("thumbnail_url"):
+        raise HTTPException(status_code=400, detail="No thumbnail found for this post")
+
+    # Import wp_service
+    from app.services import wp_service
+
+    try:
+        # Upload thumbnail to WordPress media library
+        media = await wp_service.upload_media(doc["project_id"], doc["thumbnail_url"])
+        thumbnail_media_id = media.get("id")
+
+        # Update WordPress post with featured image
+        if doc.get("wp_post_id"):
+            # Post exists in WordPress, update it
+            wp_post = await wp_service.update_wp_post(
+                doc["project_id"],
+                doc["wp_post_id"],
+                thumbnail_media_id=thumbnail_media_id,
+            )
+        else:
+            # Post doesn't exist in WordPress yet, create it as draft
+            wp_post = await wp_service.create_wp_post(
+                doc["project_id"],
+                title=doc.get("title", doc["topic"]),
+                content=doc.get("content", ""),
+                meta_description=doc.get("meta_description", ""),
+                thumbnail_media_id=thumbnail_media_id,
+                status="draft",
+            )
+
+        # Update database with WordPress post info
+        await posts_col.update_one(
+            {"_id": ObjectId(post_id)},
+            {
+                "$set": {
+                    "wp_post_id": wp_post.get("id"),
+                    "wp_post_url": wp_post.get("link"),
+                }
+            },
+        )
+
+        return {
+            "message": "Thumbnail uploaded to WordPress and set as featured image",
+            "media_id": thumbnail_media_id,
+            "wp_post_id": wp_post.get("id"),
+            "wp_post_url": wp_post.get("link"),
         }
-    )
-    return {"message": "Section images generation queued", "job_id": job_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

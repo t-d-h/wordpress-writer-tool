@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { HiOutlineArrowLeft, HiOutlineArrowPath, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles } from 'react-icons/hi2'
-import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, generateSectionImages, getJobsByPost, getProviders, uploadThumbnail } from '../../api/client'
+import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP } from '../../api/client'
 
 export default function PostView() {
   const { id } = useParams()
@@ -11,10 +11,18 @@ export default function PostView() {
   const [loading, setLoading] = useState(true)
   const [expandedStage, setExpandedStage] = useState(null)
   const [thumbnailTab, setThumbnailTab] = useState('generate')
-  const [thumbnailForm, setThumbnailForm] = useState({ providerId: '', modelName: '' })
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
   const [generatingThumbnail, setGeneratingThumbnail] = useState(false)
+  const [updatingThumbnailToWP, setUpdatingThumbnailToWP] = useState(false)
   const [providers, setProviders] = useState([])
+  const [defaultModels, setDefaultModels] = useState({
+    writing_provider_id: '',
+    writing_model_name: '',
+    image_provider_id: '',
+    image_model_name: '',
+    video_provider_id: '',
+    video_model_name: '',
+  })
   const [selectedFile, setSelectedFile] = useState(null)
   const [filePreview, setFilePreview] = useState(null)
 
@@ -32,6 +40,21 @@ export default function PostView() {
     getProviders().then(res => setProviders(res.data)).catch(console.error)
   }, [])
 
+  useEffect(() => {
+    getDefaultModels().then(res => {
+      if (res.data && res.data.id) {
+        setDefaultModels({
+          writing_provider_id: res.data.writing_provider_id || '',
+          writing_model_name: res.data.writing_model_name || '',
+          image_provider_id: res.data.image_provider_id || '',
+          image_model_name: res.data.image_model_name || '',
+          video_provider_id: res.data.video_provider_id || '',
+          video_model_name: res.data.video_model_name || '',
+        })
+      }
+    }).catch(console.error)
+  }, [])
+
   const load = async () => {
     try {
       const [postRes, jobsRes] = await Promise.all([getPost(id), getJobsByPost(id)])
@@ -47,12 +70,11 @@ export default function PostView() {
   const handleAction = async (action) => {
     try {
       const actions = {
-        publish: () => publishPost(id),
+        publish: () => publishPost(id, true),
         unpublish: () => unpublishPost(id),
         outline: () => generateOutline(id),
         content: () => generateContent(id),
         thumbnail: () => generateThumbnail(id),
-        section_images: () => generateSectionImages(id),
       }
       await actions[action]?.()
       load()
@@ -62,14 +84,19 @@ export default function PostView() {
   }
 
   const handleStageClick = (stepKey, isDone) => {
-    if (!isDone) return
+    // Allow clicking on thumbnail and publish stages even if not done (to show options/guidance)
+    if (!isDone && stepKey !== 'thumbnail' && stepKey !== 'publish') return
     setExpandedStage(expandedStage === stepKey ? null : stepKey)
   }
 
   const handleGenerateThumbnail = async () => {
+    if (!defaultModels.image_provider_id || !defaultModels.image_model_name) {
+      alert('Please configure default image provider and model in settings first')
+      return
+    }
     try {
       setGeneratingThumbnail(true)
-      await generateThumbnailWithOptions(id, thumbnailForm.providerId, thumbnailForm.modelName)
+      await generateThumbnailWithOptions(id, defaultModels.image_provider_id, defaultModels.image_model_name)
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
@@ -104,6 +131,23 @@ export default function PostView() {
     }
   }
 
+  const handleUpdateThumbnailToWP = async () => {
+    if (!post.thumbnail_url) {
+      alert('No thumbnail to upload')
+      return
+    }
+    try {
+      setUpdatingThumbnailToWP(true)
+      const res = await updateThumbnailToWP(id)
+      alert('Thumbnail uploaded to WordPress successfully!')
+      load()
+    } catch (e) {
+      alert('Error: ' + (e.response?.data?.detail || e.message))
+    } finally {
+      setUpdatingThumbnailToWP(false)
+    }
+  }
+
   if (loading) return <div className="loading-page"><div className="loading-spinner" /></div>
   if (!post) return <div className="empty-state"><div className="empty-state-title">Post not found</div></div>
 
@@ -112,12 +156,18 @@ export default function PostView() {
     { key: 'outline', label: 'Outline', done: !!post.outline },
     { key: 'content', label: 'Content', done: post.content_done },
     { key: 'thumbnail', label: 'Thumbnail', done: post.thumbnail_done || !!post.thumbnail_url },
-    { key: 'section_images', label: 'Section Images', done: post.sections_done || (post.sections && post.sections.some(s => s.image_url)) },
     { key: 'publish', label: 'Upload to WordPress', done: post.status === 'published' },
   ]
 
   const getStepStatus = (key) => {
     const job = jobs.find(j => j.job_type === key)
+    if (!job) return 'idle'
+    return job.status
+  }
+
+  const getStepDisplayStatus = (key, isDone) => {
+    const job = jobs.find(j => j.job_type === key)
+    if (isDone) return 'completed'
     if (!job) return 'idle'
     return job.status
   }
@@ -143,11 +193,8 @@ export default function PostView() {
           {post.content_done && post.status !== 'published' && (
             <button className="btn btn-success btn-sm" onClick={() => handleAction('publish')}><HiOutlineRocketLaunch /> Publish</button>
           )}
-          {post.status === 'published' && (
+          {post.wp_post_id && (
             <button className="btn btn-danger btn-sm" onClick={() => handleAction('unpublish')}><HiOutlineStop /> Unpublish</button>
-          )}
-          {post.content_done && !post.sections_done && (
-            <button className="btn btn-secondary btn-sm" onClick={() => handleAction('section_images')}><HiOutlineArrowPath /> Generate Section Images</button>
           )}
         </div>
       </div>
@@ -170,10 +217,6 @@ export default function PostView() {
           <div className="token-value">{(tu.thumbnail || 0).toLocaleString()}</div>
         </div>
         <div className="token-item">
-          <div className="token-label">Section Images</div>
-          <div className="token-value">{(tu.section_images || 0).toLocaleString()}</div>
-        </div>
-        <div className="token-item">
           <div className="token-label">Total</div>
           <div className="token-value">{(tu.total || 0).toLocaleString()}</div>
         </div>
@@ -183,14 +226,14 @@ export default function PostView() {
         <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Pipeline Progress</h3>
         <div className="pipeline-steps">
           {pipelineSteps.map((step, index) => {
-            const status = getStepStatus(step.key)
+            const status = getStepDisplayStatus(step.key, step.done)
             const cls = step.done ? 'done' : status === 'running' ? 'active' : status === 'failed' ? 'error' : ''
             const isLast = index === pipelineSteps.length - 1
             const isExpanded = expandedStage === step.key
             return (
               <div key={step.key} className="pipeline-step-wrapper">
                 <div
-                  className={`pipeline-step ${cls} ${isExpanded ? 'expanded' : ''} ${step.done ? 'clickable' : ''}`}
+                  className={`pipeline-step ${cls} ${isExpanded ? 'expanded' : ''} ${step.done || step.key === 'thumbnail' || step.key === 'publish' ? 'clickable' : ''}`}
                   onClick={() => handleStageClick(step.key, step.done)}
                 >
                   <div className="pipeline-step-icon">
@@ -198,7 +241,7 @@ export default function PostView() {
                   </div>
                   <div className="pipeline-step-label">{step.label}</div>
                   <div className="pipeline-step-status">
-                    {status === 'running' ? 'Running...' : status === 'failed' ? 'Failed' : step.done ? 'Completed' : 'Pending'}
+                    {status === 'running' ? 'Running...' : status === 'failed' ? 'Failed' : status === 'completed' || step.done ? 'Completed' : 'Pending'}
                   </div>
                 </div>
                 {!isLast && <div className="pipeline-connector" />}
@@ -277,7 +320,18 @@ export default function PostView() {
             <>
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Thumbnail</h3>
               {post.thumbnail_url ? (
-                <img src={post.thumbnail_url} alt="Thumbnail" style={{ maxWidth: '100%', borderRadius: 'var(--radius-md)', marginBottom: 16 }} />
+                <>
+                  <img src={`/api/posts/${id}/thumbnail`} alt="Thumbnail" style={{ maxWidth: '100%', borderRadius: 'var(--radius-md)', marginBottom: 16 }} />
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={handleUpdateThumbnailToWP}
+                    disabled={updatingThumbnailToWP}
+                    style={{ marginBottom: 16 }}
+                  >
+                    {updatingThumbnailToWP ? <span className="loading-spinner" style={{ width: 16, height: 16 }} /> : <HiOutlineCloudArrowUp />}
+                    {updatingThumbnailToWP ? ' Uploading...' : ' Upload to WordPress'}
+                  </button>
+                </>
               ) : (
                 <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)', background: 'var(--bg-glass)', borderRadius: 'var(--radius-md)', marginBottom: 16 }}>
                   No thumbnail generated yet
@@ -294,46 +348,32 @@ export default function PostView() {
               {thumbnailTab === 'generate' && (
                 <div style={{ padding: 20, background: 'var(--bg-glass)', borderRadius: 'var(--radius-md)', marginBottom: 16 }}>
                   <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--text-heading)' }}>Generate Thumbnail with AI</h4>
-                  <div className="form-group">
-                    <label className="form-label">AI Provider</label>
-                    <select
-                      className="form-select"
-                      value={thumbnailForm.providerId}
-                      onChange={(e) => setThumbnailForm({ ...thumbnailForm, providerId: e.target.value, modelName: '' })}
-                    >
-                      <option value="">Select provider</option>
-                      {providers.filter(p => p.provider_type === 'gemini' || p.provider_type === 'openai').map(p => (
-                        <option key={p.id} value={p.id}>{p.name} ({p.provider_type})</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Model</label>
-                    <select
-                      className="form-select"
-                      value={thumbnailForm.modelName}
-                      onChange={(e) => setThumbnailForm({ ...thumbnailForm, modelName: e.target.value })}
-                      disabled={!thumbnailForm.providerId}
-                    >
-                      <option value="">Select model</option>
-                      {thumbnailForm.providerId && (() => {
-                        const provider = providers.find(p => p.id === thumbnailForm.providerId)
-                        if (!provider) return null
-                        const models = provider.provider_type === 'gemini'
-                          ? ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash']
-                          : ['dall-e-3', 'dall-e-2']
-                        return models.map(m => <option key={m} value={m}>{m}</option>)
-                      })()}
-                    </select>
-                  </div>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleGenerateThumbnail}
-                    disabled={!thumbnailForm.providerId || !thumbnailForm.modelName || generatingThumbnail}
-                  >
-                    {generatingThumbnail ? <span className="loading-spinner" style={{ width: 16, height: 16 }} /> : <HiOutlineSparkles />}
-                    {generatingThumbnail ? ' Generating...' : ' Generate'}
-                  </button>
+                  {defaultModels.image_provider_id && defaultModels.image_model_name ? (
+                    <>
+                      <div style={{ marginBottom: 16 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Using Default Settings</div>
+                        <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                          Provider: {providers.find(p => p.id === defaultModels.image_provider_id)?.name || defaultModels.image_provider_id}
+                        </div>
+                        <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                          Model: {defaultModels.image_model_name}
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleGenerateThumbnail}
+                        disabled={generatingThumbnail}
+                      >
+                        {generatingThumbnail ? <span className="loading-spinner" style={{ width: 16, height: 16 }} /> : <HiOutlineSparkles />}
+                        {generatingThumbnail ? ' Generating...' : ' Generate'}
+                      </button>
+                    </>
+                  ) : (
+                    <div style={{ padding: 16, background: 'rgba(255, 152, 0, 0.1)', color: 'var(--warning)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 152, 0, 0.2)' }}>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>Default Image Provider Not Configured</div>
+                      <div style={{ fontSize: 13 }}>Please configure a default image provider and model in Settings before generating thumbnails.</div>
+                    </div>
+                  )}
                 </div>
               )}
               {thumbnailTab === 'upload' && (
@@ -385,34 +425,42 @@ export default function PostView() {
                 </div>
               )}
             </>
-          )}
-          {expandedStage === 'section_images' && post.sections && post.sections.length > 0 && post.sections.some(s => s.image_url) && (
-            <>
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Section Images</h3>
-              {post.sections.filter(s => s.image_url).map((section, i) => (
-                <div key={i} style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>{section.title}</div>
-                  <img src={section.image_url} alt={section.title} style={{ maxWidth: '100%', borderRadius: 'var(--radius-md)' }} />
-                </div>
-              ))}
-            </>
-          )}
-          {expandedStage === 'publish' && (
+               )}
+           {expandedStage === 'publish' && (
             <>
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Upload to WordPress</h3>
               {post.status === 'published' ? (
                 <div style={{ padding: 16, background: 'rgba(39, 174, 96, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(39, 174, 96, 0.2)' }}>
                   This post has been successfully published to WordPress.
-                  {post.wp_post_id && <div style={{ marginTop: 8, fontSize: 14 }}>Post ID: {post.wp_post_id}</div>}
+                  {post.wp_post_url && (
+                    <div style={{ marginTop: 8, fontSize: 14 }}>
+                      <a href={post.wp_post_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--success)', textDecoration: 'underline' }}>
+                        {post.wp_post_url}
+                      </a>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div style={{ padding: 16, background: 'var(--bg-glass)', color: 'var(--text-muted)', borderRadius: 'var(--radius-md)' }}>
-                  Post has not been uploaded to WordPress yet.
-                  {post.content_done && (
-                    <div style={{ marginTop: 16 }}>
-                      <button className="btn btn-success" onClick={() => handleAction('publish')} disabled={getStepStatus('publish') === 'running'}>
-                        <HiOutlineRocketLaunch /> Publish Now
-                      </button>
+                  {post.content_done ? (
+                    <>
+                      <div>Post has not been uploaded to WordPress yet.</div>
+                      <div style={{ marginTop: 16 }}>
+                        <button className="btn btn-success" onClick={() => handleAction('publish')} disabled={getStepStatus('publish') === 'running'}>
+                          <HiOutlineRocketLaunch /> Publish Now
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <div style={{ marginBottom: 8 }}>Post content must be generated before publishing.</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                        {!post.outline ? (
+                          <>Please generate the outline first, then generate the content.</>
+                        ) : (
+                          <>Please generate the content first.</>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

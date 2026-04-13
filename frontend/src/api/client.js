@@ -42,7 +42,7 @@ export const createPost = (data) => api.post('/posts', data);
 export const createBulkPosts = (data) => api.post('/posts/bulk', data);
 export const updatePost = (id, data) => api.put(`/posts/${id}`, data);
 export const deletePost = (id) => api.delete(`/posts/${id}`);
-export const publishPost = (id) => api.post(`/posts/${id}/publish`);
+export const publishPost = (id, forcePublish = false) => api.post(`/posts/${id}/publish`, { force_publish: forcePublish });
 export const unpublishPost = (id) => api.post(`/posts/${id}/unpublish`);
 export const generateOutline = (id) => api.post(`/posts/${id}/generate-outline`);
 export const generateContent = (id) => api.post(`/posts/${id}/generate-content`);
@@ -56,18 +56,11 @@ export const uploadThumbnail = (id, file) => {
   });
 };
 
+export const updateThumbnailToWP = (id) =>
+  api.post(`/posts/${id}/update-thumbnail-to-wp`);
+
 export const generateThumbnailWithOptions = (id, providerId, modelName) =>
   api.post(`/posts/${id}/generate-thumbnail`, { provider_id: providerId, model_name: modelName });
-
-export const generateSectionImages = (id) => api.post(`/posts/${id}/generate-section-images`);
-
-export const uploadSectionImages = (id, files) => {
-  const formData = new FormData();
-  files.forEach(file => formData.append('files', file));
-  return api.post(`/posts/${id}/upload-section-images`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-};
 
 // Jobs
 export const getDashboardStats = () => api.get('/jobs/dashboard-stats');

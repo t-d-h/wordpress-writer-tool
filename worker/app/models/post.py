@@ -35,7 +35,7 @@ class PostUpdate(BaseModel):
 
 class JobInfo(BaseModel):
     job_id: str
-    job_type: str  # research, outline, content, thumbnail, section_images, publish
+    job_type: str  # research, outline, content, thumbnail, publish
     status: str  # pending, running, completed, failed
     error: Optional[str] = None
     started_at: Optional[datetime] = None
@@ -47,7 +47,6 @@ class TokenUsage(BaseModel):
     outline: int = 0
     content: int = 0
     thumbnail: int = 0
-    section_images: int = 0
     total: int = 0
 
 
@@ -69,7 +68,6 @@ class PostResponse(BaseModel):
     research_done: bool = False
     content_done: bool = False
     thumbnail_done: bool = False
-    sections_done: bool = False
     token_usage: TokenUsage = TokenUsage()
     jobs: List[JobInfo] = []
     created_at: datetime

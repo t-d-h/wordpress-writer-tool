@@ -15,7 +15,6 @@ from app.workers.tasks import (
     run_outline,
     run_content,
     run_thumbnail,
-    run_section_images,
     run_publish,
 )
 
@@ -26,7 +25,6 @@ TASK_MAP = {
     "outline": run_outline,
     "content": run_content,
     "thumbnail": run_thumbnail,
-    "section_images": run_section_images,
     "publish": run_publish,
 }
 

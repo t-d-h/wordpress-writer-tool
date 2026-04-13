@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateSectionImages, getProviders, getProviderModels, getDefaultModels } from '../../api/client'
+import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath } from 'react-icons/hi2'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels } from '../../api/client'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -23,13 +23,9 @@ export default function ProjectDetail() {
     thumbnail_source: 'ai',
     thumbnail_provider_id: '',
     thumbnail_model_name: '',
-    section_images_source: 'ai',
-    section_images_provider_id: '',
-    section_images_model_name: '',
     target_word_count: 500,
     target_section_count: 4,
-    thumbnail_file: null,
-    section_image_files: []
+    thumbnail_file: null
   })
   const [bulkForm, setBulkForm] = useState({
     topics: '',
@@ -40,13 +36,9 @@ export default function ProjectDetail() {
     thumbnail_source: 'ai',
     thumbnail_provider_id: '',
     thumbnail_model_name: '',
-    section_images_source: 'ai',
-    section_images_provider_id: '',
-    section_images_model_name: '',
     target_word_count: 500,
     target_section_count: 4,
-    thumbnail_file: null,
-    section_image_files: []
+    thumbnail_file: null
   })
   const [providers, setProviders] = useState([])
   const [contentModels, setContentModels] = useState([])
@@ -55,9 +47,6 @@ export default function ProjectDetail() {
   const [thumbnailModels, setThumbnailModels] = useState([])
   const [loadingThumbnailModels, setLoadingThumbnailModels] = useState(false)
   const [thumbnailModelError, setThumbnailModelError] = useState(null)
-  const [sectionImagesModels, setSectionImagesModels] = useState([])
-  const [loadingSectionImagesModels, setLoadingSectionImagesModels] = useState(false)
-  const [sectionImagesModelError, setSectionImagesModelError] = useState(null)
   const [defaultModels, setDefaultModels] = useState({
     writing_provider_id: '',
     writing_model_name: '',
@@ -68,6 +57,24 @@ export default function ProjectDetail() {
   })
 
   useEffect(() => { load() }, [id])
+
+  useEffect(() => {
+    let interval = null
+
+    const hasActiveJobs = posts.some(p => 
+      p.jobs?.some(j => j.status === 'pending' || j.status === 'running')
+    )
+
+    if (hasActiveJobs) {
+      interval = setInterval(() => {
+        load()
+      }, 3000)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [posts, id])
 
   useEffect(() => {
     if (showCreateModal) {
@@ -82,13 +89,9 @@ export default function ProjectDetail() {
           thumbnail_source: 'ai',
           thumbnail_provider_id: defaultModels.image_provider_id || '',
           thumbnail_model_name: defaultModels.image_model_name || '',
-          section_images_source: 'ai',
-          section_images_provider_id: defaultModels.image_provider_id || '',
-          section_images_model_name: defaultModels.image_model_name || '',
           target_word_count: 500,
           target_section_count: 4,
-          thumbnail_file: null,
-          section_image_files: []
+          thumbnail_file: null
         })
       } else {
         setBulkForm({
@@ -100,13 +103,9 @@ export default function ProjectDetail() {
           thumbnail_source: 'ai',
           thumbnail_provider_id: defaultModels.image_provider_id || '',
           thumbnail_model_name: defaultModels.image_model_name || '',
-          section_images_source: 'ai',
-          section_images_provider_id: defaultModels.image_provider_id || '',
-          section_images_model_name: defaultModels.image_model_name || '',
           target_word_count: 500,
           target_section_count: 4,
-          thumbnail_file: null,
-          section_image_files: []
+          thumbnail_file: null
         })
       }
 
@@ -119,18 +118,12 @@ export default function ProjectDetail() {
           if (defaultModels.image_provider_id) {
             await fetchModelsForProvider(defaultModels.image_provider_id, 'thumbnail')
           }
-          if (defaultModels.image_provider_id) {
-            await fetchModelsForProvider(defaultModels.image_provider_id, 'section_images')
-          }
         } else {
           if (defaultModels.writing_provider_id) {
             await fetchModelsForProvider(defaultModels.writing_provider_id, 'content')
           }
           if (defaultModels.image_provider_id) {
             await fetchModelsForProvider(defaultModels.image_provider_id, 'thumbnail')
-          }
-          if (defaultModels.image_provider_id) {
-            await fetchModelsForProvider(defaultModels.image_provider_id, 'section_images')
           }
         }
       }
@@ -146,13 +139,9 @@ export default function ProjectDetail() {
         thumbnail_source: 'ai',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
-        section_images_source: 'ai',
-        section_images_provider_id: '',
-        section_images_model_name: '',
         target_word_count: 500,
         target_section_count: 4,
-        thumbnail_file: null,
-        section_image_files: []
+        thumbnail_file: null
       })
       setBulkForm({
         topics: '',
@@ -163,16 +152,12 @@ export default function ProjectDetail() {
         thumbnail_source: 'ai',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
-        section_images_source: 'ai',
-        section_images_provider_id: '',
-        section_images_model_name: '',
         target_word_count: 500,
         target_section_count: 4,
-        thumbnail_file: null,
-        section_image_files: []
+        thumbnail_file: null
       })
     }
-  }, [showCreateModal, createMode, defaultModels])
+  }, [showCreateModal, createMode])
 
   const load = async () => {
     try {
@@ -203,8 +188,6 @@ export default function ProjectDetail() {
           model_name: defaultsRes.data.writing_model_name || '',
           thumbnail_provider_id: defaultsRes.data.image_provider_id || '',
           thumbnail_model_name: defaultsRes.data.image_model_name || '',
-          section_images_provider_id: defaultsRes.data.image_provider_id || '',
-          section_images_model_name: defaultsRes.data.image_model_name || '',
         }))
         
         setBulkForm(prev => ({
@@ -213,8 +196,6 @@ export default function ProjectDetail() {
           model_name: defaultsRes.data.writing_model_name || '',
           thumbnail_provider_id: defaultsRes.data.image_provider_id || '',
           thumbnail_model_name: defaultsRes.data.image_model_name || '',
-          section_images_provider_id: defaultsRes.data.image_provider_id || '',
-          section_images_model_name: defaultsRes.data.image_model_name || '',
         }))
       }
     } catch (e) {
@@ -231,14 +212,6 @@ export default function ProjectDetail() {
       const provider = providers.find(p => p.id === singleForm.thumbnail_provider_id)
       if (provider && provider.provider_type === 'openai_compatible' && !singleForm.thumbnail_model_name) {
         alert('Please select a model for thumbnail generation')
-        return
-      }
-    }
-
-    if (singleForm.section_images_source === 'ai' && singleForm.section_images_provider_id) {
-      const provider = providers.find(p => p.id === singleForm.section_images_provider_id)
-      if (provider && provider.provider_type === 'openai_compatible' && !singleForm.section_images_model_name) {
-        alert('Please select a model for section image generation')
         return
       }
     }
@@ -262,13 +235,11 @@ export default function ProjectDetail() {
       formData.append('thumbnail_source', singleForm.thumbnail_source)
       if (singleForm.thumbnail_provider_id) formData.append('thumbnail_provider_id', singleForm.thumbnail_provider_id)
       if (singleForm.thumbnail_model_name) formData.append('thumbnail_model_name', singleForm.thumbnail_model_name)
-      formData.append('section_images_source', singleForm.section_images_source)
-      if (singleForm.section_images_provider_id) formData.append('section_images_provider_id', singleForm.section_images_provider_id)
-      if (singleForm.section_images_model_name) formData.append('section_images_model_name', singleForm.section_images_model_name)
       if (singleForm.target_word_count) formData.append('target_word_count', singleForm.target_word_count)
       if (singleForm.target_section_count) formData.append('target_section_count', singleForm.target_section_count)
 
       const response = await createPost(Object.fromEntries(formData))
+
       setShowCreateModal(false)
       setSingleForm({
         topic: '',
@@ -279,13 +250,9 @@ export default function ProjectDetail() {
         thumbnail_source: 'ai',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
-        section_images_source: 'ai',
-        section_images_provider_id: '',
-        section_images_model_name: '',
         target_word_count: 500,
         target_section_count: 4,
-        thumbnail_file: null,
-        section_image_files: []
+        thumbnail_file: null
       })
       load()
       if (response?.data?.id) {
@@ -309,14 +276,6 @@ export default function ProjectDetail() {
       }
     }
 
-    if (bulkForm.section_images_source === 'ai' && bulkForm.section_images_provider_id) {
-      const provider = providers.find(p => p.id === bulkForm.section_images_provider_id)
-      if (provider && provider.provider_type === 'openai_compatible' && !bulkForm.section_images_model_name) {
-        alert('Please select a model for section image generation')
-        return
-      }
-    }
-
     if (bulkForm.ai_provider_id) {
       const provider = providers.find(p => p.id === bulkForm.ai_provider_id)
       if (provider && provider.provider_type === 'openai_compatible' && !bulkForm.model_name) {
@@ -336,9 +295,6 @@ export default function ProjectDetail() {
         thumbnail_source: bulkForm.thumbnail_source,
         thumbnail_provider_id: bulkForm.thumbnail_provider_id,
         thumbnail_model_name: bulkForm.thumbnail_model_name,
-        section_images_source: bulkForm.section_images_source,
-        section_images_provider_id: bulkForm.section_images_provider_id,
-        section_images_model_name: bulkForm.section_images_model_name,
         target_word_count: bulkForm.target_word_count,
         target_section_count: bulkForm.target_section_count,
       })
@@ -352,13 +308,9 @@ export default function ProjectDetail() {
         thumbnail_source: 'ai',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
-        section_images_source: 'ai',
-        section_images_provider_id: '',
-        section_images_model_name: '',
         target_word_count: 500,
         target_section_count: 4,
-        thumbnail_file: null,
-        section_image_files: []
+        thumbnail_file: null
       })
       load()
     } catch (e) {
@@ -370,12 +322,11 @@ export default function ProjectDetail() {
     try {
       const actions = {
         delete: () => { if (confirm('Delete this post?')) return deletePost(postId); return null },
-        publish: () => publishPost(postId),
+        publish: () => publishPost(postId, true),
         unpublish: () => unpublishPost(postId),
         outline: () => generateOutline(postId),
         content: () => generateContent(postId),
         thumbnail: () => generateThumbnail(postId),
-        section_images: () => generateSectionImages(postId),
       }
       const result = await actions[action]?.()
       if (result !== null) load()
@@ -401,9 +352,6 @@ export default function ProjectDetail() {
       } else if (section === 'thumbnail') {
         setThumbnailModels([])
         setThumbnailModelError(null)
-      } else if (section === 'section_images') {
-        setSectionImagesModels([])
-        setSectionImagesModelError(null)
       }
       return
     }
@@ -414,9 +362,6 @@ export default function ProjectDetail() {
     } else if (section === 'thumbnail') {
       setLoadingThumbnailModels(true)
       setThumbnailModelError(null)
-    } else if (section === 'section_images') {
-      setLoadingSectionImagesModels(true)
-      setSectionImagesModelError(null)
     }
 
     try {
@@ -432,11 +377,6 @@ export default function ProjectDetail() {
         if (models.length === 0) {
           setThumbnailModelError('No models available for this provider')
         }
-      } else if (section === 'section_images') {
-        setSectionImagesModels(models)
-        if (models.length === 0) {
-          setSectionImagesModelError('No models available for this provider')
-        }
       }
     } catch (e) {
       console.error('Failed to fetch models:', e)
@@ -447,17 +387,12 @@ export default function ProjectDetail() {
       } else if (section === 'thumbnail') {
         setThumbnailModels([])
         setThumbnailModelError(errorMsg)
-      } else if (section === 'section_images') {
-        setSectionImagesModels([])
-        setSectionImagesModelError(errorMsg)
       }
     } finally {
       if (section === 'content') {
         setLoadingContentModels(false)
       } else if (section === 'thumbnail') {
         setLoadingThumbnailModels(false)
-      } else if (section === 'section_images') {
-        setLoadingSectionImagesModels(false)
       }
     }
   }
@@ -517,64 +452,54 @@ export default function ProjectDetail() {
                   <tr>
                     <th>Title / Topic</th>
                     <th>Research</th>
+                    <th>Outline</th>
                     <th>Content</th>
                     <th>Thumb</th>
-                    <th>Sections</th>
+                    <th>Uploaded</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {posts.map(p => (
-                    <tr key={p.id}>
-                      <td>
-                        <button 
-                          className="link-button" 
-                          onClick={() => navigate(`/posts/${p.id}`)}
-                          style={{ fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, textAlign: 'left', fontSize: 'inherit' }}
-                        >
-                          {p.title || p.topic}
-                        </button>
-                      </td>
-                      <td><BoolBadge value={p.research_done} /></td>
-                      <td><BoolBadge value={p.content_done} /></td>
-                      <td><BoolBadge value={p.thumbnail_done} /></td>
-                      <td><BoolBadge value={p.sections_done} /></td>
-                      <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
-                      <td>
-                        <div className="action-buttons">
-                          <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)}>View</button>
-                          {p.research_done && !p.title && (
-                            <button className="action-btn" onClick={() => handleAction('outline', p.id)}>Generate</button>
-                          )}
-                          {p.title && !p.content_done && (
-                            <button className="action-btn" onClick={() => handleAction('content', p.id)}>Generate</button>
-                          )}
-                          {p.title && !p.thumbnail_done && (
-                            <button className="action-btn" onClick={() => handleAction('thumbnail', p.id)}>Generate</button>
-                          )}
-                          {p.content_done && p.status !== 'published' && (
-                            <button className="action-btn" onClick={() => handleAction('publish', p.id)}>Publish</button>
-                          )}
-                          {p.status === 'published' && (
-                            <>
-                              <button className="action-btn" onClick={() => handleAction('unpublish', p.id)}>Unpublish</button>
-                              {p.wp_post_id && project.wp_site_url && (
-                                <a 
-                                  className="action-btn" 
-                                  href={`${project.wp_site_url}/?p=${p.wp_post_id}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ textDecoration: 'none', display: 'inline-block' }}
-                                >
-                                  View on WordPress
-                                </a>
-                              )}
-                            </>
-                          )}
-                          <button className="action-btn danger" onClick={() => handleAction('delete', p.id)}>Delete</button>
-                        </div>
-                      </td>
+                   {posts.map(p => (
+                     <tr key={p.id}>
+                       <td>
+                         <button
+                           className="link-button"
+                           onClick={() => navigate(`/posts/${p.id}`)}
+                           style={{ fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, textAlign: 'left', fontSize: 'inherit' }}
+                         >
+                           {p.title || p.topic}
+                         </button>
+                       </td>
+                       <td><JobStatusBadge jobs={p.jobs} jobType="research" /></td>
+                       <td><JobStatusBadge jobs={p.jobs} jobType="outline" /></td>
+                       <td><JobStatusBadge jobs={p.jobs} jobType="content" /></td>
+                       <td><JobStatusBadge jobs={p.jobs} jobType="thumbnail" /></td>
+                       <td><BoolBadge value={!!p.wp_post_id} /></td>
+                       <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
+                       <td>
+                         <div className="action-buttons">
+                           <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)}>View</button>
+                           {p.status === 'published' ? (
+                             <button className="action-btn" onClick={() => handleAction('unpublish', p.id)}>Unpublish</button>
+                           ) : (
+                             <button className="action-btn" onClick={() => handleAction('publish', p.id)}>Publish</button>
+                           )}
+                           {p.wp_post_id && project.wp_site_url && (
+                             <a
+                               className="action-btn"
+                               href={`${project.wp_site_url}/?p=${p.wp_post_id}`}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               style={{ textDecoration: 'none', display: 'inline-block' }}
+                             >
+                               View on WordPress
+                             </a>
+                           )}
+                           <button className="action-btn danger" onClick={() => handleAction('delete', p.id)}>Delete</button>
+                         </div>
+                       </td>
                     </tr>
                   ))}
                 </tbody>
@@ -648,74 +573,11 @@ export default function ProjectDetail() {
                         onChange={e => setSingleForm({ ...singleForm, thumbnail_source: e.target.value })}
                         style={{ cursor: 'pointer' }}
                       />
-                      <span>Upload Image</span>
+                      <span>Upload Image Later</span>
                     </label>
                     {singleForm.thumbnail_source === 'upload' && (
-                      <div style={{ marginLeft: 24, marginTop: 8 }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={e => setSingleForm({ ...singleForm, thumbnail_file: e.target.files[0] })}
-                          style={{ fontSize: 14 }}
-                        />
-                        {singleForm.thumbnail_file && (
-                          <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>
-                            Selected: {singleForm.thumbnail_file.name}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Section Images Options */}
-                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Section Images Options</h3>
-                  <div className="form-group" style={{ marginBottom: 12 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <input
-                        type="radio"
-                        name="section_images_source"
-                        value="ai"
-                        checked={singleForm.section_images_source === 'ai'}
-                        onChange={e => setSingleForm({ ...singleForm, section_images_source: e.target.value })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <span>Generate with AI</span>
-                    </label>
-                    {singleForm.section_images_source === 'ai' && (
                       <div style={{ marginLeft: 24, marginTop: 8, color: 'var(--text-muted)', fontSize: 13 }}>
-                        Will be generated using default model settings
-                      </div>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <input
-                        type="radio"
-                        name="section_images_source"
-                        value="upload"
-                        checked={singleForm.section_images_source === 'upload'}
-                        onChange={e => setSingleForm({ ...singleForm, section_images_source: e.target.value })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <span>Upload Images</span>
-                    </label>
-                    {singleForm.section_images_source === 'upload' && (
-                      <div style={{ marginLeft: 24, marginTop: 8 }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={e => setSingleForm({ ...singleForm, section_image_files: Array.from(e.target.files) })}
-                          style={{ fontSize: 14 }}
-                        />
-                        {singleForm.section_image_files.length > 0 && (
-                          <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>
-                            Selected {singleForm.section_image_files.length} image{singleForm.section_image_files.length !== 1 ? 's' : ''}
-                          </div>
-                        )}
-                        <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>Images will be assigned to sections in order after outline is generated</small>
+                        You can upload the thumbnail image in the post detail view after creation
                       </div>
                     )}
                   </div>
@@ -814,75 +676,11 @@ export default function ProjectDetail() {
                         onChange={e => setBulkForm({ ...bulkForm, thumbnail_source: e.target.value })}
                         style={{ cursor: 'pointer' }}
                       />
-                      <span>Upload Image</span>
+                      <span>Upload Image Later</span>
                     </label>
                     {bulkForm.thumbnail_source === 'upload' && (
-                      <div style={{ marginLeft: 24, marginTop: 8 }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={e => setBulkForm({ ...bulkForm, thumbnail_file: e.target.files[0] })}
-                          style={{ fontSize: 14 }}
-                        />
-                        {bulkForm.thumbnail_file && (
-                          <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>
-                            Selected: {bulkForm.thumbnail_file.name}
-                          </div>
-                        )}
-                        <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>Same image will be used for all posts</small>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Section Images Options */}
-                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Section Images Options</h3>
-                  <div className="form-group" style={{ marginBottom: 12 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <input
-                        type="radio"
-                        name="section_images_source"
-                        value="ai"
-                        checked={bulkForm.section_images_source === 'ai'}
-                        onChange={e => setBulkForm({ ...bulkForm, section_images_source: e.target.value })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <span>Generate with AI</span>
-                    </label>
-                    {bulkForm.section_images_source === 'ai' && (
                       <div style={{ marginLeft: 24, marginTop: 8, color: 'var(--text-muted)', fontSize: 13 }}>
-                        Will be generated using default model settings
-                      </div>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <input
-                        type="radio"
-                        name="section_images_source"
-                        value="upload"
-                        checked={bulkForm.section_images_source === 'upload'}
-                        onChange={e => setBulkForm({ ...bulkForm, section_images_source: e.target.value })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <span>Upload Images</span>
-                    </label>
-                    {bulkForm.section_images_source === 'upload' && (
-                      <div style={{ marginLeft: 24, marginTop: 8 }}>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={e => setBulkForm({ ...bulkForm, section_image_files: Array.from(e.target.files) })}
-                          style={{ fontSize: 14 }}
-                        />
-                        {bulkForm.section_image_files.length > 0 && (
-                          <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>
-                            Selected {bulkForm.section_image_files.length} image{bulkForm.section_image_files.length !== 1 ? 's' : ''}
-                          </div>
-                        )}
-                        <small style={{ display: 'block', marginTop: 4, color: 'var(--text-muted)' }}>Same images will be used for all posts</small>
+                        You can upload the thumbnail image in the post detail view after creation
                       </div>
                     )}
                   </div>
@@ -947,6 +745,31 @@ function BoolBadge({ value }) {
   )
 }
 
+function JobStatusBadge({ jobs, jobType }) {
+  const job = jobs?.find(j => j.job_type === jobType)
+  if (!job) return <span className="status-badge status-idle">—</span>
+  
+  const statusConfig = {
+    pending: { icon: <HiOutlineClock />, class: 'status-pending' },
+    running: { icon: <HiArrowPath className="spin" />, class: 'status-running' },
+    completed: { icon: <HiOutlineCheckCircle />, class: 'status-completed' },
+    failed: { icon: <HiOutlineXCircle />, class: 'status-failed' },
+  }
+  
+  const config = statusConfig[job.status] || { icon: null, class: 'status-idle' }
+  
+  return (
+    <span className={`status-badge ${config.class}`}>
+      {config.icon}
+    </span>
+  )
+}
+
 BoolBadge.propTypes = {
   value: PropTypes.bool.isRequired
+}
+
+JobStatusBadge.propTypes = {
+  jobs: PropTypes.array.isRequired,
+  jobType: PropTypes.string.isRequired
 }

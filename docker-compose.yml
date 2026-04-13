@@ -25,6 +25,7 @@ services:
       - .env
     volumes:
       - ./backend/app:/app/app
+      - wp_images:/tmp/wp_images
 
   worker:
     build:
@@ -37,6 +38,7 @@ services:
     command: python -m app.main
     volumes:
       - ./worker/app:/app/app
+      - wp_images:/tmp/wp_images
 
   frontend:
     build:
@@ -53,3 +55,6 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/index.html:/app/index.html
+
+volumes:
+  wp_images:

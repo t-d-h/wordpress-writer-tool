@@ -1,12 +1,18 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles } from 'react-icons/hi2'
+import { getProjects } from '../api/client'
 
 export default function Sidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [settingsOpen, setSettingsOpen] = useState(
     location.pathname.startsWith('/settings')
   )
+  const [projectsOpen, setProjectsOpen] = useState(
+    location.pathname.startsWith('/projects')
+  )
+  const [projects, setProjects] = useState([])
   const [isDark, setIsDark] = useState(true)
 
   useEffect(() => {
@@ -15,6 +21,18 @@ export default function Sidebar() {
     const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light')
     setIsDark(initialTheme === 'dark')
     document.documentElement.setAttribute('data-theme', initialTheme)
+  }, [])
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await getProjects()
+        setProjects(response.data)
+      } catch (e) {
+        console.error('Failed to load projects:', e)
+      }
+    }
+    loadProjects()
   }, [])
 
   const toggleTheme = () => {
@@ -54,12 +72,36 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
+        <button
+          className="btn btn-primary"
+          style={{ width: '100%', marginBottom: '16px' }}
+          onClick={() => navigate('/projects?create=true')}
+        >
+          <HiOutlineFolderOpen /> Create Project
+        </button>
+
         <div className="sidebar-subtitle">Menu</div>
 
-        <NavLink to="/projects" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <HiOutlineFolderOpen className="nav-icon" />
-          <span>Projects</span>
-        </NavLink>
+        <div className="nav-section">
+          <div className="nav-item" onClick={() => setProjectsOpen(!projectsOpen)}>
+            <HiOutlineFolderOpen className="nav-icon" />
+            <span>Projects</span>
+            {projectsOpen ? <HiOutlineChevronDown style={{ marginLeft: 'auto', fontSize: 14 }} /> : <HiOutlineChevronRight style={{ marginLeft: 'auto', fontSize: 14 }} />}
+          </div>
+          {projectsOpen && (
+            <div className="nav-children project-list-nav">
+              {projects.map(project => (
+                <NavLink
+                  key={project.id}
+                  to={`/projects/${project.id}`}
+                  className={({ isActive }) => `project-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  {project.title}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="nav-section">
           <div className="nav-item" onClick={() => setSettingsOpen(!settingsOpen)}>

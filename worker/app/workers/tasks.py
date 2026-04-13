@@ -256,7 +256,6 @@ async def run_content(job_data: dict):
                     "content": full_html,
                     "sections": sections,
                     "content_done": True,
-                    "sections_done": True,
                     "token_usage.content": total_tokens,
                 }
             },
@@ -336,76 +335,12 @@ async def run_thumbnail(job_data: dict):
         # Queue next job in pipeline
         project_id = post.get("project_id")
         if project_id:
-            await queue_next_job(post_id, project_id, "section_images")
-            logger.info(f"[PIPELINE] Queued section_images job for post {post_id}")
+            await queue_next_job(post_id, project_id, "publish")
+            logger.info(f"[PIPELINE] Queued publish job for post {post_id}")
 
     except Exception as e:
         logger.error(f"[THUMBNAIL] Thumbnail failed for post {post_id}: {e}")
         logger.exception("[THUMBNAIL] Full stack trace:")
-        await _update_job_status(job_id, post_id, "failed", str(e))
-
-
-async def run_section_images(job_data: dict):
-    """Generate images for each section of a post."""
-    job_id = job_data["job_id"]
-    post_id = job_data["post_id"]
-
-    try:
-        logger.info(f"[SECTION_IMAGES] Starting section images for post {post_id}")
-
-        await _update_job_status(job_id, post_id, "running")
-
-        post = await posts_col.find_one({"_id": ObjectId(post_id)})
-        if not post:
-            raise Exception("Post not found")
-
-        sections = post.get("sections", [])
-        # Use provider/model from job_data first, then fall back to post document
-        provider_id = job_data.get("ai_provider_id") or post.get(
-            "section_images_provider_id"
-        )
-        model_name = job_data.get("model_name") or post.get("section_images_model_name")
-
-        logger.info(f"[SECTION_IMAGES] Found {len(sections)} sections")
-        logger.info(f"[SECTION_IMAGES] Provider ID: {provider_id}")
-        logger.info(f"[SECTION_IMAGES] Model: {model_name}")
-
-        for i, section in enumerate(sections):
-            if section.get("title"):
-                logger.info(
-                    f"[SECTION_IMAGES] Generating image for section {i + 1}/{len(sections)}: {section['title']}"
-                )
-                filepath = await image_service.generate_section_image(
-                    post["topic"], section["title"], provider_id, model_name
-                )
-                logger.info(f"[SECTION_IMAGES] Generated image: {filepath}")
-                sections[i]["image_url"] = filepath
-
-        logger.info(f"[SECTION_IMAGES] Updating database")
-        await posts_col.update_one(
-            {"_id": ObjectId(post_id)}, {"$set": {"sections": sections}}
-        )
-
-        await _update_job_status(job_id, post_id, "completed")
-        logger.info(f"[SECTION_IMAGES] Section images completed successfully")
-
-        # Queue next job in pipeline (conditionally queue publish based on auto_publish)
-        project_id = post.get("project_id")
-        if project_id:
-            auto_publish = post.get("auto_publish", False)
-            if auto_publish:
-                await queue_next_job(post_id, project_id, "publish")
-                logger.info(
-                    f"[PIPELINE] Auto-publish enabled, queued publish job for post {post_id}"
-                )
-            else:
-                logger.info(
-                    f"[PIPELINE] Auto-publish disabled, stopping pipeline for post {post_id}"
-                )
-
-    except Exception as e:
-        logger.error(f"[SECTION_IMAGES] Section images failed for post {post_id}: {e}")
-        logger.exception("[SECTION_IMAGES] Full stack trace:")
         await _update_job_status(job_id, post_id, "failed", str(e))
 
 
@@ -439,6 +374,7 @@ async def run_publish(job_data: dict):
         thumbnail_media_id = None
         if post.get("thumbnail_url"):
             logger.info(f"[PUBLISH] Thumbnail exists: True")
+            logger.info(f"[PUBLISH] Thumbnail URL: {post.get('thumbnail_url')}")
             logger.info(f"[PUBLISH] Uploading thumbnail to WordPress...")
             try:
                 media = await wp_service.upload_media(project_id, post["thumbnail_url"])
@@ -447,9 +383,9 @@ async def run_publish(job_data: dict):
                     f"[PUBLISH] Thumbnail uploaded, media ID: {thumbnail_media_id}"
                 )
             except Exception as e:
-                logger.warning(
-                    f"[PUBLISH] Thumbnail upload failed: {e}, continuing without thumbnail"
-                )
+                logger.error(f"[PUBLISH] Thumbnail upload failed with exception: {e}")
+                logger.exception("[PUBLISH] Full stack trace:")
+                logger.warning(f"[PUBLISH] Continuing without thumbnail")
         else:
             logger.info(f"[PUBLISH] Thumbnail exists: False")
 
@@ -482,11 +418,12 @@ async def run_publish(job_data: dict):
             )
 
         logger.info(f"[PUBLISH] WordPress post ID: {wp_post.get('id')}")
+        logger.info(f"[PUBLISH] WordPress post URL: {wp_post.get('link')}")
 
         # Set post status based on force_publish and auto_publish flags
         post_status = "published" if should_publish else "draft"
         logger.info(
-            f"[PUBLISH] Updating database with WP post ID and status: {post_status}"
+            f"[PUBLISH] Updating database with WP post ID, URL, and status: {post_status}"
         )
         await posts_col.update_one(
             {"_id": ObjectId(post_id)},
@@ -494,6 +431,7 @@ async def run_publish(job_data: dict):
                 "$set": {
                     "status": post_status,
                     "wp_post_id": wp_post.get("id"),
+                    "wp_post_url": wp_post.get("link"),
                 }
             },
         )

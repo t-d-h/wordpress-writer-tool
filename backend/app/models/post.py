@@ -19,9 +19,6 @@ class PostCreate(BaseModel):
     thumbnail_source: str = "ai"
     thumbnail_provider_id: Optional[str] = None
     thumbnail_model_name: Optional[str] = None
-    section_images_source: str = "ai"
-    section_images_provider_id: Optional[str] = None
-    section_images_model_name: Optional[str] = None
     target_word_count: Optional[int] = None
     target_section_count: Optional[int] = None
 
@@ -36,9 +33,6 @@ class BulkPostCreate(BaseModel):
     thumbnail_source: str = "ai"
     thumbnail_provider_id: Optional[str] = None
     thumbnail_model_name: Optional[str] = None
-    section_images_source: str = "ai"
-    section_images_provider_id: Optional[str] = None
-    section_images_model_name: Optional[str] = None
     target_word_count: Optional[int] = None
     target_section_count: Optional[int] = None
 
@@ -53,7 +47,7 @@ class PostUpdate(BaseModel):
 
 class JobInfo(BaseModel):
     job_id: str
-    job_type: str  # research, outline, content, thumbnail, section_images, publish
+    job_type: str  # research, outline, content, thumbnail, publish
     status: str  # pending, running, completed, failed
     error: Optional[str] = None
     started_at: Optional[datetime] = None
@@ -65,7 +59,6 @@ class TokenUsage(BaseModel):
     outline: int = 0
     content: int = 0
     thumbnail: int = 0
-    section_images: int = 0
     total: int = 0
 
 
@@ -80,9 +73,6 @@ class PostResponse(BaseModel):
     thumbnail_source: str = "ai"
     thumbnail_provider_id: Optional[str] = None
     thumbnail_model_name: Optional[str] = None
-    section_images_source: str = "ai"
-    section_images_provider_id: Optional[str] = None
-    section_images_model_name: Optional[str] = None
     target_word_count: Optional[int] = None
     target_section_count: Optional[int] = None
     title: Optional[str] = None
@@ -96,8 +86,8 @@ class PostResponse(BaseModel):
     research_done: bool = False
     content_done: bool = False
     thumbnail_done: bool = False
-    sections_done: bool = False
     token_usage: TokenUsage = TokenUsage()
     jobs: List[JobInfo] = []
     created_at: datetime
     wp_post_id: Optional[int] = None
+    wp_post_url: Optional[str] = None

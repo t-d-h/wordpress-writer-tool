@@ -455,6 +455,9 @@ body {
   font-size: 14px;
   transition: border-color var(--transition-fast);
   outline: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .form-input:focus,
@@ -581,6 +584,9 @@ tbody td {
   font-size: 14px;
   border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 tbody tr {
@@ -613,6 +619,7 @@ tbody tr:last-child td {
 .status-pending { background: rgba(253,203,110,0.15); color: var(--warning); }
 .status-running { background: rgba(116,185,255,0.15); color: var(--info); }
 .status-completed { background: rgba(0,184,148,0.15); color: var(--success); }
+.status-idle { background: rgba(107,107,128,0.08); color: var(--text-muted); }
 
 .bool-indicator {
   width: 20px;

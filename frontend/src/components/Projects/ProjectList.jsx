@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineGlobeAlt, HiOutlinePencil } from 'react-icons/hi2'
 import { getProjects, createProject, deleteProject, updateProject, getSites } from '../../api/client'
 
 export default function ProjectList() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [projects, setProjects] = useState([])
   const [sites, setSites] = useState([])
   const [loading, setLoading] = useState(true)
@@ -16,6 +17,13 @@ export default function ProjectList() {
   const [editForm, setEditForm] = useState({ id: '', title: '', description: '', wp_site_id: '' })
 
   useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setShowModal(true)
+      setSearchParams({})
+    }
+  }, [searchParams, setSearchParams])
 
   const load = async () => {
     try {
