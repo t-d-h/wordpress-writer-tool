@@ -31,7 +31,7 @@
 **UI hint**: no (backend-only change)
 
 Plan list:
-- [ ] 02-01-PLAN.md — Implement automatic pipeline progression in task handlers
+- [x] 02-01-PLAN.md — Implement automatic pipeline progression in task handlers
 
 ### Phase 2: Auto-Pipeline
 **Goal**: After research completes, automatically run the entire content generation pipeline (outline, content, thumbnail, section images, publish) without manual user intervention
