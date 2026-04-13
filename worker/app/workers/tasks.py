@@ -10,6 +10,7 @@ from bson import ObjectId
 from app.database import posts_col, jobs_col
 from app.redis_client import set_job_status
 from app.services import ai_service, image_service, wp_service
+from app.services.job_service import create_and_queue_job
 from app.logging_config import setup_logging
 
 logger = setup_logging()
@@ -57,6 +58,16 @@ async def _update_job_status(job_id: str, post_id: str, status: str, error: str 
             "error": error,
         },
     )
+
+
+async def queue_next_job(
+    post_id: str, project_id: str, next_job_type: str, extra_data: dict = None
+) -> str:
+    """Queue the next job in the pipeline after current job completes successfully."""
+    logger.info(f"[PIPELINE] Queuing {next_job_type} job for post {post_id}")
+    job_id = await create_and_queue_job(post_id, project_id, next_job_type, extra_data)
+    logger.info(f"[PIPELINE] Queued {next_job_type} job {job_id} for post {post_id}")
+    return job_id
 
 
 async def run_research(job_data: dict):
@@ -378,9 +389,13 @@ async def run_publish(job_data: dict):
         content = post.get("content", "")
         logger.info(f"[PUBLISH] Post has {len(content)} characters")
 
-        # Check auto_publish flag
+        # Check force_publish flag first, then fall back to auto_publish
+        force_publish = job_data.get("force_publish", False)
         auto_publish = post.get("auto_publish", False)
+        should_publish = force_publish or auto_publish
+        logger.info(f"[PUBLISH] Force publish: {force_publish}")
         logger.info(f"[PUBLISH] Auto-publish: {auto_publish}")
+        logger.info(f"[PUBLISH] Will publish: {should_publish}")
 
         # Upload thumbnail if exists
         thumbnail_media_id = None
@@ -403,8 +418,8 @@ async def run_publish(job_data: dict):
         # Build final content with section images
         content = post.get("content", "")
 
-        # Determine status based on auto_publish flag
-        status = "publish" if auto_publish else "draft"
+        # Determine status based on force_publish and auto_publish flags
+        status = "publish" if should_publish else "draft"
         logger.info(f"[PUBLISH] WordPress status: {status}")
 
         # Create or update WP post
@@ -430,8 +445,8 @@ async def run_publish(job_data: dict):
 
         logger.info(f"[PUBLISH] WordPress post ID: {wp_post.get('id')}")
 
-        # Set post status based on auto_publish flag
-        post_status = "published" if auto_publish else "draft"
+        # Set post status based on force_publish and auto_publish flags
+        post_status = "published" if should_publish else "draft"
         logger.info(
             f"[PUBLISH] Updating database with WP post ID and status: {post_status}"
         )
