@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels } from '../../api/client'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage } from '../../api/client'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -11,6 +11,9 @@ export default function ProjectDetail() {
   const [stats, setStats] = useState({ draft: 0, waiting_approve: 0, published: 0, failed: 0, total: 0 })
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [tokenUsage, setTokenUsage] = useState(null)
+  const [loadingTokenUsage, setLoadingTokenUsage] = useState(false)
+  const [tokenUsageError, setTokenUsageError] = useState(null)
   const [activeTab, setActiveTab] = useState('content')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createMode, setCreateMode] = useState('single')
@@ -181,7 +184,7 @@ export default function ProjectDetail() {
           video_provider_id: defaultsRes.data.video_provider_id || '',
           video_model_name: defaultsRes.data.video_model_name || '',
         })
-        
+
         setSingleForm(prev => ({
           ...prev,
           ai_provider_id: defaultsRes.data.writing_provider_id || '',
@@ -189,7 +192,7 @@ export default function ProjectDetail() {
           thumbnail_provider_id: defaultsRes.data.image_provider_id || '',
           thumbnail_model_name: defaultsRes.data.image_model_name || '',
         }))
-        
+
         setBulkForm(prev => ({
           ...prev,
           ai_provider_id: defaultsRes.data.writing_provider_id || '',
@@ -197,6 +200,19 @@ export default function ProjectDetail() {
           thumbnail_provider_id: defaultsRes.data.image_provider_id || '',
           thumbnail_model_name: defaultsRes.data.image_model_name || '',
         }))
+      }
+
+      // Load token usage data
+      setLoadingTokenUsage(true)
+      setTokenUsageError(null)
+      try {
+        const tokenUsageData = await getProjectTokenUsage(id)
+        setTokenUsage(tokenUsageData)
+      } catch (e) {
+        console.error('Failed to load token usage:', e)
+        setTokenUsageError('Unable to load token usage')
+      } finally {
+        setLoadingTokenUsage(false)
       }
     } catch (e) {
       console.error(e)
