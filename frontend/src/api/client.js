@@ -27,10 +27,18 @@ export const updateSite = (id, data) => api.put(`/wp-sites/${id}`, data);
 export const deleteSite = (id) => api.delete(`/wp-sites/${id}`);
 export const verifySite = (data) => api.post('/wp-sites/verify', data);
 
+// WordPress Site Posts
+export const getSitePosts = (siteId, perPage = 100, page = 1, status = null) => {
+  const params = { per_page: perPage, page: page };
+  if (status) params.status = status;
+  return api.get(`/wp-sites/${siteId}/posts`, { params });
+};
+
 // Projects
 export const getProjects = () => api.get('/projects');
 export const getProject = (id) => api.get(`/projects/${id}`);
 export const getProjectStats = (id) => api.get(`/projects/${id}/stats`);
+export const getProjectTokenUsage = (id) => api.get(`/projects/${id}/stats`).then(res => res.data.token_usage);
 export const createProject = (data) => api.post('/projects', data);
 export const updateProject = (id, data) => api.put(`/projects/${id}`, data);
 export const deleteProject = (id) => api.delete(`/projects/${id}`);
