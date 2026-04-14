@@ -101,10 +101,38 @@ async def delete_site(site_id: str):
 
 @router.get("/{site_id}/posts")
 async def get_site_posts(
-    site_id: str, per_page: int = 100, page: int = 1, status: str = None
+    site_id: str,
+    per_page: int = 100,
+    page: int = 1,
+    status: str = None,
+    search: str = None,
+    orderby: str = "date",
+    order: str = "desc",
 ):
-    """Fetch posts from a WordPress site."""
+    """Fetch posts from a WordPress site with search, sort, and pagination."""
     from app.services.wp_service import get_wp_posts
+    from app.services.wp_cache_service import WPCacheService
+
+    # Parameter validation
+    allowed_orderby = ["date", "title", "modified", "relevance"]
+    if orderby and orderby not in allowed_orderby:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid orderby parameter. Must be one of: {', '.join(allowed_orderby)}",
+        )
+
+    if order and order.lower() not in ["asc", "desc"]:
+        raise HTTPException(
+            status_code=400, detail="Invalid order parameter. Must be 'asc' or 'desc'"
+        )
+
+    if per_page < 1 or per_page > 100:
+        raise HTTPException(
+            status_code=400, detail="per_page must be between 1 and 100"
+        )
+
+    if page < 1:
+        raise HTTPException(status_code=400, detail="page must be >= 1")
 
     doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
     if not doc:
@@ -114,6 +142,80 @@ async def get_site_posts(
     if not project:
         raise HTTPException(status_code=404, detail="No project found for this site")
 
-    result = await get_wp_posts(str(project["_id"]), per_page, page, status)
+    # Per D-09 decision: Search always hits WordPress API (not cached data)
+    if search:
+        print(f"[CACHE] Search query - bypassing cache, hitting WordPress API")
+        result = await get_wp_posts(
+            str(project["_id"]), per_page, page, status, search, orderby, order
+        )
+    return result
+
+
+@router.post("/{site_id}/posts/refresh")
+async def refresh_site_posts_cache(
+    site_id: str,
+    per_page: int = 100,
+    page: int = 1,
+    status: str = None,
+    orderby: str = "date",
+    order: str = "desc",
+):
+    """Manually refresh cached WordPress posts for a site."""
+    from app.services.wp_cache_service import WPCacheService
+
+    # Verify site exists
+    doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Site not found")
+
+    # Get project
+    project = await projects_col.find_one({"wp_site_id": site_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="No project found for this site")
+
+    # Refresh cache
+    cache_service = WPCacheService()
+    result = await cache_service.refresh_cache(
+        str(project["_id"]), per_page, page, status, orderby, order
+    )
+
+    return result
+
+    # Hybrid pagination: cache first, WordPress API fallback
+    cache_service = WPCacheService()
+    cache_key = cache_service.get_cache_key(
+        str(project["_id"]), per_page, page, status, orderby, order
+    )
+
+    try:
+        # Check cache for existing data
+        cached = await cache_service.get_cached_posts(cache_key)
+        if cached:
+            # Check if cache is stale
+            is_stale = await cache_service.is_cache_stale(
+                cache_key, str(project["_id"])
+            )
+            if not is_stale:
+                print(f"[CACHE] Cache hit for key {cache_key}")
+                return cached
+            else:
+                print(f"[CACHE] Cache stale for key {cache_key}, fetching fresh data")
+        else:
+            print(f"[CACHE] Cache miss for key {cache_key}")
+    except Exception as e:
+        print(f"[CACHE_ERROR] Failed to retrieve cache: {str(e)}")
+        # Fall back to WordPress API
+
+    # Fetch from WordPress API
+    result = await get_wp_posts(
+        str(project["_id"]), per_page, page, status, search, orderby, order
+    )
+
+    # Update cache
+    try:
+        await cache_service.cache_posts(cache_key, result["posts"], result["total"])
+    except Exception as e:
+        print(f"[CACHE_ERROR] Failed to update cache: {str(e)}")
+        # Non-critical, continue
 
     return result

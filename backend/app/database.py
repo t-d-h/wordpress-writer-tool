@@ -11,6 +11,7 @@ projects_col = db["projects"]
 posts_col = db["posts"]
 jobs_col = db["jobs"]
 default_models_col = db["default_models"]
+wp_posts_cache_col = db["wp_posts_cache"]
 
 
 async def create_indexes():
@@ -30,3 +31,6 @@ async def create_indexes():
         unique=True,
         partialFilterExpression={"wp_post_id": {"$ne": None}},
     )
+
+    # Index for Phase 4: WordPress post cache with TTL
+    await wp_posts_cache_col.create_index([("cached_at", 1)], expireAfterSeconds=10800)

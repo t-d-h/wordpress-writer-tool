@@ -44,13 +44,34 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ### Active
 
-None
+- All Posts table view in ProjectDetail
+- Table layout with columns: Title, URL, Categories, Tags, Date, Status, Actions
+- Search by title functionality
+- Sort by date/title/status functionality
+- Status filter functionality
+- Manual pagination (100 posts per page)
+- Project-scoped WordPress site posts (no site selection)
+
+## Current Milestone: v1.1 All Posts Table View
+
+**Goal:** Replace the "All Posts" tab in ProjectDetail with a table view similar to /all-posts, keeping search/sort/filter functionality while using manual pagination.
+
+**Target features:**
+- Replace PostCard grid layout with table layout
+- Use /all-posts columns: Title, URL, Categories, Tags, Date, Status, Actions
+- Keep search by title functionality
+- Keep sort by date/title/status functionality
+- Keep status filter functionality
+- Switch from infinite scroll to manual pagination (100 posts per page)
+- Scope to project's WordPress site only (no site selection dropdown)
+- Discard PostCard component usage in this tab
+- Discard origin badges (not needed in table view)
 
 ## Current State
 
-**Version:** v1.0 MVP (shipped 2026-04-14)
+**Version:** v1.1 (in progress)
 
-**Shipped Features:**
+**Shipped Features (v1.0 MVP):**
 - Token usage display with breakdown by post type
 - WordPress REST API integration with search, filtering, and pagination
 - All Posts tab UI with filter, sort, search, and infinite scroll
@@ -58,6 +79,7 @@ None
 - Post URL, categories, and tags display
 
 **Next Milestone Goals:**
+- All Posts table view with enhanced filtering
 - Security improvements (credential encryption, input validation)
 - Performance optimizations (caching, database indexes)
 - Additional features (bulk operations, advanced filtering)
@@ -126,4 +148,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after v1.0 milestone*
+*Last updated: 2026-04-14 after v1.1 milestone started*
