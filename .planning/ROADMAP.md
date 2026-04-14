@@ -23,7 +23,7 @@
 <details>
 <summary>🔄 v1.1 All Posts Table View (Phases 4-7) — IN PROGRESS</summary>
 
-- [ ] Phase 4: Backend API Enhancement — Not started
+- [ ] Phase 4: Backend API Enhancement — 3/3 plans planned
 - [ ] Phase 5: Data Transformation — Not started
 - [ ] Phase 6: Frontend UI — Not started
 - [ ] Phase 7: Cleanup — Not started
@@ -47,7 +47,10 @@
 4. Backend API invalidates cache when posts are created/updated/deleted
 5. Backend API provides manual cache refresh endpoint
 
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 04-01-PLAN.md — Create WordPress post cache service with MongoDB storage and TTL
+- [ ] 04-02-PLAN.md — Update get_site_posts endpoint with search/sort parameters
+- [ ] 04-03-PLAN.md — Integrate cache service with hybrid pagination and refresh endpoint
 
 ### Phase 5: Data Transformation
 
@@ -109,7 +112,7 @@
 | 1. Token Usage Display | v1.0 | 4/4 | Complete | 2026-04-14 |
 | 2. WordPress Integration Backend | v1.0 | 3/3 | Complete | 2026-04-14 |
 | 3. All Posts Tab UI | v1.0 | 7/7 | Complete | 2026-04-14 |
-| 4. Backend API Enhancement | v1.1 | 0/0 | Not started | - |
+| 4. Backend API Enhancement | v1.1 | 0/3 | Planned | - |
 | 5. Data Transformation | v1.1 | 0/0 | Not started | - |
 | 6. Frontend UI | v1.1 | 0/0 | Not started | - |
 | 7. Cleanup | v1.1 | 0/0 | Not started | - |
