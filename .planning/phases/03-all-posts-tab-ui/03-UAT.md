@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T21:04:00+07:00
+updated: 2026-04-14T21:07:00+07:00
 ---
 
 ## Current Test
 
-number: 12
-name: Sort by Date (Oldest First)
+number: 13
+name: Sort by Title (A-Z)
 expected: |
-  Selecting "date-asc" sorts posts by date with the oldest posts appearing first.
+  Selecting "title-asc" sorts posts by title in alphabetical order (A-Z).
 awaiting: user response
 
 ## Tests
@@ -65,7 +65,7 @@ result: pass
 
 ### 12. Sort by Date (Oldest First)
 expected: Selecting "date-asc" sorts posts by date with the oldest posts appearing first.
-result: pending
+result: pass
 
 ### 13. Sort by Title (A-Z)
 expected: Selecting "title-asc" sorts posts by title in alphabetical order (A-Z).
@@ -102,9 +102,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 9
+passed: 10
 issues: 0
-pending: 9
+pending: 8
 skipped: 2
 
 ## Gaps
