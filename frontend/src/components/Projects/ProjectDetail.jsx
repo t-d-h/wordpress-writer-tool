@@ -185,6 +185,25 @@ export default function ProjectDetail() {
     }
   }, [page])
 
+  // Scroll detection for infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loadingMore || !hasMore) return
+
+      const scrollHeight = document.documentElement.scrollHeight
+      const scrollTop = document.documentElement.scrollTop
+      const clientHeight = document.documentElement.clientHeight
+
+      // Trigger load more when user scrolls within 100px of bottom
+      if (scrollHeight - scrollTop - clientHeight < 100) {
+        loadMorePosts()
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [loadingMore, hasMore, page])
+
   const load = async () => {
     try {
       const [projRes, statsRes, postsRes, providersRes, defaultsRes] = await Promise.all([
