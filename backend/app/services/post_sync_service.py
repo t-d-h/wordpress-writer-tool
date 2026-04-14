@@ -26,6 +26,19 @@ async def create_or_update_post(
         {"wp_post_id": wp_post["id"], "project_id": ObjectId(project_id)}
     )
 
+    # Extract categories and tags from embedded terms
+    categories = []
+    tags = []
+    if "_embedded" in wp_post and "wp:term" in wp_post["_embedded"]:
+        for term in wp_post["_embedded"]["wp:term"]:
+            if term and len(term) > 0:
+                taxonomy = term[0].get("taxonomy")
+                name = term[0].get("name")
+                if taxonomy == "category" and name:
+                    categories.append(name)
+                elif taxonomy == "post_tag" and name:
+                    tags.append(name)
+
     post_data = {
         "project_id": ObjectId(project_id),
         "wp_post_id": wp_post["id"],
@@ -33,6 +46,8 @@ async def create_or_update_post(
         "title": wp_post["title"]["rendered"],
         "origin": origin,
         "status": wp_post["status"],
+        "categories": categories,
+        "tags": tags,
         "created_at": datetime.now(),
         "updated_at": datetime.now(),
     }
