@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T21:01:00+07:00
+updated: 2026-04-14T21:04:00+07:00
 ---
 
 ## Current Test
 
-number: 11
-name: Sort by Date (Newest First)
+number: 12
+name: Sort by Date (Oldest First)
 expected: |
-  Selecting "date-desc" sorts posts by date with the newest posts appearing first.
+  Selecting "date-asc" sorts posts by date with the oldest posts appearing first.
 awaiting: user response
 
 ## Tests
@@ -61,7 +61,7 @@ result: pass
 
 ### 11. Sort by Date (Newest First)
 expected: Selecting "date-desc" sorts posts by date with the newest posts appearing first.
-result: pending
+result: pass
 
 ### 12. Sort by Date (Oldest First)
 expected: Selecting "date-asc" sorts posts by date with the oldest posts appearing first.
@@ -102,9 +102,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 8
+passed: 9
 issues: 0
-pending: 10
+pending: 9
 skipped: 2
 
 ## Gaps
