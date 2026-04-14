@@ -39,6 +39,12 @@ export const getProjects = () => api.get('/projects');
 export const getProject = (id) => api.get(`/projects/${id}`);
 export const getProjectStats = (id) => api.get(`/projects/${id}/stats`);
 export const getProjectTokenUsage = (id) => api.get(`/projects/${id}/stats`).then(res => res.data.token_usage);
+export const getProjectPosts = (projectId, page = 1, limit = 20, status = null, sortBy = 'date-desc', search = null) => {
+  const params = { page, limit, sort_by: sortBy };
+  if (status) params.status = status;
+  if (search) params.search = search;
+  return api.get(`/projects/${projectId}/posts`, { params });
+};
 export const createProject = (data) => api.post('/projects', data);
 export const updateProject = (id, data) => api.put(`/projects/${id}`, data);
 export const deleteProject = (id) => api.delete(`/projects/${id}`);
