@@ -203,3 +203,50 @@ async def update_wp_post(
         response = await client.post(url, headers=headers, json=post_data)
         response.raise_for_status()
         return response.json()
+
+
+async def get_wp_posts(
+    project_id: str,
+    per_page: int = 100,
+    page: int = 1,
+    status: str = None,
+    search: str = None,
+    orderby: str = "date",
+    order: str = "desc",
+) -> dict:
+    """Fetch posts from WordPress REST API with filtering and search.
+
+    Args:
+        project_id: Project ID to get WordPress site configuration
+        per_page: Number of posts per page (default: 100, max 100)
+        page: Page number (default: 1)
+        status: Filter by post status (e.g., 'publish', 'draft', 'any')
+        search: Search by post title/content
+        orderby: Order by field (date, title, modified, etc.)
+        order: ASC or DESC
+
+    Returns:
+        dict with 'posts' list and 'total' count
+    """
+    wp_site = await _get_wp_site(project_id)
+    headers = _get_auth_header(wp_site["username"], wp_site["api_key"])
+
+    url = f"{wp_site['url'].rstrip('/')}/wp-json/wp/v2/posts"
+    params = {"per_page": per_page, "page": page, "_embed": True}
+    if status:
+        params["status"] = status
+    if search:
+        params["search"] = search
+    if orderby:
+        params["orderby"] = orderby
+    if order:
+        params["order"] = order
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        response = await client.get(url, headers=headers, params=params)
+        response.raise_for_status()
+
+        posts = response.json()
+        total = int(response.headers.get("X-WP-Total", len(posts)))
+
+        return {"posts": posts, "total": total}
