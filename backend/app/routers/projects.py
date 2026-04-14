@@ -218,6 +218,8 @@ async def get_all_posts(
             "updated_at": doc.get("updated_at", doc.get("created_at")),
             "wp_post_id": doc.get("wp_post_id"),
             "wp_post_url": doc.get("wp_post_url"),
+            "categories": doc.get("categories", []),
+            "tags": doc.get("tags", []),
             "origin": doc.get("origin", "tool"),
         }
         posts.append(post_dict)
