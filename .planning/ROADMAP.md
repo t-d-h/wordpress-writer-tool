@@ -64,7 +64,14 @@
 4. User can click Edit button to open WordPress admin edit page in new tab
 5. User can filter posts by status, sort by date, and search by title
 
-**Plans**: TBD
+**Plans**: 7 plans
+- [x] 03-01-PLAN.md — Add All Posts tab to ProjectDetail component
+- [x] 03-02-PLAN.md — Add filter, sort, and search controls
+- [x] 03-03-PLAN.md — Implement infinite scroll pagination
+- [x] 03-04-PLAN.md — Backend API for fetching all posts
+- [x] 03-05-PLAN.md — Add loading states and error handling
+- [ ] 03-06-PLAN.md — Display post URL in PostCard (gap closure)
+- [ ] 03-07-PLAN.md — Add categories and tags support (gap closure)
 **UI hint**: yes
 
 ## Progress
@@ -72,8 +79,8 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Token Usage Display | 0/0 | Not started | - |
-| 2. WordPress Integration Backend | 0/3 | Planned | - |
-| 3. All Posts Tab UI | 0/0 | Not started | - |
+| 2. WordPress Integration Backend | 3/3 | Complete | 2026-04-14 |
+| 3. All Posts Tab UI | 5/7 | In progress | - |
 
 ## Dependencies
 
