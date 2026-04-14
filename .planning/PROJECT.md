@@ -31,15 +31,20 @@ Validate WordPress site connectivity and credentials before saving, so users kno
   - Post origin tracking (tool-created vs existing)
   - Orphan detection for posts that exist locally but not in WordPress
   - API endpoints for WordPress sync functionality
-  - Validated in Phase 02: WordPress Integration Backend
+   - Validated in Phase 02: WordPress Integration Backend
+- All Posts tab UI for viewing and managing WordPress posts
+  - Display all WordPress posts (both tool-created and existing)
+  - Visual distinction between post types (origin badges)
+  - Edit button opens WordPress admin in new tab
+  - Filter by status, sort by date/title/status, search by title
+  - Infinite scroll pagination for large post lists
+  - Post URL display with security attributes
+  - Post categories and tags display as badges
+  - Validated in Phase 03: All Posts Tab UI
 
 ### Active
 
-- [ ] Add "All Posts" tab to each project
-  - Show all WordPress posts (both tool-created and existing)
-  - Visual distinction between post types
-  - Edit button opens WordPress admin in new tab
-  - Filter by status, sort by date, search by title
+None
 
 ### Out of Scope
 
@@ -49,7 +54,7 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ## Context
 
-This is a brownfield project with existing codebase mapped in `.planning/codebase/`. The system has a working AI content generation pipeline with job processing, WordPress integration, and project management. Current concerns include plain-text credential storage (deferred), URL format validation gap, no pre-save connectivity check, and missing token usage aggregation display.
+This is a brownfield project with existing codebase mapped in `.planning/codebase/`. The system has a working AI content generation pipeline with job processing, WordPress integration, and project management. All three planned phases (Token Usage Display, WordPress Integration Backend, All Posts Tab UI) are now complete. Current concerns include plain-text credential storage (deferred), URL format validation gap, no pre-save connectivity check, and pending UAT testing for Phase 03.
 
 ## Constraints
 
@@ -84,4 +89,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after Phase 02 completion*
+*Last updated: 2026-04-14 after Phase 03 completion*
