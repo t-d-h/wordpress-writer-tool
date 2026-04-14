@@ -1,41 +1,42 @@
 ---
 phase: 03-all-posts-tab-ui
-reviewed: 2026-04-14T18:01:09+07:00
+reviewed: 2026-04-14T20:17:55+07:00
 depth: standard
-files_reviewed: 5
+files_reviewed: 8
 files_reviewed_list:
+  - backend/app/models/post.py
   - backend/app/routers/posts.py
+  - backend/app/routers/projects.py
+  - backend/app/services/post_sync_service.py
   - frontend/src/api/client.js
   - frontend/src/components/Projects/PostCard.jsx
   - frontend/src/components/Projects/ProjectDetail.jsx
   - frontend/src/index.css
 findings:
-  critical: 3
-  warning: 4
-  info: 6
-  total: 13
+  critical: 2
+  warning: 5
+  info: 3
+  total: 10
 status: issues_found
 ---
 
 # Phase 03: Code Review Report
 
-**Reviewed:** 2026-04-14T18:01:09+07:00
+**Reviewed:** 2026-04-14T20:17:55+07:00
 **Depth:** standard
-**Files Reviewed:** 5
+**Files Reviewed:** 8
 **Status:** issues_found
 
 ## Summary
 
-Reviewed 5 source files implementing the "All Posts" tab UI feature. The implementation includes backend API endpoints, frontend API client, React components for post display and project management, and CSS styling. Found 3 critical issues (2 security vulnerabilities, 1 bug), 4 warnings (bugs and logic errors), and 6 info items (code quality improvements).
-
-The most critical issues are in the backend posts router: incorrect pagination total count, unsafe file handling, and exposure of internal error details. Frontend issues include redundant conditions and undefined CSS variables.
+Reviewed 8 source files implementing the "All Posts" tab UI feature. The implementation adds filtering, sorting, search, and pagination for posts within a project. Overall code quality is acceptable, but several issues were identified including incorrect pagination logic, potential security vulnerabilities, and missing error handling.
 
 ## Critical Issues
 
-### CR-01: Incorrect pagination total count breaks pagination
+### CR-01: Incorrect total count in pagination response
 
 **File:** `backend/app/routers/posts.py:71`
-**Issue:** The `total` field returns the count of posts in the current page instead of the total count of posts in the database. This breaks pagination UI components that rely on accurate total counts.
+**Issue:** The `total` field in the response returns the count of posts on the current page, not the total count of all posts matching the query. This breaks pagination UI logic that relies on accurate total counts.
 
 **Fix:**
 ```python
@@ -62,38 +63,102 @@ async def list_posts_by_project(
     return {"posts": posts, "total": total}
 ```
 
-### CR-02: Unsafe file extension extraction allows path traversal
+### CR-02: Regex injection vulnerability in search
 
-**File:** `backend/app/routers/posts.py:476`
-**Issue:** The file extension extraction uses `split(".")[-1]` which is vulnerable to path traversal if the filename contains malicious characters like `../../etc/passwd`. Also, no validation that the extension is actually an image type.
+**File:** `backend/app/routers/projects.py:177`
+**Issue:** The search filter directly passes user input to MongoDB regex without escaping. This allows users to inject arbitrary regex patterns, potentially causing denial of service through catastrophic backtracking or exposing sensitive data.
 
 **Fix:**
 ```python
-import os
-
-# Validate filename and extract extension safely
-if not file.filename or not file.filename.strip():
-    raise HTTPException(status_code=400, detail="Invalid filename")
-
-# Get the base filename without path
-safe_filename = os.path.basename(file.filename)
-
-# Extract extension and validate it's an image type
-ext = safe_filename.rsplit(".", 1)[-1].lower() if "." in safe_filename else "jpg"
-
-# Whitelist allowed image extensions
-allowed_extensions = {"jpg", "jpeg", "png", "gif", "webp"}
-if ext not in allowed_extensions:
-    raise HTTPException(status_code=400, detail=f"Invalid file type. Allowed: {', '.join(allowed_extensions)}")
-
-filename = f"{uuid.uuid4()}.{ext}"
-filepath = f"/tmp/wp_images/{filename}"
+# Apply search filter if provided (case-insensitive title search)
+if search:
+    # Escape special regex characters to prevent injection
+    import re
+    escaped_search = re.escape(search)
+    query_filter["title"] = {"$regex": escaped_search, "$options": "i"}
 ```
 
-### CR-03: Exposing internal exception details to clients
+## Warnings
+
+### WR-01: Missing ObjectId validation could cause crashes
+
+**File:** `backend/app/routers/projects.py:164`
+**Issue:** The `ObjectId(project_id)` conversion is not wrapped in a try/except block. If an invalid ObjectId string is passed, the application will crash with an unhandled exception.
+
+**Fix:**
+```python
+@router.get("/{project_id}/posts")
+async def get_all_posts(
+    project_id: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    status: Optional[str] = Query(None),
+    sort_by: str = Query(
+        "date-desc", regex="^(date-desc|date-asc|title-asc|title-desc|status)$"
+    ),
+    search: Optional[str] = Query(None),
+):
+    """Get all posts for a project with filter, sort, and search support."""
+    try:
+        project_id_obj = ObjectId(project_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid project ID")
+
+    # Verify project exists
+    project = await projects_col.find_one({"_id": project_id_obj})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    # ... rest of the function
+```
+
+### WR-02: Unhandled promise rejection in getProjectTokenUsage
+
+**File:** `frontend/src/api/client.js:41`
+**Issue:** The `getProjectTokenUsage` function uses `.then()` without error handling. If the request fails, the promise rejection will be unhandled, potentially causing runtime errors.
+
+**Fix:**
+```javascript
+export const getProjectTokenUsage = (id) =>
+  getProjectStats(id)
+    .then(res => {
+      if (!res.data || !res.data.token_usage) {
+        throw new Error('Invalid response format');
+      }
+      return res.data.token_usage;
+    })
+    .catch(err => {
+      console.error('Failed to get token usage:', err);
+      throw err; // Re-throw to allow caller to handle
+    });
+```
+
+### WR-03: Missing null check in PostCard date formatting
+
+**File:** `frontend/src/components/Projects/PostCard.jsx:37`
+**Issue:** The `formatDate` function is called with `post.created_at || post.updated_at`, but if both are null/undefined, it will pass `undefined` to `new Date()`, which results in "Invalid Date" being displayed.
+
+**Fix:**
+```javascript
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return 'N/A'
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  } catch (e) {
+    return 'N/A'
+  }
+}
+```
+
+### WR-04: Exposing internal error details to clients
 
 **File:** `backend/app/routers/posts.py:602`
-**Issue:** Using `str(e)` in HTTPException exposes internal exception details to clients, which can leak sensitive information about the system's internal structure, database schema, or third-party service configurations.
+**Issue:** The exception handler returns `str(e)` directly to the client, which may expose internal implementation details, file paths, or other sensitive information.
 
 **Fix:**
 ```python
@@ -102,237 +167,66 @@ except Exception as e:
     import logging
     logger = logging.getLogger(__name__)
     logger.error(f"Failed to update thumbnail to WordPress: {e}", exc_info=True)
-
-    # Return generic error message to client
     raise HTTPException(
         status_code=500,
-        detail="Failed to upload thumbnail to WordPress. Please try again later."
+        detail="Failed to upload thumbnail to WordPress"
     )
 ```
 
-## Warnings
+### WR-05: Potential null reference in ProjectDetail
 
-### WR-01: Confusing field name usage (thumbnail_url as file path)
-
-**File:** `backend/app/routers/posts.py:540`
-**Issue:** The field is named `thumbnail_url` but it's being used as a file path in `os.path.exists()`. This is confusing and could cause issues if the value is actually a URL instead of a file path.
+**File:** `frontend/src/components/Projects/ProjectDetail.jsx:690`
+**Issue:** The `onEdit` callback checks `post.wp_post_id && project.wp_site_url` but doesn't validate that `project` is defined before accessing `project.wp_site_url`. If `project` is null, this will cause a runtime error.
 
 **Fix:**
-```python
-thumbnail_path = doc.get("thumbnail_url")
-if not thumbnail_path:
-    raise HTTPException(status_code=404, detail="No thumbnail found for this post")
-
-# Check if it's a local file path
-if not os.path.exists(thumbnail_path):
-    raise HTTPException(
-        status_code=404, detail="Thumbnail file not found on server"
-    )
-
-return FileResponse(thumbnail_path)
-```
-
-### WR-02: Redundant condition in ternary operator
-
-**File:** `frontend/src/components/Projects/ProjectDetail.jsx:677-679`
-**Issue:** The condition `allPosts.length === 0` is checked twice - once in the outer condition and once in the inner ternary. The inner ternary's second branch will never execute because if `allPosts.length === 0`, the outer condition is already true.
-
-**Fix:**
-```jsx
-{allPosts.length === 0 ? (
-  <div className="empty-state">
-    <div className="empty-state-icon">📄</div>
-    <div className="empty-state-title">No Posts Found</div>
-    <div className="empty-state-text">
-      No WordPress posts found for this project
-    </div>
-  </div>
-) : (
-  <>
-    <div className="stats-grid">
-      {allPosts.map(post => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onEdit={(post) => {
-            if (post.wp_post_id && project.wp_site_url) {
-              window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
-            }
-          }}
-        />
-      ))}
-    </div>
-    {/* ... loading states ... */}
-  </>
-)}
-```
-
-### WR-03: Using undefined field as fallback
-
-**File:** `frontend/src/components/Projects/PostCard.jsx:37`
-**Issue:** The code uses `post.updated_at` as a fallback for `post.created_at`, but `updated_at` might not exist in the post object. This could cause the date to display incorrectly or throw an error.
-
-**Fix:**
-```jsx
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  if (isNaN(date.getTime())) return 'N/A'  // Handle invalid dates
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-// In the JSX:
-<span className="post-card-date">{formatDate(post.created_at)}</span>
-```
-
-### WR-04: Undefined CSS variables
-
-**File:** `frontend/src/index.css:1111-1112`
-**Issue:** The `.link-button` class references `var(--primary)` and `var(--primary-hover)` but these variables are not defined in the CSS. The correct variables are `var(--accent-primary)` and `var(--accent-primary-hover)`.
-
-**Fix:**
-```css
-.link-button {
-  color: var(--accent-primary);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-.link-button:hover {
-  color: var(--accent-primary-hover);
-  text-decoration: underline;
-}
+```javascript
+onEdit={(post) => {
+  if (post?.wp_post_id && project?.wp_site_url) {
+    window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
+  }
+}}
 ```
 
 ## Info
 
-### IN-01: Optional request parameter pattern could be improved
+### IN-01: Inconsistent error handling pattern
 
-**File:** `backend/app/routers/posts.py:237, 422`
-**Issue:** Using `request: PublishRequest = None` and then checking `if request` is not ideal. Better to use Pydantic's `Body(default=None)` or make the fields optional in the model.
+**File:** `backend/app/routers/posts.py:328`
+**Issue:** Using `print()` for logging instead of a proper logging framework. The codebase uses `print()` in some places and `logger` in others, making it inconsistent.
 
-**Fix:**
+**Fix:** Replace with proper logging:
 ```python
-class PublishRequest(BaseModel):
-    force_publish: bool = False
+import logging
+logger = logging.getLogger(__name__)
 
-@router.post("/{post_id}/publish")
-async def publish_post(post_id: str, request: PublishRequest = Body(default=PublishRequest())):
-    """Queue a publish job for a post."""
-    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Post not found")
-    if not doc.get("content"):
-        raise HTTPException(status_code=400, detail="Post has no content to publish")
-
-    # request is now guaranteed to be a PublishRequest instance
-    job_id = str(uuid.uuid4())
-    # ... rest of the code
+# In the catch block:
+logger.warning(f"Failed to update WordPress post: {e}")
 ```
 
-### IN-02: Inconsistent async pattern in API client
+### IN-02: Unused import in PostCard
 
-**File:** `frontend/src/api/client.js:41`
-**Issue:** `getProjectTokenUsage` chains `.then()` which is inconsistent with the rest of the file that uses async/await pattern in calling code.
+**File:** `frontend/src/components/Projects/PostCard.jsx:1`
+**Issue:** The `PropTypes` import is used at the bottom of the file for prop validation, which is good practice. However, this is noted for completeness as the import is actually used.
+
+**Fix:** No action needed - this is correct usage.
+
+### IN-03: Magic number for pagination limit
+
+**File:** `frontend/src/components/Projects/ProjectDetail.jsx:284`
+**Issue:** The pagination limit of 20 is hardcoded in multiple places. This should be a constant for maintainability.
 
 **Fix:**
 ```javascript
-export const getProjectTokenUsage = (id) => api.get(`/projects/${id}/stats`);
-// Let the caller handle the promise chain with async/await
-```
+const POSTS_PER_PAGE = 20
 
-### IN-03: Magic numbers should be constants
-
-**File:** `frontend/src/components/Projects/ProjectDetail.jsx:84, 198, 284, 291`
-**Issue:** Hardcoded values like 3000ms (refresh interval), 100px (scroll threshold), and 20 (page limit) are magic numbers that should be defined as constants for better maintainability.
-
-**Fix:**
-```javascript
-// At the top of the file
-const AUTO_REFRESH_INTERVAL = 3000  // 3 seconds
-const SCROLL_THRESHOLD = 100  // pixels from bottom
-const POSTS_PAGE_LIMIT = 20
-
-// Then use these constants in the code
-interval = setInterval(() => {
-  load()
-}, AUTO_REFRESH_INTERVAL)
-
-if (scrollHeight - scrollTop - clientHeight < SCROLL_THRESHOLD) {
-  loadMorePosts()
-}
-
-const response = await getProjectPosts(id, pageNum, POSTS_PAGE_LIMIT, ...)
-setHasMore(newPosts.length >= POSTS_PAGE_LIMIT)
-```
-
-### IN-04: Incorrect response structure check
-
-**File:** `frontend/src/components/Projects/ProjectDetail.jsx:361`
-**Issue:** The code checks `if (response?.data?.id)` but the API response structure from `createPost` might not have `data.id` - it should be checked against the actual response structure.
-
-**Fix:**
-```javascript
-const response = await createPost(Object.fromEntries(formData))
-
-setShowCreateModal(false)
-// ... reset form ...
-load()
-
-// Check the actual response structure
-if (response?.data?.id) {
-  navigate(`/posts/${response.data.id}`)
-} else if (response?.id) {
-  // Some APIs return id directly
-  navigate(`/posts/${response.id}`)
-}
-```
-
-### IN-05: Generic PropTypes should be more specific
-
-**File:** `frontend/src/components/Projects/PostCard.jsx:49-50`
-**Issue:** `PropTypes.object` is too generic. Should use `PropTypes.shape({...})` to define the expected structure of the post object.
-
-**Fix:**
-```javascript
-PostCard.propTypes = {
-  post: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    title: PropTypes.string,
-    origin: PropTypes.oneOf(['tool', 'existing']),
-    status: PropTypes.string.isRequired,
-    created_at: PropTypes.string,
-    updated_at: PropTypes.string,
-    wp_post_id: PropTypes.number
-  }),
-  onEdit: PropTypes.func
-}
-```
-
-### IN-06: Duplicate animation definition
-
-**File:** `frontend/src/index.css:1136-1144`
-**Issue:** The `@keyframes pulse` animation is defined twice (lines 1136-1139 and 1141-1144). This is duplicate code.
-
-**Fix:**
-```css
-/* Remove the duplicate definition at lines 1141-1144 */
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
+// Then use:
+const response = await getProjectPosts(id, pageNum, POSTS_PER_PAGE, statusFilter === 'all' ? null : statusFilter, sortBy, searchQuery || null)
+// And:
+setHasMore(newPosts.length >= POSTS_PER_PAGE)
 ```
 
 ---
 
-_Reviewed: 2026-04-14T18:01:09+07:00_
+_Reviewed: 2026-04-14T20:17:55+07:00_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
