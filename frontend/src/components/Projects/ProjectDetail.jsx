@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath } from 'react-icons/hi2'
 import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage } from '../../api/client'
 import TokenUsageCard from './TokenUsageCard'
+import PostCard from './PostCard'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -16,6 +17,9 @@ export default function ProjectDetail() {
   const [loadingTokenUsage, setLoadingTokenUsage] = useState(false)
   const [tokenUsageError, setTokenUsageError] = useState(null)
   const [activeTab, setActiveTab] = useState('content')
+  const [allPosts, setAllPosts] = useState([])
+  const [loadingAllPosts, setLoadingAllPosts] = useState(false)
+  const [allPostsError, setAllPostsError] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createMode, setCreateMode] = useState('single')
   const [singleForm, setSingleForm] = useState({
@@ -163,6 +167,12 @@ export default function ProjectDetail() {
     }
   }, [showCreateModal, createMode])
 
+  useEffect(() => {
+    if (activeTab === 'all-posts') {
+      loadAllPosts()
+    }
+  }, [activeTab, id])
+
   const load = async () => {
     try {
       const [projRes, statsRes, postsRes, providersRes, defaultsRes] = await Promise.all([
@@ -219,6 +229,20 @@ export default function ProjectDetail() {
       console.error(e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAllPosts = async () => {
+    setLoadingAllPosts(true)
+    setAllPostsError(null)
+    try {
+      const response = await getPostsByProject(id)
+      setAllPosts(response.data)
+    } catch (e) {
+      console.error('Failed to load all posts:', e)
+      setAllPostsError('Unable to load posts')
+    } finally {
+      setLoadingAllPosts(false)
     }
   }
 
@@ -535,11 +559,37 @@ export default function ProjectDetail() {
       )}
 
       {activeTab === 'all-posts' && (
-        <div className="empty-state">
-          <div className="empty-state-icon">📄</div>
-          <div className="empty-state-title">All Posts</div>
-          <div className="empty-state-text">View all WordPress posts for this project</div>
-        </div>
+        <>
+          {loadingAllPosts ? (
+            <div className="loading-page"><div className="loading-spinner" /></div>
+          ) : allPostsError ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">⚠️</div>
+              <div className="empty-state-title">Error Loading Posts</div>
+              <div className="empty-state-text">{allPostsError}</div>
+            </div>
+          ) : allPosts.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📄</div>
+              <div className="empty-state-title">No Posts Yet</div>
+              <div className="empty-state-text">No WordPress posts found for this project</div>
+            </div>
+          ) : (
+            <div className="stats-grid">
+              {allPosts.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onEdit={(post) => {
+                    if (post.wp_post_id && project.wp_site_url) {
+                      window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Create Post Modal */}
