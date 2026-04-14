@@ -75,7 +75,7 @@ export default function ProjectDetail() {
   useEffect(() => {
     let interval = null
 
-    const hasActiveJobs = posts.some(p => 
+    const hasActiveJobs = Array.isArray(posts) && posts.some(p =>
       p.jobs?.some(j => j.status === 'pending' || j.status === 'running')
     )
 
