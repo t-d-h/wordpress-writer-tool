@@ -91,4 +91,6 @@ class PostResponse(BaseModel):
     created_at: datetime
     wp_post_id: Optional[int] = None
     wp_post_url: Optional[str] = None
+    categories: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
     origin: str = "tool"  # "tool" or "wordpress"
