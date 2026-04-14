@@ -46,6 +46,27 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 None
 
+## Current State
+
+**Version:** v1.0 MVP (shipped 2026-04-14)
+
+**Shipped Features:**
+- Token usage display with breakdown by post type
+- WordPress REST API integration with search, filtering, and pagination
+- All Posts tab UI with filter, sort, search, and infinite scroll
+- Post origin tracking (tool-created vs existing)
+- Post URL, categories, and tags display
+
+**Next Milestone Goals:**
+- Security improvements (credential encryption, input validation)
+- Performance optimizations (caching, database indexes)
+- Additional features (bulk operations, advanced filtering)
+
+**Technical Debt:**
+- 10 code review findings documented (2 critical, 5 warnings, 3 info)
+- Plain-text credential storage (deferred)
+- URL format validation gap (minor)
+
 ### Out of Scope
 
 - Frontend UI toast styling — backend error details are sufficient for now
@@ -54,7 +75,20 @@ None
 
 ## Context
 
-This is a brownfield project with existing codebase mapped in `.planning/codebase/`. The system has a working AI content generation pipeline with job processing, WordPress integration, and project management. All three planned phases (Token Usage Display, WordPress Integration Backend, All Posts Tab UI) are now complete. Current concerns include plain-text credential storage (deferred), URL format validation gap, no pre-save connectivity check, and pending UAT testing for Phase 03.
+This is a brownfield project with existing codebase mapped in `.planning/codebase/`. The system has a working AI content generation pipeline with job processing, WordPress integration, and project management. All three planned phases (Token Usage Display, WordPress Integration Backend, All Posts Tab UI) are now complete and shipped as v1.0 MVP.
+
+**Current State:**
+- 3 phases completed, 14 plans executed, 38 tasks delivered
+- 16,329 lines of code added (Python + JavaScript/JSX)
+- 8 days of development (2026-04-06 → 2026-04-14)
+- UAT completed: 18/20 tests passed, 2 skipped (external dependencies)
+- Code review: 10 findings (2 critical, 5 warnings, 3 info) — documented in 03-REVIEW.md
+
+**Known Issues:**
+- Plain-text credential storage (deferred for security milestone)
+- URL format validation gap (minor, not blocking)
+- No pre-save connectivity check (feature for future milestone)
+- Code review findings documented but not yet fixed (can be addressed in v1.1)
 
 ## Constraints
 
@@ -66,10 +100,13 @@ This is a brownfield project with existing codebase mapped in `.planning/codebas
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Token usage calculated on-the-fly | No caching needed for MVP, simpler implementation | — Pending |
-| Include deleted posts in token totals | Users want complete cost visibility | — Pending |
-| Build features sequentially | Token usage first, then All Posts tab | — Pending |
-| Track post origin in database | Distinguish tool-created vs existing posts | — Pending |
+| Token usage calculated on-the-fly | No caching needed for MVP, simpler implementation | ✓ Good — Implemented in Phase 01, performs well for <100 posts |
+| Include deleted posts in token totals | Users want complete cost visibility | ✓ Good — Implemented in Phase 01, aggregation pipeline works correctly |
+| Build features sequentially | Token usage first, then All Posts tab | ✓ Good — Phases 01, 02, 03 completed in order, no dependencies broken |
+| Track post origin in database | Distinguish tool-created vs existing posts | ✓ Good — Implemented in Phase 02, origin field added to Post model |
+| Client-side filtering for MVP | Simpler implementation, move to backend later | ⚠️ Revisit — Moved to server-side in Phase 03 for better performance |
+| Infinite scroll for pagination | Better UX than manual page controls | ✓ Good — Implemented in Phase 03, 20 posts per page with loading indicator |
+| WordPress REST API with rate limiting | Prevent API abuse and handle errors gracefully | ✓ Good — Implemented in Phase 02, exponential backoff works well |
 
 ## Evolution
 
@@ -89,4 +126,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after Phase 03 completion*
+*Last updated: 2026-04-14 after v1.0 milestone*
