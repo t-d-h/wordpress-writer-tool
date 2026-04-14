@@ -1,7 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import ai_providers, wp_sites, projects, posts, jobs, default_models
+from app.routers import (
+    ai_providers,
+    wp_sites,
+    projects,
+    posts,
+    jobs,
+    default_models,
+    wordpress,
+)
 
 app = FastAPI(
     title="WordPress AI Writer",
@@ -25,6 +33,7 @@ app.include_router(projects.router)
 app.include_router(posts.router)
 app.include_router(jobs.router)
 app.include_router(default_models.router)
+app.include_router(wordpress.router)
 
 
 @app.get("/health")
