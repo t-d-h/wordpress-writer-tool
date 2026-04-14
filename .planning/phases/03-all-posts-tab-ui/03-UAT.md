@@ -3,24 +3,22 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T20:33:00+07:00
+updated: 2026-04-14T20:39:00+07:00
 ---
 
 ## Current Test
 
-[PAUSED - Blocker found]
-
-Test 1 failed with critical error: "TypeError: posts.some is not a function at ProjectDetail.jsx:94"
-
-Cannot continue testing until this blocker is resolved.
+number: 2
+name: Post Card Display
+expected: |
+  Posts are displayed in a grid layout using PostCard components. Each card shows the post title, status badge, formatted date, origin badge (Tool or Existing), and an Edit button.
+awaiting: user response
 
 ## Tests
 
 ### 1. All Posts Tab Navigation
 expected: Navigate to a project detail page. Click the "All Posts" tab button. The tab becomes active and displays the All Posts section. The tab follows the same pattern as General and Content tabs.
-result: issue
-reported: "TypeError: posts.some is not a function at ProjectDetail.jsx:94. The page crashes immediately when navigating to project detail, preventing any tab navigation testing."
-severity: blocker
+result: pass
 
 ### 2. Post Card Display
 expected: Posts are displayed in a grid layout using PostCard components. Each card shows the post title, status badge, formatted date, origin badge (Tool or Existing), and an Edit button.
@@ -101,17 +99,11 @@ result: pending
 ## Summary
 
 total: 20
-passed: 0
-issues: 1
+passed: 1
+issues: 0
 pending: 19
 skipped: 0
 
 ## Gaps
 
-- truth: "Navigate to a project detail page. Click the 'All Posts' tab button. The tab becomes active and displays the All Posts section. The tab follows the same pattern as General and Content tabs."
-  status: failed
-  reason: "User reported: TypeError: posts.some is not a function at ProjectDetail.jsx:94. The page crashes immediately when navigating to project detail, preventing any tab navigation testing."
-  severity: blocker
-  test: 1
-  artifacts: []
-  missing: []
+none yet
