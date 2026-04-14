@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T20:58:00+07:00
+updated: 2026-04-14T21:00:00+07:00
 ---
 
 ## Current Test
 
-number: 9
-name: Status Filter Functionality
+number: 10
+name: Sort Dropdown
 expected: |
-  Selecting a status from the dropdown filters the displayed posts. "all" shows all posts. Specific status options show only posts with that status. The filter updates immediately.
+  A sort dropdown is displayed at the top of the All Posts tab next to the filter. The dropdown shows options: date-desc, date-asc, title-asc, title-desc, status.
 awaiting: user response
 
 ## Tests
@@ -53,7 +53,7 @@ result: pass
 
 ### 9. Status Filter Functionality
 expected: Selecting a status from the dropdown filters the displayed posts. "all" shows all posts. Specific status options show only posts with that status. The filter updates immediately.
-result: pending
+result: pass
 
 ### 10. Sort Dropdown
 expected: A sort dropdown is displayed at the top of the All Posts tab next to the filter. The dropdown shows options: date-desc, date-asc, title-asc, title-desc, status.
@@ -102,9 +102,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 6
+passed: 7
 issues: 0
-pending: 12
+pending: 11
 skipped: 2
 
 ## Gaps
