@@ -20,6 +20,9 @@ export default function ProjectDetail() {
   const [allPosts, setAllPosts] = useState([])
   const [loadingAllPosts, setLoadingAllPosts] = useState(false)
   const [allPostsError, setAllPostsError] = useState(null)
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('date-desc')
+  const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createMode, setCreateMode] = useState('single')
   const [singleForm, setSingleForm] = useState({
@@ -245,6 +248,37 @@ export default function ProjectDetail() {
       setLoadingAllPosts(false)
     }
   }
+
+  // Filter posts by status
+  const filteredPosts = allPosts.filter(post => {
+    if (statusFilter === 'all') return true
+    return post.status === statusFilter
+  })
+
+  // Sort posts
+  const sortedPosts = [...filteredPosts].sort((a, b) => {
+    switch (sortBy) {
+      case 'date-desc':
+        return new Date(b.created_at || b.updated_at) - new Date(a.created_at || a.updated_at)
+      case 'date-asc':
+        return new Date(a.created_at || a.updated_at) - new Date(b.created_at || b.updated_at)
+      case 'title-asc':
+        return (a.title || '').localeCompare(b.title || '')
+      case 'title-desc':
+        return (b.title || '').localeCompare(a.title || '')
+      case 'status':
+        return (a.status || '').localeCompare(b.status || '')
+      default:
+        return 0
+    }
+  })
+
+  // Search posts by title
+  const searchedPosts = sortedPosts.filter(post => {
+    if (!searchQuery) return true
+    const title = (post.title || '').toLowerCase()
+    return title.includes(searchQuery.toLowerCase())
+  })
 
   const handleCreateSingle = async (e) => {
     e.preventDefault()
@@ -568,26 +602,74 @@ export default function ProjectDetail() {
               <div className="empty-state-title">Error Loading Posts</div>
               <div className="empty-state-text">{allPostsError}</div>
             </div>
-          ) : allPosts.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">📄</div>
-              <div className="empty-state-title">No Posts Yet</div>
-              <div className="empty-state-text">No WordPress posts found for this project</div>
-            </div>
           ) : (
-            <div className="stats-grid">
-              {allPosts.map(post => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onEdit={(post) => {
-                    if (post.wp_post_id && project.wp_site_url) {
-                      window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
-                    }
-                  }}
-                />
-              ))}
-            </div>
+            <>
+              <div className="toolbar" style={{ marginBottom: 20 }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>
+                  <select
+                    className="form-input"
+                    style={{ width: 'auto', padding: '8px 12px' }}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                  <select
+                    className="form-input"
+                    style={{ width: 'auto', padding: '8px 12px' }}
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="date-desc">Newest First</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="title-asc">Title (A-Z)</option>
+                    <option value="title-desc">Title (Z-A)</option>
+                    <option value="status">Status</option>
+                  </select>
+                  <input
+                    className="form-input"
+                    type="text"
+                    placeholder="Search by title..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ flex: 1, maxWidth: 300, padding: '8px 12px' }}
+                  />
+                </div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+                  {searchedPosts.length} post{searchedPosts.length !== 1 ? 's' : ''}
+                </div>
+              </div>
+
+              {searchedPosts.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">📄</div>
+                  <div className="empty-state-title">No Posts Found</div>
+                  <div className="empty-state-text">
+                    {allPosts.length === 0
+                      ? 'No WordPress posts found for this project'
+                      : 'No posts match your filter, sort, or search criteria'}
+                  </div>
+                </div>
+              ) : (
+                <div className="stats-grid">
+                  {searchedPosts.map(post => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onEdit={(post) => {
+                        if (post.wp_post_id && project.wp_site_url) {
+                          window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
