@@ -125,3 +125,59 @@
 - **Prevention strategy**: Implement performance benchmarks, test with realistic data volumes, profile database queries, monitor API response times, implement performance regression tests
 - **Phase to address**: All phases
 - **Severity**: MEDIUM - performance issue
+
+## Table View Migration Pitfalls
+
+### Incomplete State Migration from Infinite Scroll to Manual Pagination
+- **Warning signs**: Scroll event listener remains attached after component unmount, duplicate API calls when changing pages, "Can't perform a React state update on an unmounted component" warnings in console
+- **Prevention strategy**: Remove all infinite scroll-related state (`hasMore`, `loadingMore`), ensure scroll event listener cleanup in `useEffect` return function, add `total` state for pagination, remove `loadMorePosts` function entirely, update API call from 20 to 100 posts per page
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: CRITICAL - causes memory leaks and broken functionality
+
+### Breaking Search/Sort/Filter State Reset Logic
+- **Warning signs**: Changing filter/sort/search doesn't reset to page 1, pagination shows wrong page numbers, API calls with wrong parameters
+- **Prevention strategy**: Preserve the `useEffect` that watches `statusFilter`, `sortBy`, `searchQuery`, `project`, update function call from `loadAllPosts(1, true)` to `loadAllPosts(1)`, test all filter/sort/search combinations, add loading state when resetting
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: HIGH - causes incorrect data display
+
+### Forgetting to Remove PostCard Component and Related Styling
+- **Warning signs**: Unused code increases bundle size, future developers confused by PostCard references, CSS conflicts between PostCard and table styles
+- **Prevention strategy**: Remove PostCard import from ProjectDetail.jsx, delete PostCard usage in JSX, remove `.post-card` styles from index.css, remove `.origin-badge` styles if unused, search codebase for remaining PostCard references
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: MEDIUM - causes code bloat and confusion
+
+### Incorrect API Parameter Mapping for WordPress REST API
+- **Warning signs**: API returns 400 Bad Request or 500 Internal Server Error, wrong data returned, pagination shows wrong total
+- **Prevention strategy**: Verify backend endpoint in `backend/app/routers/wordpress.py`, check parameter order matches `getSitePosts(site_id, per_page, page, status)`, test with 100 posts per page, add proper error handling for 400/500 responses, log API calls for debugging
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: HIGH - causes broken feature
+
+### Missing or Incorrect Table Column Data Transformation
+- **Warning signs**: Table shows "undefined" or "-" for missing fields, links are broken, categories/tags not displayed, date formatting incorrect
+- **Prevention strategy**: Map WordPress response correctly using `post._embedded['wp:term'][0]` for categories and `[1]` for tags, preserve existing transformation logic, reuse `getCategoryNames` and `getTagNames` helpers from AllPosts.jsx, use `formatDate` helper, add fallbacks for undefined/null values
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: MEDIUM - causes poor UX
+
+### Pagination Controls Not Disabled at Boundaries
+- **Warning signs**: Previous/Next buttons remain clickable on first/last page, API call with page 0 or negative, empty results on invalid pages
+- **Prevention strategy**: Disable Previous when `page === 1`, disable Next when `page * 100 >= total`, calculate total pages as `Math.ceil(total / 100)`, display "Page X of Y" for clarity, test edge cases (0 posts, exactly 100 posts, 101+ posts)
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: MEDIUM - causes confusing UX
+
+### Not Reusing Existing Helper Functions from AllPosts.jsx
+- **Warning signs**: Code duplication, inconsistent formatting between AllPosts and ProjectDetail tables, bugs in one copy but not the other
+- **Prevention strategy**: Extract helpers to shared file `frontend/src/utils/helpers.js`, import in both components, keep consistent formatting, document helper functions with JSDoc comments
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: LOW - causes maintenance burden
+
+### Missing Loading State for Pagination Changes
+- **Warning signs**: No loading indicator when changing pages, users click multiple times causing duplicate API calls, unclear if action is being processed
+- **Prevention strategy**: Use single `loadingAllPosts` state, set loading on page change before `setPage(newPage)`, clear loading in `finally` block, disable pagination controls during load, show loading spinner in table or pagination area
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: MEDIUM - causes poor UX and race conditions
+
+### Not Handling Empty Results Correctly
+- **Warning signs**: Blank table with no explanation when no posts match filters, users don't know if filter is too restrictive, no call to action
+- **Prevention strategy**: Preserve empty state logic from current implementation, show helpful message "No posts match your filter, sort, or search criteria", provide clear action "Try adjusting your filters or search query", distinguish between truly empty vs filtered results, match app design for empty states
+- **Phase to address**: Phase 01 (Implementation)
+- **Severity**: LOW - causes confusing UX
