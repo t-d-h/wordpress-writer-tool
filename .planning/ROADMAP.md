@@ -1,57 +1,90 @@
-# WordPress Writer Tool - Roadmap
+# Roadmap
 
-**Milestone:** WP Site Validation + Auto-Pipeline
-**Granularity:** standard
-**Phases:** 2
-
-## Goal
-
-1. Validate WordPress site connectivity and credentials before saving, so users know immediately if their site is configured correctly -- not after wasting time creating content that can't be published.
-2. Automate the content generation pipeline so users don't need to manually trigger each step after research completes.
+**Project:** WordPress Writer Tool
+**Version:** 1.0
+**Last Updated:** 2026-04-14
 
 ## Phases
 
-- [ ] **Phase 1: Site Validation Pipeline** - Validate URL format, connectivity, and API credentials before saving WordPress sites to MongoDB
-- [ ] **Phase 2: Auto-Pipeline** - Automatically queue the entire content generation pipeline (outline, content, thumbnail, section images, publish) after research completes
+- [ ] **Phase 1: Token Usage Display** - Display token usage breakdown in project details
+- [ ] **Phase 2: WordPress Integration Backend** - Backend services for fetching WordPress posts
+- [ ] **Phase 3: All Posts Tab UI** - Frontend interface for viewing and managing all posts
 
 ## Phase Details
 
-### Phase 1: Site Validation Pipeline
-**Goal**: When a user submits a new WordPress site, the backend validates URL format, tests connectivity, and verifies API credentials -- only saving to MongoDB if all checks pass, otherwise returning specific error details
-**Depends on**: Nothing (existing codebase is the foundation)
-**Requirements**: VALID-01, VALID-02, VALID-03, VALID-04, VALID-05
+### Phase 1: Token Usage Display
+
+**Goal**: Users can view token usage breakdown for each project, including all post types and deleted posts
+
+**Depends on**: Nothing (first phase)
+
+**Requirements**: TOKEN-01, TOKEN-02, TOKEN-03, TOKEN-04, TOKEN-05, TOKEN-06, TOKEN-07, PERF-01, PERF-03, DATA-01, UX-01
+
 **Success Criteria** (what must be TRUE):
-  1. Submitting an invalid URL (missing http/https, malformed) returns an error and saves nothing to MongoDB
-  2. Submitting a valid URL pointing to an unreachable WordPress site returns a connectivity error and saves nothing to MongoDB
-  3. Submitting a reachable site with invalid username or API key returns a credential verification error and saves nothing to MongoDB
-  4. Submitting a fully valid site (correct URL, reachable, valid credentials) saves successfully to MongoDB
-  5. Every validation failure returns a specific error message identifying which check failed (URL, connectivity, or credentials)
-
-**Plans**: 1 plan
-**UI hint**: no (backend-only change)
-
-Plan list:
-- [x] 02-01-PLAN.md — Implement automatic pipeline progression in task handlers
-
-### Phase 2: Auto-Pipeline
-**Goal**: After research completes, automatically run the entire content generation pipeline (outline, content, thumbnail, section images, publish) without manual user intervention
-**Depends on**: Phase 1 (existing job system is the foundation)
-**Requirements**: AUTO-01, AUTO-02, AUTO-03, AUTO-04, AUTO-05, AUTO-06, AUTO-07
-**Success Criteria** (what must be TRUE):
-  1. When a research job completes successfully, an outline job is automatically queued
-  2. When an outline job completes successfully, a content job is automatically queued
-  3. When a content job completes successfully, a thumbnail job is automatically queued
-  4. When a thumbnail job completes successfully, a section images job is automatically queued
-  5. When a section images job completes successfully, a publish job is automatically queued (if auto_publish is True)
-  6. If any job fails, the pipeline stops and no subsequent jobs are queued
-  7. If auto_publish is False, the pipeline stops after section images (no publish job queued)
+1. User can view token usage breakdown in Project general tab above statistics section
+2. System displays token usage breakdown by post type (research, outline, content, thumbnail)
+3. System shows total input tokens and total output tokens across all post types
+4. System includes deleted posts in token usage calculations
+5. Token usage display loads within 1 second for projects with <100 posts
 
 **Plans**: TBD
-**UI hint**: no (backend-only change)
+
+### Phase 2: WordPress Integration Backend
+
+**Goal**: Backend provides robust WordPress REST API integration for fetching, filtering, and searching posts
+
+**Depends on**: Phase 1
+
+**Requirements**: WP-01, WP-02, WP-03, WP-04, WP-05, PERF-02, PERF-04, DATA-02, DATA-03, DATA-04
+
+**Success Criteria** (what must be TRUE):
+1. Backend WordPress service can fetch all posts from WordPress REST API
+2. Backend WordPress service supports pagination for large post lists
+3. Backend WordPress service supports status filtering and search by title
+4. Backend WordPress service handles API rate limiting gracefully
+5. System correctly identifies post origin (tool-created vs existing)
+
+**Plans**: TBD
+
+### Phase 3: All Posts Tab UI
+
+**Goal**: Users can view, filter, sort, and search all WordPress posts for a project with clear visual distinction
+
+**Depends on**: Phase 2
+
+**Requirements**: POSTS-01, POSTS-02, POSTS-03, POSTS-04, POSTS-05, POSTS-06, POSTS-07, POSTS-08, POSTS-09, POSTS-10, POSTS-11, POSTS-12, POSTS-13, POSTS-14, UX-02, UX-03, UX-04, UX-05
+
+**Success Criteria** (what must be TRUE):
+1. User can view "All Posts" tab in each project
+2. System displays all WordPress posts (both tool-created and existing)
+3. System provides visual distinction between tool-created and existing posts
+4. User can click Edit button to open WordPress admin edit page in new tab
+5. User can filter posts by status, sort by date, and search by title
+
+**Plans**: TBD
+**UI hint**: yes
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Site Validation Pipeline | 0/0 | Not started | - |
-| 2. Auto-Pipeline | 0/1 | Not started | - |
+| 1. Token Usage Display | 0/0 | Not started | - |
+| 2. WordPress Integration Backend | 0/0 | Not started | - |
+| 3. All Posts Tab UI | 0/0 | Not started | - |
+
+## Dependencies
+
+```
+Phase 1 (Token Usage Display)
+    ↓
+Phase 2 (WordPress Integration Backend)
+    ↓
+Phase 3 (All Posts Tab UI)
+```
+
+## Notes
+
+- All phases follow existing codebase patterns and conventions
+- Performance requirements are scoped for MVP (no caching unless necessary)
+- Token usage calculated on-the-fly for simplicity
+- Post origin tracking added to support All Posts tab functionality

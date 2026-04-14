@@ -97,18 +97,18 @@
 | TOKEN-05 | Phase 1 | Pending | Query all posts, no status filter |
 | TOKEN-06 | Phase 1 | Pending | MongoDB aggregation pipeline |
 | TOKEN-07 | Phase 1 | Pending | Always render component |
-| POSTS-01 | Phase 2 | Pending | Add tab to ProjectDetail.jsx |
-| POSTS-02 | Phase 2 | Pending | Merge WordPress API data with database |
-| POSTS-03 | Phase 2 | Pending | Visual badge or color coding |
-| POSTS-04 | Phase 2 | Pending | target="_blank" attribute |
-| POSTS-05 | Phase 2 | Pending | Display post.title.rendered |
-| POSTS-06 | Phase 2 | Pending | Display post.link |
-| POSTS-07 | Phase 2 | Pending | Display post.categories array |
-| POSTS-08 | Phase 2 | Pending | Display post.tags array |
-| POSTS-09 | Phase 2 | Pending | Display post.date |
-| POSTS-10 | Phase 2 | Pending | Filter dropdown component |
-| POSTS-11 | Phase 2 | Pending | Sort by date toggle |
-| POSTS-12 | Phase 2 | Pending | Search input with debouncing |
+| POSTS-01 | Phase 3 | Pending | Add tab to ProjectDetail.jsx |
+| POSTS-02 | Phase 3 | Pending | Merge WordPress API data with database |
+| POSTS-03 | Phase 3 | Pending | Visual badge or color coding |
+| POSTS-04 | Phase 3 | Pending | target="_blank" attribute |
+| POSTS-05 | Phase 3 | Pending | Display post.title.rendered |
+| POSTS-06 | Phase 3 | Pending | Display post.link |
+| POSTS-07 | Phase 3 | Pending | Display post.categories array |
+| POSTS-08 | Phase 3 | Pending | Display post.tags array |
+| POSTS-09 | Phase 3 | Pending | Display post.date |
+| POSTS-10 | Phase 3 | Pending | Filter dropdown component |
+| POSTS-11 | Phase 3 | Pending | Sort by date toggle |
+| POSTS-12 | Phase 3 | Pending | Search input with debouncing |
 | POSTS-13 | Phase 2 | Pending | Add to wp_service.py |
 | POSTS-14 | Phase 2 | Pending | Add origin field to Post model |
 | WP-01 | Phase 2 | Pending | Extend wp_service.py |
@@ -125,10 +125,10 @@
 | DATA-03 | Phase 2 | Pending | Handle missing WordPress posts |
 | DATA-04 | Phase 2 | Pending | Check for duplicates before creation |
 | UX-01 | Phase 1 | Pending | Design token usage component |
-| UX-02 | Phase 2 | Pending | Design post type indicators |
-| UX-03 | Phase 2 | Pending | Style edit button prominently |
-| UX-04 | Phase 2 | Pending | Implement filter UI |
-| UX-05 | Phase 2 | Pending | Implement search UI |
+| UX-02 | Phase 3 | Pending | Design post type indicators |
+| UX-03 | Phase 3 | Pending | Style edit button prominently |
+| UX-04 | Phase 3 | Pending | Implement filter UI |
+| UX-05 | Phase 3 | Pending | Implement search UI |
 
 ## Success Criteria
 
