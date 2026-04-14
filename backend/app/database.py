@@ -21,3 +21,12 @@ async def create_indexes():
     await posts_col.create_index([("token_usage.outline", 1)])
     await posts_col.create_index([("token_usage.content", 1)])
     await posts_col.create_index([("token_usage.thumbnail", 1)])
+
+    # New indexes for Phase 2: WordPress Integration
+    await posts_col.create_index([("wp_post_id", 1)])
+    await posts_col.create_index([("origin", 1)])
+    await posts_col.create_index(
+        [("project_id", 1), ("wp_post_id", 1)],
+        unique=True,
+        partialFilterExpression={"wp_post_id": {"$ne": None}},
+    )
