@@ -45,9 +45,9 @@
 5. System correctly identifies post origin (tool-created vs existing)
 
 **Plans**: 3 plans
-- [ ] 02-01-PLAN.md — Enhanced WordPress service with search, filtering, and rate limiting
-- [ ] 02-02-PLAN.md — Post origin tracking and sync service
-- [ ] 02-03-PLAN.md — Orphan detection and API endpoints
+- [x] 02-01-PLAN.md — Enhanced WordPress service with search, filtering, and rate limiting
+- [x] 02-02-PLAN.md — Post origin tracking and sync service
+- [x] 02-03-PLAN.md — Orphan detection and API endpoints
 
 ### Phase 3: All Posts Tab UI
 
