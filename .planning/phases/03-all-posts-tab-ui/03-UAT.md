@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T21:07:00+07:00
+updated: 2026-04-14T21:09:00+07:00
 ---
 
 ## Current Test
 
-number: 13
-name: Sort by Title (A-Z)
+number: 14
+name: Sort by Title (Z-A)
 expected: |
-  Selecting "title-asc" sorts posts by title in alphabetical order (A-Z).
+  Selecting "title-desc" sorts posts by title in reverse alphabetical order (Z-A).
 awaiting: user response
 
 ## Tests
@@ -69,7 +69,7 @@ result: pass
 
 ### 13. Sort by Title (A-Z)
 expected: Selecting "title-asc" sorts posts by title in alphabetical order (A-Z).
-result: pending
+result: pass
 
 ### 14. Sort by Title (Z-A)
 expected: Selecting "title-desc" sorts posts by title in reverse alphabetical order (Z-A).
@@ -102,9 +102,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 10
+passed: 11
 issues: 0
-pending: 8
+pending: 7
 skipped: 2
 
 ## Gaps
