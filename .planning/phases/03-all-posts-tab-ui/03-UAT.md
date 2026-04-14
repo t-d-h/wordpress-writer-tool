@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T20:52:00+07:00
+updated: 2026-04-14T20:54:00+07:00
 ---
 
 ## Current Test
 
-number: 6
-name: Error State
+number: 7
+name: Empty State
 expected: |
-  If the post fetch fails, an error message is displayed to the user. The error message indicates that posts could not be loaded.
+  When a project has no posts, a "No posts yet" message with an icon is displayed in the All Posts tab.
 awaiting: user response
 
 ## Tests
@@ -41,7 +41,7 @@ result: pass
 
 ### 6. Error State
 expected: If the post fetch fails, an error message is displayed to the user. The error message indicates that posts could not be loaded.
-result: pending
+result: pass
 
 ### 7. Empty State
 expected: When a project has no posts, a "No posts yet" message with an icon is displayed in the All Posts tab.
@@ -102,9 +102,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 3
+passed: 4
 issues: 0
-pending: 15
+pending: 14
 skipped: 2
 
 ## Gaps
