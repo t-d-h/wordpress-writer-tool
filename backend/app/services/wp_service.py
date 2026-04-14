@@ -378,22 +378,27 @@ async def get_wp_posts(
 
     # Transform posts data for frontend consumption
     transformed_posts = []
-    for post in result.get("posts", []):
-        # Extract nested data from _embedded
-        embedded = post.get("_embedded", {})
-        categories = _extract_categories(embedded)
-        tags = _extract_tags(embedded)
+    try:
+        for post in result.get("posts", []):
+            # Extract nested data from _embedded
+            embedded = post.get("_embedded", {})
+            categories = _extract_categories(embedded)
+            tags = _extract_tags(embedded)
 
-        # Format date and generate edit URL
-        formatted_date = _format_date(post.get("date"))
-        edit_url = _generate_edit_url(wp_site["url"], post.get("id"))
+            # Format date and generate edit URL
+            formatted_date = _format_date(post.get("date"))
+            edit_url = _generate_edit_url(wp_site["url"], post.get("id"))
 
-        # Add transformed fields to post (keep original fields intact)
-        post["categories"] = categories
-        post["tags"] = tags
-        post["formatted_date"] = formatted_date
-        post["edit_url"] = edit_url
+            # Add transformed fields to post (keep original fields intact)
+            post["categories"] = categories
+            post["tags"] = tags
+            post["formatted_date"] = formatted_date
+            post["edit_url"] = edit_url
 
-        transformed_posts.append(post)
+            transformed_posts.append(post)
+    except Exception as e:
+        print(f"[TRANSFORM_ERROR] Failed to transform posts: {str(e)}")
+        # Return original posts if transformation fails
+        transformed_posts = result.get("posts", [])
 
     return {"posts": transformed_posts, "total": result.get("total", 0)}
