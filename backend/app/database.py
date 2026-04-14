@@ -11,3 +11,13 @@ projects_col = db["projects"]
 posts_col = db["posts"]
 jobs_col = db["jobs"]
 default_models_col = db["default_models"]
+
+
+async def create_indexes():
+    """Create database indexes for optimized queries."""
+    # Index on posts collection for token usage aggregation
+    await posts_col.create_index([("project_id", 1)])
+    await posts_col.create_index([("token_usage.research", 1)])
+    await posts_col.create_index([("token_usage.outline", 1)])
+    await posts_col.create_index([("token_usage.content", 1)])
+    await posts_col.create_index([("token_usage.thumbnail", 1)])
