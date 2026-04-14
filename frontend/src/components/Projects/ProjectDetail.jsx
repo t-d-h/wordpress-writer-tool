@@ -434,6 +434,7 @@ export default function ProjectDetail() {
       <div className="tabs">
         <button className={`tab ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>General</button>
         <button className={`tab ${activeTab === 'content' ? 'active' : ''}`} onClick={() => setActiveTab('content')}>Content</button>
+        <button className={`tab ${activeTab === 'all-posts' ? 'active' : ''}`} onClick={() => setActiveTab('all-posts')}>All Posts</button>
       </div>
 
       {activeTab === 'general' && (
@@ -524,13 +525,21 @@ export default function ProjectDetail() {
                            <button className="action-btn danger" onClick={() => handleAction('delete', p.id)}>Delete</button>
                          </div>
                        </td>
-                    </tr>
-                  ))}
+                     </tr>
+                   ))}
                 </tbody>
               </table>
             </div>
           )}
         </>
+      )}
+
+      {activeTab === 'all-posts' && (
+        <div className="empty-state">
+          <div className="empty-state-icon">📄</div>
+          <div className="empty-state-title">All Posts</div>
+          <div className="empty-state-text">View all WordPress posts for this project</div>
+        </div>
       )}
 
       {/* Create Post Modal */}
