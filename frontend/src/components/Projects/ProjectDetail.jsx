@@ -568,9 +568,9 @@ export default function ProjectDetail() {
                     <th>Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                   {posts.map(p => (
-                     <tr key={p.id}>
+                 <tbody>
+                    {Array.isArray(posts) && posts.map(p => (
+                      <tr key={p.id}>
                        <td>
                          <button
                            className="link-button"
