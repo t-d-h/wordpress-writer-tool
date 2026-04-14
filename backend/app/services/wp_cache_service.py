@@ -113,6 +113,7 @@ class WPCacheService:
         status: str,
         orderby: str,
         order: str,
+        search: str = None,
     ) -> dict:
         """Refresh cache from WordPress API with progress tracking.
 
@@ -123,6 +124,7 @@ class WPCacheService:
             status: Post status filter
             orderby: Order by field
             order: Order direction
+            search: Search query (optional)
 
         Returns:
             dict: Progress information with status, posts_refreshed, total_posts, message
@@ -134,7 +136,7 @@ class WPCacheService:
         try:
             # Fetch posts from WordPress API with retry logic
             wp_data = await get_wp_posts(
-                project_id, per_page, page, status, orderby, order
+                project_id, per_page, page, status, search, orderby, order
             )
             posts = wp_data.get("posts", [])
             total = wp_data.get("total", 0)

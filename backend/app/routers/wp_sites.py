@@ -148,38 +148,7 @@ async def get_site_posts(
         result = await get_wp_posts(
             str(project["_id"]), per_page, page, status, search, orderby, order
         )
-    return result
-
-
-@router.post("/{site_id}/posts/refresh")
-async def refresh_site_posts_cache(
-    site_id: str,
-    per_page: int = 100,
-    page: int = 1,
-    status: str = None,
-    orderby: str = "date",
-    order: str = "desc",
-):
-    """Manually refresh cached WordPress posts for a site."""
-    from app.services.wp_cache_service import WPCacheService
-
-    # Verify site exists
-    doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Site not found")
-
-    # Get project
-    project = await projects_col.find_one({"wp_site_id": site_id})
-    if not project:
-        raise HTTPException(status_code=404, detail="No project found for this site")
-
-    # Refresh cache
-    cache_service = WPCacheService()
-    result = await cache_service.refresh_cache(
-        str(project["_id"]), per_page, page, status, orderby, order
-    )
-
-    return result
+        return result
 
     # Hybrid pagination: cache first, WordPress API fallback
     cache_service = WPCacheService()
@@ -217,5 +186,36 @@ async def refresh_site_posts_cache(
     except Exception as e:
         print(f"[CACHE_ERROR] Failed to update cache: {str(e)}")
         # Non-critical, continue
+
+    return result
+
+
+@router.post("/{site_id}/posts/refresh")
+async def refresh_site_posts_cache(
+    site_id: str,
+    per_page: int = 100,
+    page: int = 1,
+    status: str = None,
+    orderby: str = "date",
+    order: str = "desc",
+):
+    """Manually refresh cached WordPress posts for a site."""
+    from app.services.wp_cache_service import WPCacheService
+
+    # Verify site exists
+    doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Site not found")
+
+    # Get project
+    project = await projects_col.find_one({"wp_site_id": site_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="No project found for this site")
+
+    # Refresh cache
+    cache_service = WPCacheService()
+    result = await cache_service.refresh_cache(
+        str(project["_id"]), per_page, page, status, orderby, order
+    )
 
     return result
