@@ -1,5 +1,5 @@
 """
-Post Sync Service — sync WordPress posts to local database.
+Post Sync Service — sync WordPress posts to local database and detect orphaned posts.
 """
 
 from datetime import datetime
@@ -102,3 +102,36 @@ async def sync_wordpress_posts(
         "updated": updated_count,
         "total": created_count + updated_count,
     }
+
+
+async def detect_orphaned_posts(project_id: str) -> list:
+    """Find posts that exist locally but not in WordPress.
+
+    Args:
+        project_id: Project ID
+
+    Returns:
+        List of orphaned post documents
+    """
+    # Get all local posts with wp_post_id
+    local_posts = await posts_col.find(
+        {"project_id": ObjectId(project_id), "wp_post_id": {"$ne": None}}
+    ).to_list(None)
+
+    if not local_posts:
+        return []
+
+    # Get all WordPress posts
+    try:
+        wp_result = await get_wp_posts(
+            project_id=project_id, per_page=100, status="any"
+        )
+        wp_post_ids = {p["id"] for p in wp_result["posts"]}
+    except Exception as e:
+        print(f"[ORPHAN_DETECTION] Failed to fetch WordPress posts: {str(e)}")
+        return []
+
+    # Find orphans (local posts not in WordPress)
+    orphans = [p for p in local_posts if p["wp_post_id"] not in wp_post_ids]
+
+    return orphans
