@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage } from '../../api/client'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts } from '../../api/client'
 import TokenUsageCard from './TokenUsageCard'
 import PostCard from './PostCard'
 
@@ -281,7 +281,7 @@ export default function ProjectDetail() {
     }
     setAllPostsError(null)
     try {
-      const response = await getPostsByProject(id, pageNum, 20)
+      const response = await getProjectPosts(id, pageNum, 20, statusFilter === 'all' ? null : statusFilter, sortBy, searchQuery || null)
       const newPosts = response.data.posts || []
       if (reset) {
         setAllPosts(newPosts)
@@ -304,37 +304,6 @@ export default function ProjectDetail() {
     setPage(nextPage)
     await loadAllPosts(nextPage, false)
   }
-
-  // Filter posts by status
-  const filteredPosts = allPosts.filter(post => {
-    if (statusFilter === 'all') return true
-    return post.status === statusFilter
-  })
-
-  // Sort posts
-  const sortedPosts = [...filteredPosts].sort((a, b) => {
-    switch (sortBy) {
-      case 'date-desc':
-        return new Date(b.created_at || b.updated_at) - new Date(a.created_at || a.updated_at)
-      case 'date-asc':
-        return new Date(a.created_at || a.updated_at) - new Date(b.created_at || b.updated_at)
-      case 'title-asc':
-        return (a.title || '').localeCompare(b.title || '')
-      case 'title-desc':
-        return (b.title || '').localeCompare(a.title || '')
-      case 'status':
-        return (a.status || '').localeCompare(b.status || '')
-      default:
-        return 0
-    }
-  })
-
-  // Search posts by title
-  const searchedPosts = sortedPosts.filter(post => {
-    if (!searchQuery) return true
-    const title = (post.title || '').toLowerCase()
-    return title.includes(searchQuery.toLowerCase())
-  })
 
   const handleCreateSingle = async (e) => {
     e.preventDefault()
@@ -696,11 +665,11 @@ export default function ProjectDetail() {
                   />
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-                  {searchedPosts.length} post{searchedPosts.length !== 1 ? 's' : ''}
+                  {allPosts.length} post{allPosts.length !== 1 ? 's' : ''}
                 </div>
               </div>
 
-              {searchedPosts.length === 0 ? (
+              {allPosts.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-state-icon">📄</div>
                   <div className="empty-state-title">No Posts Found</div>
@@ -710,34 +679,34 @@ export default function ProjectDetail() {
                       : 'No posts match your filter, sort, or search criteria'}
                   </div>
                 </div>
-              ) : (
-                <>
-                  <div className="stats-grid">
-                    {searchedPosts.map(post => (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        onEdit={(post) => {
-                          if (post.wp_post_id && project.wp_site_url) {
-                            window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                  {loadingMore && (
-                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
-                      <div className="loading-spinner" style={{ margin: '0 auto 10px' }} />
-                      <div>Loading more posts...</div>
-                    </div>
-                  )}
-                  {!hasMore && searchedPosts.length > 0 && (
-                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
-                      <div>No more posts to load</div>
-                    </div>
-                  )}
-                </>
-              )}
+               ) : (
+                 <>
+                   <div className="stats-grid">
+                     {allPosts.map(post => (
+                       <PostCard
+                         key={post.id}
+                         post={post}
+                         onEdit={(post) => {
+                           if (post.wp_post_id && project.wp_site_url) {
+                             window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
+                           }
+                         }}
+                       />
+                     ))}
+                   </div>
+                   {loadingMore && (
+                     <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                       <div className="loading-spinner" style={{ margin: '0 auto 10px' }} />
+                       <div>Loading more posts...</div>
+                     </div>
+                   )}
+                   {!hasMore && allPosts.length > 0 && (
+                     <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                       <div>No more posts to load</div>
+                     </div>
+                   )}
+                 </>
+               )}
             </>
           )}
         </>
