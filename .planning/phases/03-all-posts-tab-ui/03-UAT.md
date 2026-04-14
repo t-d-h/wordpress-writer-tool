@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T20:41:00+07:00
+updated: 2026-04-14T20:43:00+07:00
 ---
 
 ## Current Test
 
-number: 3
-name: Origin Badge Rendering
+number: 4
+name: Edit Button Functionality
 expected: |
-  Tool-created posts show a "Tool" badge. Existing WordPress posts show an "Existing" badge. The badge is positioned on the card and clearly distinguishes post types.
+  Clicking the Edit button on a post card opens the WordPress admin edit page in a new tab. The URL format is {wp_site_url}/wp-admin/post.php?post={wp_post_id}&action=edit.
 awaiting: user response
 
 ## Tests
@@ -26,7 +26,9 @@ result: pass
 
 ### 3. Origin Badge Rendering
 expected: Tool-created posts show a "Tool" badge. Existing WordPress posts show an "Existing" badge. The badge is positioned on the card and clearly distinguishes post types.
-result: pending
+result: blocked
+blocked_by: third-party
+reason: "There are only tool-created posts in the system, no existing posts to verify the 'Existing' badge rendering."
 
 ### 4. Edit Button Functionality
 expected: Clicking the Edit button on a post card opens the WordPress admin edit page in a new tab. The URL format is {wp_site_url}/wp-admin/post.php?post={wp_post_id}&action=edit.
@@ -101,8 +103,8 @@ result: pending
 total: 20
 passed: 2
 issues: 0
-pending: 18
-skipped: 0
+pending: 17
+skipped: 1
 
 ## Gaps
 
