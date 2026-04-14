@@ -36,6 +36,13 @@ export default function PostCard({ post, onEdit }) {
       <div className="post-card-meta">
         <span className="post-card-date">{formatDate(post.created_at || post.updated_at)}</span>
       </div>
+      {post.wp_post_url && (
+        <div className="post-card-url">
+          <a href={post.wp_post_url} target="_blank" rel="noopener noreferrer">
+            {post.wp_post_url}
+          </a>
+        </div>
+      )}
       {post.wp_post_id && (
         <button className="btn btn-secondary btn-sm" onClick={handleEdit}>
           Edit in WordPress
