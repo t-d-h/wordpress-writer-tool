@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T20:39:00+07:00
+updated: 2026-04-14T20:41:00+07:00
 ---
 
 ## Current Test
 
-number: 2
-name: Post Card Display
+number: 3
+name: Origin Badge Rendering
 expected: |
-  Posts are displayed in a grid layout using PostCard components. Each card shows the post title, status badge, formatted date, origin badge (Tool or Existing), and an Edit button.
+  Tool-created posts show a "Tool" badge. Existing WordPress posts show an "Existing" badge. The badge is positioned on the card and clearly distinguishes post types.
 awaiting: user response
 
 ## Tests
@@ -22,7 +22,7 @@ result: pass
 
 ### 2. Post Card Display
 expected: Posts are displayed in a grid layout using PostCard components. Each card shows the post title, status badge, formatted date, origin badge (Tool or Existing), and an Edit button.
-result: pending
+result: pass
 
 ### 3. Origin Badge Rendering
 expected: Tool-created posts show a "Tool" badge. Existing WordPress posts show an "Existing" badge. The badge is positioned on the card and clearly distinguishes post types.
@@ -99,9 +99,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 1
+passed: 2
 issues: 0
-pending: 19
+pending: 18
 skipped: 0
 
 ## Gaps
