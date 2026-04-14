@@ -55,24 +55,24 @@ None deferred for this milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BACKEND-01 | TBD | Pending |
-| BACKEND-02 | TBD | Pending |
-| BACKEND-03 | TBD | Pending |
-| BACKEND-04 | TBD | Pending |
-| BACKEND-05 | TBD | Pending |
-| BACKEND-06 | TBD | Pending |
-| FRONTEND-01 | TBD | Pending |
-| FRONTEND-02 | TBD | Pending |
-| FRONTEND-03 | TBD | Pending |
-| FRONTEND-04 | TBD | Pending |
-| FRONTEND-05 | TBD | Pending |
-| FRONTEND-06 | TBD | Pending |
-| FRONTEND-07 | TBD | Pending |
-| CLEANUP-01 | TBD | Pending |
-| CLEANUP-02 | TBD | Pending |
-| CLEANUP-03 | TBD | Pending |
-| CLEANUP-04 | TBD | Pending |
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
+| BACKEND-01 | Phase 4 | Pending |
+| BACKEND-02 | Phase 4 | Pending |
+| BACKEND-03 | Phase 4 | Pending |
+| BACKEND-04 | Phase 4 | Pending |
+| BACKEND-05 | Phase 4 | Pending |
+| BACKEND-06 | Phase 4 | Pending |
+| FRONTEND-01 | Phase 6 | Pending |
+| FRONTEND-02 | Phase 6 | Pending |
+| FRONTEND-03 | Phase 6 | Pending |
+| FRONTEND-04 | Phase 6 | Pending |
+| FRONTEND-05 | Phase 6 | Pending |
+| FRONTEND-06 | Phase 6 | Pending |
+| FRONTEND-07 | Phase 6 | Pending |
+| CLEANUP-01 | Phase 7 | Pending |
+| CLEANUP-02 | Phase 7 | Pending |
+| CLEANUP-03 | Phase 7 | Pending |
+| CLEANUP-04 | Phase 7 | Pending |
+| DATA-01 | Phase 5 | Pending |
+| DATA-02 | Phase 5 | Pending |
+| DATA-03 | Phase 5 | Pending |
+| DATA-04 | Phase 5 | Pending |
