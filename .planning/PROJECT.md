@@ -20,21 +20,26 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 - Post publishing to WordPress REST API
 - Project statistics display (published, waiting approve, draft, failed posts)
 - Token usage tracking per post (research, outline, content, thumbnail)
+- Display token usage breakdown in Project general tab (above statistics)
+  - Show breakdown by post type: research, outline, content, thumbnail
+  - Include deleted posts in calculations
+  - Always visible, calculate on-the-fly from posts collection
+  - Validated in Phase 01: Token Usage Display
+- WordPress REST API integration for fetching, filtering, and searching posts
+  - Backend service supports pagination, status filtering, and search by title
+  - Rate limiting with exponential backoff for API calls
+  - Post origin tracking (tool-created vs existing)
+  - Orphan detection for posts that exist locally but not in WordPress
+  - API endpoints for WordPress sync functionality
+  - Validated in Phase 02: WordPress Integration Backend
 
 ### Active
 
-- [ ] Display token usage breakdown in Project general tab (above statistics)
-  - Show breakdown by post type: research, outline, content, thumbnail
-  - Show total input tokens and total output tokens
-  - Include deleted posts in calculations
-  - Always visible, calculate on-the-fly from posts collection
 - [ ] Add "All Posts" tab to each project
   - Show all WordPress posts (both tool-created and existing)
   - Visual distinction between post types
   - Edit button opens WordPress admin in new tab
   - Filter by status, sort by date, search by title
-  - Add WordPress API method to fetch all posts
-  - Track post origin in database
 
 ### Out of Scope
 
@@ -79,4 +84,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after initialization*
+*Last updated: 2026-04-14 after Phase 02 completion*
