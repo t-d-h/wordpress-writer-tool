@@ -204,6 +204,15 @@ export default function ProjectDetail() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [loadingMore, hasMore, page])
 
+  // Reset pagination when filter/sort/search changes
+  useEffect(() => {
+    if (activeTab === 'all-posts') {
+      setPage(1)
+      setHasMore(true)
+      loadAllPosts(1, true)
+    }
+  }, [statusFilter, sortBy, searchQuery])
+
   const load = async () => {
     try {
       const [projRes, statsRes, postsRes, providersRes, defaultsRes] = await Promise.all([
