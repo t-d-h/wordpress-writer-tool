@@ -3,7 +3,12 @@ from bson import ObjectId
 from datetime import datetime, timezone
 from typing import Optional
 from app.database import projects_col, wp_sites_col, posts_col
-from app.models.project import ProjectCreate, ProjectUpdate, ProjectResponse
+from app.models.project import (
+    ProjectCreate,
+    ProjectUpdate,
+    ProjectResponse,
+    TokenUsageResponse,
+)
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
@@ -50,6 +55,7 @@ async def get_project_stats(project_id: str):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    # Aggregate post status counts
     pipeline = [
         {"$match": {"project_id": project_id}},
         {"$group": {"_id": "$status", "count": {"$sum": 1}}},
@@ -58,6 +64,36 @@ async def get_project_stats(project_id: str):
     async for doc in posts_col.aggregate(pipeline):
         stats[doc["_id"]] = doc["count"]
         stats["total"] += doc["count"]
+
+    # Aggregate token usage (includes all posts, no status filter)
+    token_pipeline = [
+        {"$match": {"project_id": project_id}},
+        {
+            "$group": {
+                "_id": "$project_id",
+                "research": {"$sum": "$token_usage.research"},
+                "outline": {"$sum": "$token_usage.outline"},
+                "content": {"$sum": "$token_usage.content"},
+                "thumbnail": {"$sum": "$token_usage.thumbnail"},
+                "total": {"$sum": "$token_usage.total"},
+            }
+        },
+    ]
+    token_result = await posts_col.aggregate(token_pipeline).to_list(length=1)
+    token_usage = TokenUsageResponse(
+        research=0, outline=0, content=0, thumbnail=0, total=0
+    )
+    if token_result:
+        token_usage = TokenUsageResponse(
+            research=token_result[0].get("research", 0),
+            outline=token_result[0].get("outline", 0),
+            content=token_result[0].get("content", 0),
+            thumbnail=token_result[0].get("thumbnail", 0),
+            total=token_result[0].get("total", 0),
+        )
+
+    # Add token usage to stats response
+    stats["token_usage"] = token_usage.model_dump()
     return stats
 
 
