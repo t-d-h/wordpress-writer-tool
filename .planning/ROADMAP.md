@@ -44,7 +44,10 @@
 4. Backend WordPress service handles API rate limiting gracefully
 5. System correctly identifies post origin (tool-created vs existing)
 
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 02-01-PLAN.md — Enhanced WordPress service with search, filtering, and rate limiting
+- [ ] 02-02-PLAN.md — Post origin tracking and sync service
+- [ ] 02-03-PLAN.md — Orphan detection and API endpoints
 
 ### Phase 3: All Posts Tab UI
 
@@ -69,7 +72,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Token Usage Display | 0/0 | Not started | - |
-| 2. WordPress Integration Backend | 0/0 | Not started | - |
+| 2. WordPress Integration Backend | 0/3 | Planned | - |
 | 3. All Posts Tab UI | 0/0 | Not started | - |
 
 ## Dependencies
