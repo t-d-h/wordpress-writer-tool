@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -24,3 +24,16 @@ class WPSiteResponse(BaseModel):
     username: str
     api_key_preview: str
     created_at: datetime
+
+
+class WPPostResponse(BaseModel):
+    id: int
+    title: str
+    link: str
+    date: str
+    modified: str
+    status: str
+    categories: List[dict] = []
+    tags: List[dict] = []
+    excerpt: str = ""
+    author: int = 0

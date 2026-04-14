@@ -1,0 +1,88 @@
+[      75ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:21550
+[     253ms] TypeError: posts.some is not a function
+    at http://w2676:5173/src/components/Projects/ProjectDetail.jsx:94:33
+    at commitHookEffectListMount (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:16915:34)
+    at commitPassiveMountOnFiber (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18156:19)
+    at commitPassiveMountEffects_complete (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18129:17)
+    at commitPassiveMountEffects_begin (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18119:15)
+    at commitPassiveMountEffects (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18109:11)
+    at flushPassiveEffectsImpl (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19490:11)
+    at flushPassiveEffects (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19447:22)
+    at http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19328:17
+    at workLoop (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:197:42)
+[     254ms] [ERROR] The above error occurred in the <ProjectDetail> component:
+
+    at ProjectDetail (http://w2676:5173/src/components/Projects/ProjectDetail.jsx:27:18)
+    at RenderedRoute (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:6419:26)
+    at Outlet (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:7207:26)
+    at main
+    at div
+    at Layout
+    at RenderedRoute (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:6419:26)
+    at Routes (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:7286:3)
+    at App
+    at Router (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:7216:13)
+    at BrowserRouter (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:10514:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:14031
+[     257ms] TypeError: posts.some is not a function
+    at http://w2676:5173/src/components/Projects/ProjectDetail.jsx:94:33
+    at commitHookEffectListMount (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:16915:34)
+    at commitPassiveMountOnFiber (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18156:19)
+    at commitPassiveMountEffects_complete (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18129:17)
+    at commitPassiveMountEffects_begin (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18119:15)
+    at commitPassiveMountEffects (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18109:11)
+    at flushPassiveEffectsImpl (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19490:11)
+    at flushPassiveEffects (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19447:22)
+    at http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19328:17
+    at workLoop (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:197:42)
+[   64439ms] TypeError: posts.map is not a function
+    at ProjectDetail (http://w2676:5173/src/components/Projects/ProjectDetail.jsx?t=1776173845153:693:59)
+    at renderWithHooks (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:11548:26)
+    at updateFunctionComponent (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:14582:28)
+    at beginWork (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:15924:22)
+    at HTMLUnknownElement.callCallback2 (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:3674:22)
+    at Object.invokeGuardedCallbackDev (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:3699:24)
+    at invokeGuardedCallback (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:3733:39)
+    at beginWork$1 (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19765:15)
+    at performUnitOfWork (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19198:20)
+    at workLoopSync (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19137:13)
+[   64449ms] TypeError: posts.map is not a function
+    at ProjectDetail (http://w2676:5173/src/components/Projects/ProjectDetail.jsx?t=1776173845153:693:59)
+    at renderWithHooks (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:11548:26)
+    at updateFunctionComponent (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:14582:28)
+    at beginWork (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:15924:22)
+    at HTMLUnknownElement.callCallback2 (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:3674:22)
+    at Object.invokeGuardedCallbackDev (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:3699:24)
+    at invokeGuardedCallback (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:3733:39)
+    at beginWork$1 (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19765:15)
+    at performUnitOfWork (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19198:20)
+    at workLoopSync (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19137:13)
+[   64448ms] [ERROR] The above error occurred in the <ProjectDetail> component:
+
+    at ProjectDetail (http://w2676:5173/src/components/Projects/ProjectDetail.jsx?t=1776173845153:27:18)
+    at RenderedRoute (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:6419:26)
+    at Outlet (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:7207:26)
+    at main
+    at div
+    at Layout
+    at RenderedRoute (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:6419:26)
+    at Routes (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:7286:3)
+    at App
+    at Router (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:7216:13)
+    at BrowserRouter (http://w2676:5173/node_modules/.vite/deps/react-router-dom.js?v=99e4bc92:10514:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:14031
+[   64452ms] TypeError: posts.map is not a function
+    at ProjectDetail (http://w2676:5173/src/components/Projects/ProjectDetail.jsx?t=1776173845153:693:59)
+    at renderWithHooks (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:11548:26)
+    at updateFunctionComponent (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:14582:28)
+    at beginWork (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:15924:22)
+    at beginWork$1 (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19753:22)
+    at performUnitOfWork (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19198:20)
+    at workLoopSync (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19137:13)
+    at renderRootSync (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:19116:15)
+    at recoverFromConcurrentError (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18736:28)
+    at performConcurrentWorkOnRoot (http://w2676:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=99e4bc92:18684:30)

@@ -6,6 +6,7 @@ import DefaultModels from './components/Settings/DefaultModels'
 import ProjectList from './components/Projects/ProjectList'
 import ProjectDetail from './components/Projects/ProjectDetail'
 import PostView from './components/Posts/PostView'
+import AllPosts from './components/AllPosts'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/projects" element={<ProjectList />} />
         <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/posts/:id" element={<PostView />} />
+        <Route path="/all-posts" element={<AllPosts />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

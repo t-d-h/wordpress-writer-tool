@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts } from '../../api/client'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts, getSitePosts } from '../../api/client'
 import TokenUsageCard from './TokenUsageCard'
 import PostCard from './PostCard'
 
@@ -174,10 +174,10 @@ export default function ProjectDetail() {
   }, [showCreateModal, createMode])
 
   useEffect(() => {
-    if (activeTab === 'all-posts') {
+    if (activeTab === 'all-posts' && project && project.wp_site_id) {
       loadAllPosts(1, true)
     }
-  }, [activeTab, id])
+  }, [activeTab, id, project])
 
   useEffect(() => {
     if (page > 1) {
@@ -206,12 +206,12 @@ export default function ProjectDetail() {
 
   // Reset pagination when filter/sort/search changes
   useEffect(() => {
-    if (activeTab === 'all-posts') {
+    if (activeTab === 'all-posts' && project && project.wp_site_id) {
       setPage(1)
       setHasMore(true)
       loadAllPosts(1, true)
     }
-  }, [statusFilter, sortBy, searchQuery])
+  }, [statusFilter, sortBy, searchQuery, project])
 
   const load = async () => {
     try {
@@ -224,7 +224,7 @@ export default function ProjectDetail() {
       ])
       setProject(projRes.data)
       setStats(statsRes.data)
-      setPosts(postsRes.data || [])
+      setPosts(postsRes.data.posts || [])
       setProviders(providersRes.data)
       if (defaultsRes.data && defaultsRes.data.id) {
         setDefaultModels({
@@ -281,17 +281,42 @@ export default function ProjectDetail() {
     }
     setAllPostsError(null)
     try {
-      const response = await getProjectPosts(id, pageNum, 20, statusFilter === 'all' ? null : statusFilter, sortBy, searchQuery || null)
-      const newPosts = response.data.posts || []
+      // Fetch posts from WordPress instead of MongoDB
+      const response = await getSitePosts(
+        project.wp_site_id,
+        20,
+        pageNum,
+        statusFilter === 'all' ? null : statusFilter
+      )
+
+      // The response is already in the format {"posts": [...], "total": N}
+      const wpPosts = response.data?.posts || []
+
+      // Transform WordPress REST API response to match PostCard format
+      const transformedPosts = wpPosts.map(wpPost => ({
+        id: wpPost.id,
+        title: wpPost.title?.rendered || 'Untitled',
+        status: wpPost.status,
+        created_at: wpPost.date,
+        updated_at: wpPost.modified,
+        wp_post_id: wpPost.id,
+        wp_post_url: wpPost.link,
+        categories: wpPost.categories || [],
+        tags: wpPost.tags || [],
+        origin: 'existing' // These are existing WordPress posts
+      }))
+
       if (reset) {
-        setAllPosts(newPosts)
+        setAllPosts(transformedPosts)
       } else {
-        setAllPosts(prev => [...prev, ...newPosts])
+        setAllPosts(prev => [...prev, ...transformedPosts])
       }
-      setHasMore(newPosts.length >= 20)
+
+      // Check if there are more posts based on the response
+      setHasMore(transformedPosts.length >= 20)
     } catch (e) {
       console.error('Failed to load all posts:', e)
-      setAllPostsError('Unable to load posts')
+      setAllPostsError('Unable to load posts from WordPress')
     } finally {
       setLoadingAllPosts(false)
       setLoadingMore(false)

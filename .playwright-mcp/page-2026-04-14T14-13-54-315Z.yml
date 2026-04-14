@@ -1,0 +1,38 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: W
+      - generic [ref=e7]:
+        - generic [ref=e8]: WP Writer
+        - generic [ref=e9]: AI-Powered
+      - button "Switch to dark mode" [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+    - navigation [ref=e13]:
+      - button "Create Project" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+        - text: Create Project
+      - generic [ref=e17]: Menu
+      - link "All Posts" [ref=e19] [cursor=pointer]:
+        - /url: /all-posts
+        - img [ref=e20]
+        - generic [ref=e22]: All Posts
+      - generic [ref=e23]:
+        - generic [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+          - generic [ref=e27]: Projects
+          - img [ref=e28]
+        - link "test" [ref=e31] [cursor=pointer]:
+          - /url: /projects/69d4dff2e7de1724c0e1b51e
+      - generic [ref=e33] [cursor=pointer]:
+        - img [ref=e34]
+        - generic [ref=e37]: Settings
+        - img [ref=e38]
+  - main [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - heading "test" [level=1] [ref=e43]
+        - paragraph [ref=e44]: fasdf · test
+      - generic [ref=e45]:
+        - button "General" [ref=e46] [cursor=pointer]
+        - button "Content" [ref=e47] [cursor=pointer]
+        - button "All Posts" [ref=e48] [cursor=pointer]
