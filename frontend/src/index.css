@@ -1273,3 +1273,29 @@ tbody tr:last-child td {
   color: #007bff;
   text-decoration: underline;
 }
+
+.post-card-categories,
+.post-card-tags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge-category {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.75em;
+  background-color: #e0d4fc;
+  color: #6b46c1;
+  border-radius: 4px;
+}
+
+.badge-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.75em;
+  background-color: #d1fae5;
+  color: #047857;
+  border-radius: 4px;
+}
