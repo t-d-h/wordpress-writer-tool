@@ -18,23 +18,33 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 - AI-assisted content pipeline: outline generation, full content, thumbnails, section images
 - Async job processing via Redis pub/sub
 - Post publishing to WordPress REST API
+- Project statistics display (published, waiting approve, draft, failed posts)
+- Token usage tracking per post (research, outline, content, thumbnail)
 
 ### Active
 
-- [ ] Backend validates WordPress site URL format (http/https) on creation
-- [ ] Backend checks WordPress site is reachable (connectivity test) before saving
-- [ ] Backend verifies username + API key credentials against WordPress REST API before saving
-- [ ] Backend returns specific error details to frontend on validation failure
-- [ ] Save is blocked if any validation step fails
+- [ ] Display token usage breakdown in Project general tab (above statistics)
+  - Show breakdown by post type: research, outline, content, thumbnail
+  - Show total input tokens and total output tokens
+  - Include deleted posts in calculations
+  - Always visible, calculate on-the-fly from posts collection
+- [ ] Add "All Posts" tab to each project
+  - Show all WordPress posts (both tool-created and existing)
+  - Visual distinction between post types
+  - Edit button opens WordPress admin in new tab
+  - Filter by status, sort by date, search by title
+  - Add WordPress API method to fetch all posts
+  - Track post origin in database
 
 ### Out of Scope
 
 - Frontend UI toast styling — backend error details are sufficient for now
 - Periodic re-validation of saved sites — validation only runs on site creation
+- Token usage pagination — show all at once, note performance concern for later
 
 ## Context
 
-This is a brownfield project with existing codebase mapped in `.planning/codebase/`. The current `POST /api/wp-sites` endpoint accepts and stores WP site data with zero validation against the actual WordPress instance. Invalid URLs, unreachable sites, and bad credentials are only discovered when the user attempts to publish content. Known concerns include plain-text credential storage (deferred), URL format validation gap, and no pre-save connectivity check.
+This is a brownfield project with existing codebase mapped in `.planning/codebase/`. The system has a working AI content generation pipeline with job processing, WordPress integration, and project management. Current concerns include plain-text credential storage (deferred), URL format validation gap, no pre-save connectivity check, and missing token usage aggregation display.
 
 ## Constraints
 
@@ -46,9 +56,10 @@ This is a brownfield project with existing codebase mapped in `.planning/codebas
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Backend-only validation with HTTP error responses | Keep it simple; frontend already handles API errors | — Pending |
-| Test connectivity AND credentials on creation | User explicitly wants both checks | — Pending |
-| Reject invalid URLs upfront | Catch obviously bad input before making network calls | — Pending |
+| Token usage calculated on-the-fly | No caching needed for MVP, simpler implementation | — Pending |
+| Include deleted posts in token totals | Users want complete cost visibility | — Pending |
+| Build features sequentially | Token usage first, then All Posts tab | — Pending |
+| Track post origin in database | Distinguish tool-created vs existing posts | — Pending |
 
 ## Evolution
 
@@ -68,4 +79,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-07 after initialization*
+*Last updated: 2026-04-14 after initialization*
