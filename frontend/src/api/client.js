@@ -44,7 +44,7 @@ export const updateProject = (id, data) => api.put(`/projects/${id}`, data);
 export const deleteProject = (id) => api.delete(`/projects/${id}`);
 
 // Posts
-export const getPostsByProject = (projectId) => api.get(`/posts/by-project/${projectId}`);
+export const getPostsByProject = (projectId, page = 1, limit = 100) => api.get(`/posts/by-project/${projectId}`, { params: { page, limit } });
 export const getPost = (id) => api.get(`/posts/${id}`);
 export const createPost = (data) => api.post('/posts', data);
 export const createBulkPosts = (data) => api.post('/posts/bulk', data);

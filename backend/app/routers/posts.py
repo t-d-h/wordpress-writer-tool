@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Body
+from fastapi import APIRouter, HTTPException, UploadFile, File, Body, Query
 from fastapi.responses import FileResponse
 from bson import ObjectId
 from datetime import datetime, timezone
 import uuid
 import os
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from app.database import posts_col, projects_col, jobs_col
 from app.models.post import PostCreate, BulkPostCreate, PostUpdate, PostResponse
 from app.redis_client import publish_job
@@ -53,14 +53,22 @@ def format_post(doc: dict) -> dict:
 
 
 @router.get("/by-project/{project_id}")
-async def list_posts_by_project(project_id: str):
+async def list_posts_by_project(
+    project_id: str, page: int = Query(1, ge=1), limit: int = Query(100, ge=1, le=100)
+):
     project = await projects_col.find_one({"_id": ObjectId(project_id)})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     posts = []
-    async for doc in posts_col.find({"project_id": project_id}).sort("created_at", -1):
+    skip = (page - 1) * limit
+    async for doc in (
+        posts_col.find({"project_id": project_id})
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(limit)
+    ):
         posts.append(format_post(doc))
-    return posts
+    return {"posts": posts, "total": len(posts)}
 
 
 @router.get("/{post_id}")

@@ -23,6 +23,9 @@ export default function ProjectDetail() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('date-desc')
   const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createMode, setCreateMode] = useState('single')
   const [singleForm, setSingleForm] = useState({
@@ -172,9 +175,15 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     if (activeTab === 'all-posts') {
-      loadAllPosts()
+      loadAllPosts(1, true)
     }
   }, [activeTab, id])
+
+  useEffect(() => {
+    if (page > 1) {
+      loadAllPosts(page, false)
+    }
+  }, [page])
 
   const load = async () => {
     try {
@@ -235,18 +244,37 @@ export default function ProjectDetail() {
     }
   }
 
-  const loadAllPosts = async () => {
-    setLoadingAllPosts(true)
+  const loadAllPosts = async (pageNum = 1, reset = false) => {
+    if (reset) {
+      setLoadingAllPosts(true)
+      setAllPosts([])
+    } else {
+      setLoadingMore(true)
+    }
     setAllPostsError(null)
     try {
-      const response = await getPostsByProject(id)
-      setAllPosts(response.data)
+      const response = await getPostsByProject(id, pageNum, 20)
+      const newPosts = response.data.posts || []
+      if (reset) {
+        setAllPosts(newPosts)
+      } else {
+        setAllPosts(prev => [...prev, ...newPosts])
+      }
+      setHasMore(newPosts.length >= 20)
     } catch (e) {
       console.error('Failed to load all posts:', e)
       setAllPostsError('Unable to load posts')
     } finally {
       setLoadingAllPosts(false)
+      setLoadingMore(false)
     }
+  }
+
+  const loadMorePosts = async () => {
+    if (loadingMore || !hasMore) return
+    const nextPage = page + 1
+    setPage(nextPage)
+    await loadAllPosts(nextPage, false)
   }
 
   // Filter posts by status
