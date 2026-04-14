@@ -224,7 +224,7 @@ export default function ProjectDetail() {
       ])
       setProject(projRes.data)
       setStats(statsRes.data)
-      setPosts(postsRes.data)
+      setPosts(postsRes.data || [])
       setProviders(providersRes.data)
       if (defaultsRes.data && defaultsRes.data.id) {
         setDefaultModels({
