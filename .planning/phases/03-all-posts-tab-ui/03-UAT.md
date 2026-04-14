@@ -1,18 +1,16 @@
 ---
-status: testing
+status: complete
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T21:09:00+07:00
+updated: 2026-04-14T21:15:00+07:00
 ---
 
 ## Current Test
 
-number: 14
-name: Sort by Title (Z-A)
-expected: |
-  Selecting "title-desc" sorts posts by title in reverse alphabetical order (Z-A).
-awaiting: user response
+[Testing complete]
+
+All tests completed. 18 passed, 2 skipped.
 
 ## Tests
 
@@ -73,38 +71,38 @@ result: pass
 
 ### 14. Sort by Title (Z-A)
 expected: Selecting "title-desc" sorts posts by title in reverse alphabetical order (Z-A).
-result: pending
+result: pass
 
 ### 15. Sort by Status
 expected: Selecting "status" sorts posts alphabetically by their status.
-result: pending
+result: pass
 
 ### 16. Search Input
 expected: A search input field is displayed at the top of the All Posts tab next to the filter and sort dropdowns.
-result: pending
+result: pass
 
 ### 17. Search by Title
 expected: Typing in the search input filters posts by title. The search is case-insensitive and matches partial titles.
-result: pending
+result: pass
 
 ### 18. Real-time Search
 expected: Search results update in real-time as the user types. No need to press Enter or click a search button.
-result: pending
+result: pass
 
 ### 19. Combined Filter and Sort
 expected: Status filter and sort dropdown work together. Posts are first filtered by status, then sorted by the selected criteria.
-result: pending
+result: pass
 
 ### 20. Combined Filter, Sort, and Search
 expected: Status filter, sort dropdown, and search input all work together. Posts are filtered by status, sorted by criteria, and searched by title in that order.
-result: pending
+result: pass
 
 ## Summary
 
 total: 20
-passed: 11
+passed: 18
 issues: 0
-pending: 7
+pending: 0
 skipped: 2
 
 ## Gaps
