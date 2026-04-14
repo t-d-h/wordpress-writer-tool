@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath } from 'react-icons/hi2'
 import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage } from '../../api/client'
+import TokenUsageCard from './TokenUsageCard'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -436,14 +437,21 @@ export default function ProjectDetail() {
       </div>
 
       {activeTab === 'general' && (
-        <div className="stats-grid">
-          {statCards.map(c => (
-            <div key={c.key} className={`stat-card ${c.key}`}>
-              <div className="stat-label">{c.label}</div>
-              <div className="stat-value">{c.value}</div>
-            </div>
-          ))}
-        </div>
+        <>
+          <TokenUsageCard
+            tokenUsage={tokenUsage}
+            loading={loadingTokenUsage}
+            error={tokenUsageError}
+          />
+          <div className="stats-grid">
+            {statCards.map(c => (
+              <div key={c.key} className={`stat-card ${c.key}`}>
+                <div className="stat-label">{c.label}</div>
+                <div className="stat-value">{c.value}</div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {activeTab === 'content' && (
