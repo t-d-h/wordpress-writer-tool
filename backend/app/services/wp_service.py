@@ -2,6 +2,7 @@
 WordPress Service — publish/update posts via the WordPress REST API.
 """
 
+import asyncio
 import base64
 import httpx
 import os
@@ -24,6 +25,55 @@ def _get_auth_header(username: str, api_key: str) -> dict:
     """Create Basic Auth header for WordPress REST API."""
     credentials = base64.b64encode(f"{username}:{api_key}".encode()).decode()
     return {"Authorization": f"Basic {credentials}"}
+
+
+async def fetch_with_retry(
+    url: str, headers: dict, params: dict, max_retries: int = 3
+) -> dict:
+    """Fetch with exponential backoff on rate limit errors.
+
+    Args:
+        url: WordPress REST API endpoint URL
+        headers: Request headers (including auth)
+        params: Query parameters
+        max_retries: Maximum number of retry attempts
+
+    Returns:
+        dict with 'posts' list and 'total' count
+
+    Raises:
+        httpx.HTTPStatusError: If request fails after max retries
+    """
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                response = await client.get(url, headers=headers, params=params)
+
+                if response.status_code == 429:
+                    # Rate limit exceeded, wait with exponential backoff
+                    wait_time = 2**attempt  # 1, 2, 4 seconds
+                    print(
+                        f"[RATE_LIMIT] Too many requests, waiting {wait_time}s before retry {attempt + 1}/{max_retries}"
+                    )
+                    await asyncio.sleep(wait_time)
+                    continue
+
+                response.raise_for_status()
+                posts = response.json()
+                total = int(response.headers.get("X-WP-Total", len(posts)))
+                return {"posts": posts, "total": total}
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429 and attempt < max_retries - 1:
+                continue
+            raise
+        except httpx.RequestError as e:
+            print(f"[REQUEST_ERROR] Failed to fetch posts: {str(e)}")
+            raise
+
+    raise Exception(
+        f"Failed to fetch posts after {max_retries} retries due to rate limiting"
+    )
 
 
 async def verify_wp_site(url: str, username: str, api_key: str) -> dict:
@@ -242,11 +292,4 @@ async def get_wp_posts(
     if order:
         params["order"] = order
 
-    async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.get(url, headers=headers, params=params)
-        response.raise_for_status()
-
-        posts = response.json()
-        total = int(response.headers.get("X-WP-Total", len(posts)))
-
-        return {"posts": posts, "total": total}
+    return await fetch_with_retry(url, headers, params)
