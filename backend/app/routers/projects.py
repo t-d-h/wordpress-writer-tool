@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import Optional
@@ -146,3 +146,80 @@ async def delete_project(project_id: str):
     # Also delete all posts in this project
     await posts_col.delete_many({"project_id": project_id})
     return {"message": "Project and its posts deleted"}
+
+
+@router.get("/{project_id}/posts")
+async def get_all_posts(
+    project_id: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    status: Optional[str] = Query(None),
+    sort_by: str = Query(
+        "date-desc", regex="^(date-desc|date-asc|title-asc|title-desc|status)$"
+    ),
+    search: Optional[str] = Query(None),
+):
+    """Get all posts for a project with filter, sort, and search support."""
+    # Verify project exists
+    project = await projects_col.find_one({"_id": ObjectId(project_id)})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # Build query filter
+    query_filter = {"project_id": project_id}
+
+    # Apply status filter if provided
+    if status:
+        query_filter["status"] = status
+
+    # Apply search filter if provided (case-insensitive title search)
+    if search:
+        query_filter["title"] = {"$regex": search, "$options": "i"}
+
+    # Determine sort order
+    sort_field = "created_at"
+    sort_direction = -1  # descending
+
+    if sort_by == "date-asc":
+        sort_field = "created_at"
+        sort_direction = 1
+    elif sort_by == "title-asc":
+        sort_field = "title"
+        sort_direction = 1
+    elif sort_by == "title-desc":
+        sort_field = "title"
+        sort_direction = -1
+    elif sort_by == "status":
+        sort_field = "status"
+        sort_direction = 1
+
+    # Get total count
+    total = await posts_col.count_documents(query_filter)
+
+    # Apply pagination
+    skip = (page - 1) * limit
+
+    # Query posts with filter, sort, and pagination
+    posts = []
+    async for doc in (
+        posts_col.find(query_filter)
+        .sort(sort_field, sort_direction)
+        .skip(skip)
+        .limit(limit)
+    ):
+        # Convert ObjectId to string for response
+        post_dict = {
+            "id": str(doc["_id"]),
+            "project_id": doc["project_id"],
+            "topic": doc.get("topic"),
+            "title": doc.get("title"),
+            "status": doc.get("status", "draft"),
+            "created_at": doc.get("created_at"),
+            "updated_at": doc.get("updated_at", doc.get("created_at")),
+            "wp_post_id": doc.get("wp_post_id"),
+            "wp_post_url": doc.get("wp_post_url"),
+            "origin": doc.get("origin", "tool"),
+        }
+        posts.append(post_dict)
+
+    return {"posts": posts, "total": total, "page": page, "limit": limit}
