@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T20:56:00+07:00
+updated: 2026-04-14T20:58:00+07:00
 ---
 
 ## Current Test
 
-number: 8
-name: Status Filter Dropdown
+number: 9
+name: Status Filter Functionality
 expected: |
-  A status filter dropdown is displayed at the top of the All Posts tab. The dropdown shows options: all, published, draft, pending, failed.
+  Selecting a status from the dropdown filters the displayed posts. "all" shows all posts. Specific status options show only posts with that status. The filter updates immediately.
 awaiting: user response
 
 ## Tests
@@ -49,7 +49,7 @@ result: pass
 
 ### 8. Status Filter Dropdown
 expected: A status filter dropdown is displayed at the top of the All Posts tab. The dropdown shows options: all, published, draft, pending, failed.
-result: pending
+result: pass
 
 ### 9. Status Filter Functionality
 expected: Selecting a status from the dropdown filters the displayed posts. "all" shows all posts. Specific status options show only posts with that status. The filter updates immediately.
@@ -102,9 +102,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 5
+passed: 6
 issues: 0
-pending: 13
+pending: 12
 skipped: 2
 
 ## Gaps
