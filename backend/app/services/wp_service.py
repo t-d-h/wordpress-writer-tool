@@ -374,4 +374,26 @@ async def get_wp_posts(
     if order:
         params["order"] = order
 
-    return await fetch_with_retry(url, headers, params)
+    result = await fetch_with_retry(url, headers, params)
+
+    # Transform posts data for frontend consumption
+    transformed_posts = []
+    for post in result.get("posts", []):
+        # Extract nested data from _embedded
+        embedded = post.get("_embedded", {})
+        categories = _extract_categories(embedded)
+        tags = _extract_tags(embedded)
+
+        # Format date and generate edit URL
+        formatted_date = _format_date(post.get("date"))
+        edit_url = _generate_edit_url(wp_site["url"], post.get("id"))
+
+        # Add transformed fields to post (keep original fields intact)
+        post["categories"] = categories
+        post["tags"] = tags
+        post["formatted_date"] = formatted_date
+        post["edit_url"] = edit_url
+
+        transformed_posts.append(post)
+
+    return {"posts": transformed_posts, "total": result.get("total", 0)}
