@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T20:50:00+07:00
+updated: 2026-04-14T20:52:00+07:00
 ---
 
 ## Current Test
 
-number: 5
-name: Loading State
+number: 6
+name: Error State
 expected: |
-  When the All Posts tab is first opened or refreshed, a loading spinner is displayed while posts are being fetched from the backend.
+  If the post fetch fails, an error message is displayed to the user. The error message indicates that posts could not be loaded.
 awaiting: user response
 
 ## Tests
@@ -37,7 +37,7 @@ reason: "WordPress site configuration issue - forces login even when already log
 
 ### 5. Loading State
 expected: When the All Posts tab is first opened or refreshed, a loading spinner is displayed while posts are being fetched from the backend.
-result: pending
+result: pass
 
 ### 6. Error State
 expected: If the post fetch fails, an error message is displayed to the user. The error message indicates that posts could not be loaded.
@@ -102,9 +102,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 2
+passed: 3
 issues: 0
-pending: 16
+pending: 15
 skipped: 2
 
 ## Gaps
