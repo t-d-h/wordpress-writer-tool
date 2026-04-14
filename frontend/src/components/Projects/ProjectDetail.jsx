@@ -702,19 +702,32 @@ export default function ProjectDetail() {
                   </div>
                 </div>
               ) : (
-                <div className="stats-grid">
-                  {searchedPosts.map(post => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      onEdit={(post) => {
-                        if (post.wp_post_id && project.wp_site_url) {
-                          window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="stats-grid">
+                    {searchedPosts.map(post => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        onEdit={(post) => {
+                          if (post.wp_post_id && project.wp_site_url) {
+                            window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {loadingMore && (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                      <div className="loading-spinner" style={{ margin: '0 auto 10px' }} />
+                      <div>Loading more posts...</div>
+                    </div>
+                  )}
+                  {!hasMore && searchedPosts.length > 0 && (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                      <div>No more posts to load</div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
