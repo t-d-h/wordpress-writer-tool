@@ -1253,3 +1253,23 @@ tbody tr:last-child td {
   align-items: center;
   gap: 4px;
 }
+
+.post-card-url {
+  margin-top: 8px;
+  font-size: 0.85em;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-card-url a {
+  color: #666;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.post-card-url a:hover {
+  color: #007bff;
+  text-decoration: underline;
+}
