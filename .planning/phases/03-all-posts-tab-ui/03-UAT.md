@@ -3,16 +3,16 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T20:43:00+07:00
+updated: 2026-04-14T20:47:00+07:00
 ---
 
 ## Current Test
 
-number: 4
-name: Edit Button Functionality
-expected: |
-  Clicking the Edit button on a post card opens the WordPress admin edit page in a new tab. The URL format is {wp_site_url}/wp-admin/post.php?post={wp_post_id}&action=edit.
-awaiting: user response
+[PAUSED - Issue found]
+
+Test 4 failed with major issue: "Edit button opens a WordPress link but forces login even when already logged in. WordPress login doesn't work even though password and username are correct."
+
+Cannot continue testing until this issue is resolved.
 
 ## Tests
 
@@ -32,7 +32,9 @@ reason: "There are only tool-created posts in the system, no existing posts to v
 
 ### 4. Edit Button Functionality
 expected: Clicking the Edit button on a post card opens the WordPress admin edit page in a new tab. The URL format is {wp_site_url}/wp-admin/post.php?post={wp_post_id}&action=edit.
-result: pending
+result: issue
+reported: "Edit button opens a WordPress link but forces login even when already logged in. WordPress login doesn't work even though password and username are correct."
+severity: major
 
 ### 5. Loading State
 expected: When the All Posts tab is first opened or refreshed, a loading spinner is displayed while posts are being fetched from the backend.
@@ -102,10 +104,16 @@ result: pending
 
 total: 20
 passed: 2
-issues: 0
-pending: 17
+issues: 1
+pending: 16
 skipped: 1
 
 ## Gaps
 
-none yet
+- truth: "Clicking the Edit button on a post card opens the WordPress admin edit page in a new tab. The URL format is {wp_site_url}/wp-admin/post.php?post={wp_post_id}&action=edit."
+  status: failed
+  reason: "User reported: Edit button opens a WordPress link but forces login even when already logged in. WordPress login doesn't work even though password and username are correct."
+  severity: major
+  test: 4
+  artifacts: []
+  missing: []
