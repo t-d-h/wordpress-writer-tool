@@ -43,6 +43,20 @@ export default function PostCard({ post, onEdit }) {
           </a>
         </div>
       )}
+      {post.categories && post.categories.length > 0 && (
+        <div className="post-card-categories">
+          {post.categories.map((cat, index) => (
+            <span key={index} className="badge badge-category">{cat}</span>
+          ))}
+        </div>
+      )}
+      {post.tags && post.tags.length > 0 && (
+        <div className="post-card-tags">
+          {post.tags.map((tag, index) => (
+            <span key={index} className="badge badge-tag">{tag}</span>
+          ))}
+        </div>
+      )}
       {post.wp_post_id && (
         <button className="btn btn-secondary btn-sm" onClick={handleEdit}>
           Edit in WordPress
