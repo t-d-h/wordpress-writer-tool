@@ -3,15 +3,15 @@ status: testing
 phase: 03-all-posts-tab-ui
 source: [03-01-SUMMARY.md, 03-02-SUMMARY.md]
 started: 2026-04-14T16:21:53+07:00
-updated: 2026-04-14T21:00:00+07:00
+updated: 2026-04-14T21:01:00+07:00
 ---
 
 ## Current Test
 
-number: 10
-name: Sort Dropdown
+number: 11
+name: Sort by Date (Newest First)
 expected: |
-  A sort dropdown is displayed at the top of the All Posts tab next to the filter. The dropdown shows options: date-desc, date-asc, title-asc, title-desc, status.
+  Selecting "date-desc" sorts posts by date with the newest posts appearing first.
 awaiting: user response
 
 ## Tests
@@ -57,7 +57,7 @@ result: pass
 
 ### 10. Sort Dropdown
 expected: A sort dropdown is displayed at the top of the All Posts tab next to the filter. The dropdown shows options: date-desc, date-asc, title-asc, title-desc, status.
-result: pending
+result: pass
 
 ### 11. Sort by Date (Newest First)
 expected: Selecting "date-desc" sorts posts by date with the newest posts appearing first.
@@ -102,9 +102,9 @@ result: pending
 ## Summary
 
 total: 20
-passed: 7
+passed: 8
 issues: 0
-pending: 11
+pending: 10
 skipped: 2
 
 ## Gaps
