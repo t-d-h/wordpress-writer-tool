@@ -6,8 +6,90 @@ import asyncio
 import base64
 import httpx
 import os
+from datetime import datetime
 from app.database import wp_sites_col, projects_col
 from bson import ObjectId
+
+
+def _format_date(date_string: str) -> str:
+    """Format WordPress date string to DD MMMM YYYY format.
+
+    Args:
+        date_string: ISO 8601 date string from WordPress API
+
+    Returns:
+        Formatted date string (e.g., "14 April 2026") or empty string on error
+    """
+    if not date_string:
+        return ""
+    try:
+        dt = datetime.fromisoformat(date_string.replace("Z", "+00:00"))
+        return dt.strftime("%d %B %Y")
+    except Exception as e:
+        print(f"[FORMAT_DATE_ERROR] Failed to format date '{date_string}': {str(e)}")
+        return ""
+
+
+def _extract_categories(embedded: dict) -> list:
+    """Extract category names from WordPress _embedded data.
+
+    Args:
+        embedded: _embedded dict from WordPress API response
+
+    Returns:
+        List of category names or empty list if not found
+    """
+    if not embedded:
+        return []
+    try:
+        wp_terms = embedded.get("wp:term", [])
+        if len(wp_terms) < 1 or not wp_terms[0]:
+            return []
+        return [term.get("name", "") for term in wp_terms[0] if term.get("name")]
+    except Exception as e:
+        print(f"[EXTRACT_CATEGORIES_ERROR] Failed to extract categories: {str(e)}")
+        return []
+
+
+def _extract_tags(embedded: dict) -> list:
+    """Extract tag names from WordPress _embedded data.
+
+    Args:
+        embedded: _embedded dict from WordPress API response
+
+    Returns:
+        List of tag names or empty list if not found
+    """
+    if not embedded:
+        return []
+    try:
+        wp_terms = embedded.get("wp:term", [])
+        if len(wp_terms) < 2 or not wp_terms[1]:
+            return []
+        return [term.get("name", "") for term in wp_terms[1] if term.get("name")]
+    except Exception as e:
+        print(f"[EXTRACT_TAGS_ERROR] Failed to extract tags: {str(e)}")
+        return []
+
+
+def _generate_edit_url(site_url: str, post_id: int) -> str:
+    """Generate WordPress admin edit URL for a post.
+
+    Args:
+        site_url: WordPress site URL
+        post_id: Post ID
+
+    Returns:
+        Full edit URL string or empty string on error
+    """
+    if not site_url or not post_id:
+        return ""
+    try:
+        base_url = site_url.rstrip("/")
+        return f"{base_url}/wp-admin/post.php?post={post_id}&action=edit"
+    except Exception as e:
+        print(f"[GENERATE_EDIT_URL_ERROR] Failed to generate edit URL: {str(e)}")
+        return ""
 
 
 async def _get_wp_site(project_id: str) -> dict:
