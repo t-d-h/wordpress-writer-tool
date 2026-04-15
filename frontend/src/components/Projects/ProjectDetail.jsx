@@ -16,15 +16,9 @@ export default function ProjectDetail() {
   const [loadingTokenUsage, setLoadingTokenUsage] = useState(false)
   const [tokenUsageError, setTokenUsageError] = useState(null)
   const [activeTab, setActiveTab] = useState('content')
-  const [allPosts, setAllPosts] = useState([])
-  const [loadingAllPosts, setLoadingAllPosts] = useState(false)
-  const [allPostsError, setAllPostsError] = useState(null)
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('date-desc')
   const [searchQuery, setSearchQuery] = useState('')
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createMode, setCreateMode] = useState('single')
   const [singleForm, setSingleForm] = useState({
@@ -178,40 +172,6 @@ export default function ProjectDetail() {
     }
   }, [activeTab, id, project])
 
-  useEffect(() => {
-    if (page > 1) {
-      loadAllPosts(page, false)
-    }
-  }, [page])
-
-  // Scroll detection for infinite scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (loadingMore || !hasMore) return
-
-      const scrollHeight = document.documentElement.scrollHeight
-      const scrollTop = document.documentElement.scrollTop
-      const clientHeight = document.documentElement.clientHeight
-
-      // Trigger load more when user scrolls within 100px of bottom
-      if (scrollHeight - scrollTop - clientHeight < 100) {
-        loadMorePosts()
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [loadingMore, hasMore, page])
-
-  // Reset pagination when filter/sort/search changes
-  useEffect(() => {
-    if (activeTab === 'all-posts' && project && project.wp_site_id) {
-      setPage(1)
-      setHasMore(true)
-      loadAllPosts(1, true)
-    }
-  }, [statusFilter, sortBy, searchQuery, project])
-
   const load = async () => {
     try {
       const [projRes, statsRes, postsRes, providersRes, defaultsRes] = await Promise.all([
@@ -269,64 +229,6 @@ export default function ProjectDetail() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const loadAllPosts = async (pageNum = 1, reset = false) => {
-    if (reset) {
-      setLoadingAllPosts(true)
-      setAllPosts([])
-    } else {
-      setLoadingMore(true)
-    }
-    setAllPostsError(null)
-    try {
-      // Fetch posts from WordPress instead of MongoDB
-      const response = await getSitePosts(
-        project.wp_site_id,
-        20,
-        pageNum,
-        statusFilter === 'all' ? null : statusFilter
-      )
-
-      // The response is already in the format {"posts": [...], "total": N}
-      const wpPosts = response.data?.posts || []
-
-      // Transform WordPress REST API response to match PostCard format
-      const transformedPosts = wpPosts.map(wpPost => ({
-        id: wpPost.id,
-        title: wpPost.title?.rendered || 'Untitled',
-        status: wpPost.status,
-        created_at: wpPost.date,
-        updated_at: wpPost.modified,
-        wp_post_id: wpPost.id,
-        wp_post_url: wpPost.link,
-        categories: wpPost.categories || [],
-        tags: wpPost.tags || [],
-        origin: 'existing' // These are existing WordPress posts
-      }))
-
-      if (reset) {
-        setAllPosts(transformedPosts)
-      } else {
-        setAllPosts(prev => [...prev, ...transformedPosts])
-      }
-
-      // Check if there are more posts based on the response
-      setHasMore(transformedPosts.length >= 20)
-    } catch (e) {
-      console.error('Failed to load all posts:', e)
-      setAllPostsError('Unable to load posts from WordPress')
-    } finally {
-      setLoadingAllPosts(false)
-      setLoadingMore(false)
-    }
-  }
-
-  const loadMorePosts = async () => {
-    if (loadingMore || !hasMore) return
-    const nextPage = page + 1
-    setPage(nextPage)
-    await loadAllPosts(nextPage, false)
   }
 
   const handleCreateSingle = async (e) => {
@@ -706,25 +608,14 @@ export default function ProjectDetail() {
                 ) : (
                   <>
                     {/* PostCard removed - replaced by table view in Phase 6 */}
-                    {loadingMore && (
-                     <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
-                       <div className="loading-spinner" style={{ margin: '0 auto 10px' }} />
-                       <div>Loading more posts...</div>
-                     </div>
-                   )}
-                   {!hasMore && allPosts.length > 0 && (
-                     <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
-                       <div>No more posts to load</div>
-                     </div>
-                   )}
-                 </>
-               )}
-            </>
-          )}
-        </>
-      )}
+                  </>
+                )}
+             </>
+           )}
+         </>
+       )}
 
-      {/* Create Post Modal */}
+       {/* Create Post Modal */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
