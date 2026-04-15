@@ -63,7 +63,8 @@ export const createPost = (data) => api.post('/posts', data);
 export const createBulkPosts = (data) => api.post('/posts/bulk', data);
 export const updatePost = (id, data) => api.put(`/posts/${id}`, data);
 export const deletePost = (id) => api.delete(`/posts/${id}`);
-export const publishPost = (id, forcePublish = false) => api.post(`/posts/${id}/publish`, { force_publish: forcePublish });
+export const publishPost = (id, forcePublish = false) =>
+  api.post(`/posts/${id}/publish`, { force_publish: forcePublish });
 export const unpublishPost = (id) => api.post(`/posts/${id}/unpublish`);
 export const generateOutline = (id) => api.post(`/posts/${id}/generate-outline`);
 export const generateContent = (id) => api.post(`/posts/${id}/generate-content`);
