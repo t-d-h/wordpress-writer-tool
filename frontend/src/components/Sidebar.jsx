@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles, HiOutlineDocumentText } from 'react-icons/hi2'
+import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles } from 'react-icons/hi2'
 import { getProjects } from '../api/client'
 
 export default function Sidebar() {
@@ -81,13 +81,6 @@ export default function Sidebar() {
         </button>
 
         <div className="sidebar-subtitle">Menu</div>
-
-        <div className="nav-section">
-          <NavLink to="/all-posts" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-            <HiOutlineDocumentText className="nav-icon" />
-            <span>All Posts</span>
-          </NavLink>
-        </div>
 
         <div className="nav-section">
           <div className="nav-item" onClick={() => setProjectsOpen(!projectsOpen)}>
