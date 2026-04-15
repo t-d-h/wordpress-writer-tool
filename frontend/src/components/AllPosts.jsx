@@ -80,7 +80,10 @@ export default function AllPosts() {
   }
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString()
+    if (!dateString) return '-'
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return '-'
+    return date.toLocaleDateString()
   }
 
   const getEditUrl = (postId) => {
