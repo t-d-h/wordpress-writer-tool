@@ -22,6 +22,11 @@ metrics:
   files_modified: 1
   lines_added: 127
   lines_removed: 0
+requirements-completed:
+  - DATA-01: WordPress REST API response is transformed to table format
+  - DATA-02: Nested categories and tags from _embedded['wp:term'] are handled correctly
+  - DATA-03: Dates are formatted for display
+  - DATA-04: Edit URLs are generated for WordPress admin
 ---
 
 # Phase 05 Plan 01: WordPress REST API Data Transformation Summary
