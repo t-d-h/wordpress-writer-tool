@@ -37,12 +37,15 @@
 <details>
 <summary>⏳ v1.2 Vietnamese Language Support (Phases 12-14) — IN PROGRESS</summary>
 
-- [ ] Phase 12: Backend Foundation (3/3 plans) — not started
-  - [ ] 12-01-PLAN.md — Test infrastructure setup
-  - [ ] 12-02-PLAN.md — Add language field to models
-  - [ ] 12-03-PLAN.md — Update API endpoints
-- [ ] Phase 13: AI Service Integration (0/0 plans) — not started
-- [ ] Phase 14: Frontend UI (0/0 plans) — not started
+ - [ ] Phase 12: Backend Foundation (3/3 plans) — completed 2026-04-15
+   - [x] 12-01-PLAN.md — Test infrastructure setup
+   - [x] 12-02-PLAN.md — Add language field to models
+   - [x] 12-03-PLAN.md — Update API endpoints
+ - [ ] Phase 13: AI Service Integration (3/3 plans) — not started
+   - [ ] 13-01-PLAN.md — Add language parameter to AI service functions
+   - [ ] 13-02-PLAN.md — Modify system prompts for language-specific instructions
+   - [ ] 13-03-PLAN.md — Update worker tasks to extract and pass language
+ - [ ] Phase 14: Frontend UI (0/0 plans) — not started
 
 </details>
 
@@ -61,9 +64,9 @@
 | 9. Data Transformation Documentation | v1.1 | 1/1 | Complete | 2026-04-15 |
 | 10. Frontend UI Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
 | 11. Cleanup Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
-| 12. Backend Foundation | v1.2 | 0/3 | Pending | — |
-| 13. AI Service Integration | v1.2 | 0/0 | Pending | — |
-| 14. Frontend UI | v1.2 | 0/0 | Pending | — |
+ | 12. Backend Foundation | v1.2 | 3/3 | Complete    | 2026-04-15 |
+ | 13. AI Service Integration | v1.2 | 0/3 | Pending | — |
+ | 14. Frontend UI | v1.2 | 0/0 | Pending | — |
 
 ---
 
