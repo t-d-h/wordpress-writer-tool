@@ -86,9 +86,9 @@
 7. User sees appropriate empty state when no posts match criteria
 
 **Plans**: 3 plans
-- [ ] 06-01-PLAN.md — Update API client and add search/sort state management
-- [ ] 06-02-PLAN.md — Add search input and sort dropdown UI controls
-- [ ] 06-03-PLAN.md — Verify all frontend requirements through comprehensive testing
+- [x] 06-01-PLAN.md — Update API client and add search/sort state management
+- [x] 06-02-PLAN.md — Add search input and sort dropdown UI controls
+- [x] 06-03-PLAN.md — Verify all frontend requirements through comprehensive testing
 
 **UI hint**: yes
 
@@ -117,7 +117,7 @@
 | 3. All Posts Tab UI | v1.0 | 7/7 | Complete | 2026-04-14 |
 | 4. Backend API Enhancement | v1.1 | 0/3 | Planned | - |
 | 5. Data Transformation | v1.1 | 0/0 | Not started | - |
-| 6. Frontend UI | v1.1 | 0/3 | Planned | - |
+| 6. Frontend UI | v1.1 | 3/3 | Complete   | 2026-04-15 |
 | 7. Cleanup | v1.1 | 0/0 | Not started | - |
 
 ---

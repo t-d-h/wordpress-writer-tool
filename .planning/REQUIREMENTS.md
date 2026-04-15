@@ -17,13 +17,13 @@
 
 ### Frontend UI
 
-- [ ] **FRONTEND-01**: User can view posts in table layout with columns: Title, URL, Categories, Tags, Date, Status, Actions
-- [ ] **FRONTEND-02**: User can search posts by title using search input field
-- [ ] **FRONTEND-03**: User can sort posts by date, title, or status using sort dropdown
-- [ ] **FRONTEND-04**: User can filter posts by status using status filter dropdown
-- [ ] **FRONTEND-05**: User can navigate between pages using Previous/Next pagination controls
-- [ ] **FRONTEND-06**: User sees loading states when pagination changes
-- [ ] **FRONTEND-07**: User sees appropriate empty state when no posts match criteria
+- [x] **FRONTEND-01**: User can view posts in table layout with columns: Title, URL, Categories, Tags, Date, Status, Actions
+- [x] **FRONTEND-02**: User can search posts by title using search input field
+- [x] **FRONTEND-03**: User can sort posts by date, title, or status using sort dropdown
+- [x] **FRONTEND-04**: User can filter posts by status using status filter dropdown
+- [x] **FRONTEND-05**: User can navigate between pages using Previous/Next pagination controls
+- [x] **FRONTEND-06**: User sees loading states when pagination changes
+- [x] **FRONTEND-07**: User sees appropriate empty state when no posts match criteria
 
 ### Cleanup
 
@@ -61,13 +61,13 @@ None deferred for this milestone.
 | BACKEND-04 | Phase 4 | Pending |
 | BACKEND-05 | Phase 4 | Pending |
 | BACKEND-06 | Phase 4 | Pending |
-| FRONTEND-01 | Phase 6 | Pending |
-| FRONTEND-02 | Phase 6 | Pending |
-| FRONTEND-03 | Phase 6 | Pending |
-| FRONTEND-04 | Phase 6 | Pending |
-| FRONTEND-05 | Phase 6 | Pending |
-| FRONTEND-06 | Phase 6 | Pending |
-| FRONTEND-07 | Phase 6 | Pending |
+| FRONTEND-01 | Phase 6 | Complete |
+| FRONTEND-02 | Phase 6 | Complete |
+| FRONTEND-03 | Phase 6 | Complete |
+| FRONTEND-04 | Phase 6 | Complete |
+| FRONTEND-05 | Phase 6 | Complete |
+| FRONTEND-06 | Phase 6 | Complete |
+| FRONTEND-07 | Phase 6 | Complete |
 | CLEANUP-01 | Phase 7 | Pending |
 | CLEANUP-02 | Phase 7 | Pending |
 | CLEANUP-03 | Phase 7 | Pending |
