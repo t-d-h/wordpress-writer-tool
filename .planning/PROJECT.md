@@ -78,6 +78,13 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 - Post origin tracking (tool-created vs existing)
 - Post URL, categories, and tags display
 
+**Completed in v1.1:**
+- Backend API enhancement with caching, pagination, and search/sort
+- Data transformation for WordPress REST API responses
+- Frontend UI with table view, search, sort, filter, and pagination
+- Cleanup of legacy PostCard component and infinite scroll
+- Backend API verification (Phase 8 complete)
+
 **Next Milestone Goals:**
 - All Posts table view with enhanced filtering
 - Security improvements (credential encryption, input validation)
@@ -148,4 +155,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after v1.1 milestone started*
+*Last updated: 2026-04-15 after Phase 8 (Backend API Verification) complete*
