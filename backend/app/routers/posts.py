@@ -99,6 +99,7 @@ async def create_post(data: PostCreate):
         "thumbnail_model_name": data.thumbnail_model_name,
         "target_word_count": data.target_word_count,
         "target_section_count": data.target_section_count,
+        "language": data.language,
         "title": None,
         "meta_description": None,
         "outline": None,
@@ -165,6 +166,7 @@ async def create_post(data: PostCreate):
             "model_name": data.model_name,
             "target_section_count": data.target_section_count,
             "target_word_count": data.target_word_count,
+            "language": data.language,
         }
     )
 
