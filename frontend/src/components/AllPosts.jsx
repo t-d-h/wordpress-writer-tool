@@ -228,7 +228,7 @@ export default function AllPosts() {
             <tbody>
               {posts.map(post => (
                 <tr key={post.id}>
-                  <td style={{ fontWeight: 600 }}>{post.title.rendered || '(Untitled)'}</td>
+                  <td style={{ fontWeight: 600 }}>{post.title.rendered?.replace(/<[^>]*>/g, '') || '(Untitled)'}</td>
                   <td>
                     <a href={post.link} target="_blank" rel="noopener" style={{ color: 'var(--accent-secondary)' }}>
                       {post.link}
