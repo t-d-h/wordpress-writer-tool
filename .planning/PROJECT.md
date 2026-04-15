@@ -88,6 +88,11 @@ None — all v1.2 requirements to be defined
   - API validates language is "vietnamese" or "english"
   - Backward compatibility: existing posts default to "english"
   - Test infrastructure created with pytest and fixtures
+- AI service integration for language support (Phase 13 complete)
+  - Language parameter added to all 5 AI service functions
+  - Language-specific system prompts with Vietnamese cultural context
+  - Worker tasks extract and pass language to AI service functions
+  - End-to-end language flow from MongoDB to AI providers
 
 **Next Milestone Goals:**
 - Vietnamese language support for post creation
@@ -174,5 +179,5 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-**Last updated:** 2026-04-15 (Phase 12 complete)
+**Last updated:** 2026-04-15 (Phase 13 complete)
 *Last updated: 2026-04-15 starting v1.2 milestone*
