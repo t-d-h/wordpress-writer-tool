@@ -153,14 +153,16 @@ async def run_outline(job_data: dict):
         research_data = post.get("research_data", {})
         provider_id = post.get("ai_provider_id")
         model_name = post.get("model_name")
+        language = post.get("language", "vietnamese")
 
         logger.info(f"[OUTLINE] Topic: {topic}")
         logger.info(f"[OUTLINE] Using research data with {len(research_data)} points")
         logger.info(f"[OUTLINE] Calling AI provider: {provider_id}")
         logger.info(f"[OUTLINE] Calling AI model: {model_name}")
+        logger.info(f"[OUTLINE] Language: {language}")
 
         outline, tokens = await ai_service.generate_outline(
-            topic, research_data, additional, provider_id, model_name
+            topic, research_data, additional, provider_id, model_name, language
         )
 
         logger.info(f"[OUTLINE] AI call completed, {tokens} tokens used")
