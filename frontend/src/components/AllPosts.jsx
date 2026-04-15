@@ -3,6 +3,8 @@ import { HiOutlinePencil, HiOutlineArrowPath, HiOutlineMagnifyingGlass } from 'r
 import { getSites, getSitePosts } from '../api/client'
 
 export default function AllPosts() {
+  const POSTS_PER_PAGE = 100
+
   const [sites, setSites] = useState([])
   const [selectedSite, setSelectedSite] = useState(null)
   const [posts, setPosts] = useState([])
@@ -49,7 +51,7 @@ export default function AllPosts() {
     try {
       const { data } = await getSitePosts(
         selectedSite.id,
-        100,
+        POSTS_PER_PAGE,
         page,
         statusFilter === 'any' ? null : statusFilter,
         searchQuery || null,
@@ -258,7 +260,7 @@ export default function AllPosts() {
             </tbody>
           </table>
 
-          {total > 100 && (
+          {total > POSTS_PER_PAGE && (
             <div className="pagination">
               <button
                 className="btn btn-secondary"
@@ -268,12 +270,12 @@ export default function AllPosts() {
                 Previous
               </button>
               <span style={{ margin: '0 16px' }}>
-                Page {page} of {Math.ceil(total / 100)}
+                Page {page} of {Math.ceil(total / POSTS_PER_PAGE)}
               </span>
               <button
                 className="btn btn-secondary"
                 onClick={() => setPage(p => p + 1)}
-                disabled={page * 100 >= total}
+                disabled={page * POSTS_PER_PAGE >= total}
               >
                 Next
               </button>
