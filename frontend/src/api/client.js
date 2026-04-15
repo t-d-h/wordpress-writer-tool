@@ -39,7 +39,13 @@ export const getSitePosts = (siteId, perPage = 100, page = 1, status = null, sea
 export const getProjects = () => api.get('/projects');
 export const getProject = (id) => api.get(`/projects/${id}`);
 export const getProjectStats = (id) => api.get(`/projects/${id}/stats`);
-export const getProjectTokenUsage = (id) => api.get(`/projects/${id}/stats`).then(res => res.data.token_usage);
+export const getProjectTokenUsage = (id) =>
+  api.get(`/projects/${id}/stats`)
+    .then(res => res.data?.token_usage || {})
+    .catch(err => {
+      console.error('Failed to get token usage:', err)
+      return {}
+    })
 export const getProjectPosts = (projectId, page = 1, limit = 20, status = null, sortBy = 'date-desc', search = null) => {
   const params = { page, limit, sort_by: sortBy };
   if (status) params.status = status;
