@@ -1,172 +1,209 @@
-# Project Research Summary
+# Research Summary
 
-**Project:** WordPress Writer Tool - Token Usage & All Posts Features
-**Domain:** AI content generation and WordPress integration
-**Researched:** 2026-04-14
-**Confidence:** HIGH
+**Project:** WordPress Writer Tool - Vietnamese Language Support
+**Researched:** 2026-04-15
+**Mode:** Ecosystem (feature-specific research for v1.2 milestone)
 
 ## Executive Summary
 
-The WordPress Writer Tool is an AI-powered content generation system that integrates with WordPress sites via REST API. Experts build this type of product using a layered architecture with clear separation between frontend (React SPA), backend (FastAPI), and external integrations (WordPress REST API, AI providers). The recommended approach for the new features leverages existing patterns: MongoDB aggregation for on-demand token usage calculations and a service layer for WordPress API integration, with TanStack Table for the frontend post listing.
+**No new libraries required.** The existing AI providers (OpenAI GPT-4o, Gemini 2.0 Flash, Anthropic Claude Sonnet 4) all support Vietnamese language generation natively. The implementation requires only configuration changes and prompt engineering:
 
-The research indicates both features can be built using established patterns in the codebase without requiring architectural changes. Token usage aggregation uses MongoDB's native aggregation framework (no new dependencies), while the All Posts tab extends the existing WordPress REST API integration with a new merge service. Key risks include WordPress API rate limiting, credential exposure in logs, and inconsistent post data between systems—all mitigated by following existing error handling patterns, implementing proper logging hygiene, and using origin tracking for data consistency.
+1. **Backend:** Add `language` field to models, pass through pipeline
+2. **Frontend:** Add language selection checkbox (Vietnamese default)
+3. **AI Service:** Add language parameter with language-specific prompts
+4. **Database:** Add `language` field (MongoDB schemaless - no migration needed)
 
-## Key Findings
+**Key Finding:** Vietnamese is a "low-resource" language with unique challenges (tonal structure, cultural context, limited training data), but existing AI models handle it well with proper prompt engineering.
 
-### Recommended Stack
+## Key Findings by Category
 
-The research confirms the existing stack is appropriate for both features. No major framework changes are needed—only one new frontend dependency for the All Posts tab.
+### Stack Additions
 
-**Core technologies:**
-- **FastAPI 0.115.0**: Backend REST API framework — already in use, async support, Pydantic validation
-- **React 18.3.1**: Frontend UI framework — already in use, functional components, hooks
-- **MongoDB 7+**: Data store — already in use, aggregation framework for token usage
-- **Redis 5.0.0**: Pub/sub messaging — already in use, job processing
+**No new libraries required.** All existing AI providers support Vietnamese:
 
-**New additions:**
-- **TanStack Table 8.20+**: Headless table component — industry standard for React tables in 2025, full control over markup/styles
-- **MongoDB Aggregation Framework**: Native token calculation — built-in `$group` and `$sum` operators, no additional libraries needed
-- **WordPress REST API**: Post listing — built-in filtering, sorting, searching, pagination
+| Provider | Version | Vietnamese Support | Notes |
+|----------|---------|-------------------|-------|
+| OpenAI GPT-4o | >=1.60.0 | ✅ Native | 128K context window, multilingual model |
+| Gemini 2.0 Flash | 1.5.0 | ✅ Native | Multilingual model, supports Vietnamese |
+| Anthropic Claude Sonnet 4 | 0.39.0 | ✅ Native | Multilingual model, supports Vietnamese |
 
-**Optional (defer to v2+):**
-- **Recharts 2.12+**: Token usage visualization — only if charts needed later; simple display uses HTML/CSS
-- **date-fns 3.6+**: Date formatting — for post date display in All Posts tab
+**Backend Changes:**
+- Add `language: str = "vietnamese"` to PostCreate/PostResponse models
+- Pass `language` to job queue and store in MongoDB
+- Add `language` parameter to all AI service functions
+- Pass `language` to AI service calls in worker tasks
 
-### Expected Features
+**Frontend Changes:**
+- Add language selection checkbox (Vietnamese/English) after title field
+- Set Vietnamese as default in form state
+- Pass `language` in createPost/createBulkPosts API calls
 
-**Must have (table stakes):**
-- **Token usage breakdown by type** — users expect to see research, outline, content, and thumbnail token costs
-- **Total token count** — users need to understand overall AI usage costs
-- **Post listing with filtering** — users expect to filter by status (publish, draft, pending)
-- **Search by title** — users need to find specific posts quickly
-- **Sort by date** — users expect chronological ordering
+**Database Changes:**
+- Add `language` field to posts collection
+- Values: "vietnamese" or "english"
+- Default: "vietnamese"
+- No migration needed (MongoDB schemaless)
 
-**Should have (competitive):**
-- **Visual distinction by origin** — differentiator: clearly mark tool-created vs existing WordPress posts
-- **Merged view of tool + WordPress posts** — differentiator: single unified view instead of separate lists
-- **Edit button to WordPress admin** — differentiator: seamless workflow for editing published posts
+### Feature Table Stakes
 
-**Defer (v2+):**
-- **Input/output token separation** — current model only tracks total per type; requires AI provider API changes
-- **Charts/visualizations** — simple HTML/CSS display sufficient for MVP; can add Recharts later
-- **Advanced filtering** — date ranges, multiple status filters, category filtering not essential for launch
-- **Post origin persistence** — can be computed on-the-fly via wp_post_id matching
+**Must-have features for MVP:**
 
-### Architecture Approach
+| Feature | Complexity | Notes |
+|---------|------------|-------|
+| Language selection UI (checkbox/radio) | Low | Binary choice, fits existing form pattern |
+| Default language setting (Vietnamese) | Low | Global default, no per-user complexity |
+| Language persistence across sessions | Low | Store in localStorage or form state |
+| Language passed through content pipeline | Medium | Requires modifying AI service functions |
+| Visual indication of selected language | Low | Simple UI feedback, checkbox/radio button state |
+| Language-specific prompts | Medium | System prompts need language parameter |
 
-The existing layered architecture provides a solid foundation. Both features follow established patterns: MongoDB aggregation for on-demand calculations, service layer for external API integration, and data merging with origin tracking.
+**Differentiators (deferred for future):**
+- Language-specific SEO optimization
+- Tone/style customization per language
+- Language-specific content length targets
+- Bilingual content generation
+- Language quality indicators
 
-**Major components:**
-1. **Frontend Layer (React)** — ProjectDetail.jsx with new tabs (General for token usage, All Posts for post listing), TokenUsageDisplay component, AllPostsTab component with TanStack Table
-2. **API Client Layer** — client.js with getProjectTokenUsage() and getProjectAllPosts() methods
-3. **Backend Router Layer** — projects.py with GET /api/projects/{id}/token-usage and GET /api/projects/{id}/all-posts endpoints
-4. **Backend Service Layer** — token_usage_service.py (new) for MongoDB aggregation, post_merge_service.py (new) for merging tool and WordPress posts, wp_service.py (extended) for WordPress REST API calls
-5. **Database Layer** — MongoDB posts collection with token_usage field, wp_sites collection for credentials
+**Anti-Features (explicitly NOT building):**
+- Per-user language preferences
+- Per-project language settings
+- Multi-language dropdown (10+ languages)
+- Language switching mid-generation
+- Language-specific AI provider routing
 
-**Key patterns:**
-- MongoDB aggregation pipeline for on-demand token calculations
-- Service layer isolation for external API integration
-- Data merging with origin tracking (tool/existing/both)
-- Client-side filtering/sorting for MVP simplicity
+### Integration Points
 
-### Critical Pitfalls
+**Data Flow:**
+```
+Frontend Form → API Request → Post Document → Job Payload → AI Service Calls
+```
 
-**Top 5 pitfalls with prevention strategies:**
+**Component Responsibilities:**
 
-1. **WordPress API rate limiting** — implement exponential backoff, respect 429 responses, add rate limiting headers
-2. **Credential exposure in logs** — never log WordPress credentials, use redacted logging, audit all print statements
-3. **Inconsistent post data between systems** — use origin tracking (wp_post_id matching), handle missing fields gracefully, validate data structure
-4. **Token usage calculation errors** — handle missing token_usage fields, default to zero, validate aggregation pipeline
-5. **Pagination edge cases** — handle empty results, respect WordPress API limits, implement proper page boundaries
+| Component | Responsibility | Change |
+|-----------|----------------|--------|
+| Post Model | Store language preference per post | Add `language: str = "vi"` field |
+| AI Service | Generate content in specified language | Add `language` parameter to all functions |
+| Worker Tasks | Pass language through pipeline | Extract and pass language to AI service |
+| Frontend Form | Allow language selection | Add checkbox/radio after title field |
+| Posts Router | Accept and persist language | Update `create_post()` to handle language |
+| Job Service | Include language in job data | Add language to job payload |
 
-**Moderate risks:**
-- Performance at scale (10K+ posts) — add Redis caching later if needed
-- Date/time zone issues — use UTC consistently, display in user's timezone
-- Empty state handling — show helpful messages when no posts exist
+**Build Order Recommendations:**
 
-**Minor risks:**
-- Accessibility concerns — follow ARIA patterns for table, keyboard navigation
-- Bundle size — TanStack Table is lightweight, defer Recharts to v2+
+1. **Phase 1: Backend Model and API** - Foundation for language field
+2. **Phase 2: AI Service Integration** - Core logic for language-aware generation
+3. **Phase 3: Worker Pipeline Integration** - Async processing with language propagation
+4. **Phase 4: Frontend UI** - User interface for language selection
+5. **Phase 5: Testing and Validation** - End-to-end verification
 
-## Implications for Roadmap
+**Rationale:**
+- Backend first (models → API) provides foundation
+- AI service integration before worker tasks ensures functions are ready
+- Worker tasks after AI service ensures language parameter is available
+- Frontend last depends on backend API being ready
 
-Based on research, suggested phase structure:
+### Watch Out For
 
-### Phase 1: Token Usage Display
-**Rationale:** Independent feature with no dependencies, builds on existing MongoDB aggregation patterns, quick win for users
-**Delivers:** Token usage breakdown by type (research, outline, content, thumbnail), total token count, per-project aggregation
-**Addresses:** Token usage breakdown (table stakes), total token count (table stakes)
-**Avoids:** Token usage calculation errors (pitfall #4)
-**Uses:** MongoDB Aggregation Framework, Motor 3.6.0, Pydantic 2.9.0
-**Implements:** token_usage_service.py, TokenUsageDisplay.jsx component
+**Critical Pitfalls (HIGH severity):**
 
-### Phase 2: All Posts Tab
-**Rationale:** Depends on existing wp_service.py integration, builds on WordPress REST API patterns, provides core post management functionality
-**Delivers:** Post listing with filtering, search by title, sort by date, visual distinction by origin, edit button to WordPress admin
-**Addresses:** Post listing with filtering (table stakes), search by title (table stakes), sort by date (table stakes), visual distinction by origin (differentiator), merged view (differentiator)
-**Avoids:** WordPress API rate limiting (pitfall #1), credential exposure in logs (pitfall #2), inconsistent post data (pitfall #3)
-**Uses:** TanStack Table 8.20+, httpx >=0.28.1, WordPress REST API
-**Implements:** post_merge_service.py, AllPostsTab.jsx component with TanStack Table
+1. **AI Model Quality Issues with Vietnamese**
+   - Vietnamese is a "low-resource" language
+   - AI models may have lower quality for Vietnamese
+   - **Prevention:** Use explicit language instructions, test across all providers
 
-### Phase 3: Post Origin Tracking (Optional)
-**Rationale:** Enhances data consistency, optional for MVP since origin can be computed on-the-fly
-**Delivers:** Persisted origin field in posts collection, improved merge accuracy, origin-based filtering
-**Addresses:** Inconsistent post data between systems (pitfall #3)
-**Uses:** MongoDB schema update, post_merge_service.py extension
-**Implements:** Database migration, origin persistence on post creation
+2. **Prompt Engineering Challenges**
+   - Vietnamese requires different prompt strategies
+   - Language parameter must be in all prompts
+   - **Prevention:** Add language instruction to system prompts, test with each provider
 
-### Phase Ordering Rationale
+3. **Data Model Issues**
+   - Language field must be persisted through entire pipeline
+   - Existing posts won't have language field
+   - **Prevention:** Default to "english" for existing posts, handle missing field gracefully
 
-- **Why this order based on dependencies:** Phase 1 is independent and can be built in parallel. Phase 2 depends on existing wp_service.py but not on Phase 1. Phase 3 depends on Phase 2's merge logic.
-- **Why this grouping based on architecture patterns:** Phase 1 follows MongoDB aggregation pattern (backend-heavy). Phase 2 follows service layer + external API pattern (full-stack). Phase 3 is an optional enhancement to data consistency.
-- **How this avoids pitfalls from research:** Phase 1 avoids calculation errors by using proven aggregation patterns. Phase 2 avoids rate limiting and credential exposure by extending existing wp_service.py with proper error handling. Phase 3 addresses data consistency issues by persisting origin.
+4. **Integration Pitfalls**
+   - Language parameter may be lost between pipeline stages
+   - Different providers handle language differently
+   - **Prevention:** Test with all providers, validate language flows through pipeline
 
-### Research Flags
+5. **Pipeline Integration Issues**
+   - Language must be consistent across research → outline → content
+   - **Prevention:** Pass language through entire pipeline, validate consistency
 
-Phases likely needing deeper research during planning:
-- **Phase 2:** WordPress API rate limiting behavior varies by hosting provider; may need to test with real WordPress sites during implementation
-- **Phase 2:** WordPress REST API response structure can vary by plugin/theme; need to handle edge cases in merge logic
+**Medium Severity Pitfalls:**
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1:** MongoDB aggregation is well-documented with established patterns; no additional research needed
-- **Phase 3:** Database schema updates are straightforward; origin tracking logic is clearly defined
+6. **Cultural Context Issues**
+   - Vietnamese has unique cultural nuances
+   - Formality levels matter in Vietnamese
+   - **Prevention:** Include cultural context in prompts, test with Vietnamese speakers
+
+7. **Testing Challenges**
+   - No systematic benchmarks for Vietnamese LLMs
+   - Quality assessment is subjective
+   - **Prevention:** Create test cases, validate with Vietnamese speakers
+
+8. **UI/UX Pitfalls**
+   - Users may be confused about language selection
+   - Vietnamese must be default
+   - **Prevention:** Clear labels, visual indication, prominent placement
+
+**Low Severity Pitfalls:**
+
+9. **Performance Concerns**
+   - Vietnamese generation may be slower
+   - Higher token costs possible
+   - **Prevention:** Monitor performance, optimize prompts
+
+10. **Backward Compatibility**
+    - Existing posts lack language field
+    - **Prevention:** Default to "english", handle missing field gracefully
 
 ## Confidence Assessment
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Stack | HIGH | Verified with official MongoDB, TanStack Table, and WordPress REST API documentation |
-| Features | HIGH | Based on existing codebase patterns and user expectations for content management tools |
-| Architecture | HIGH | Analyzed existing codebase; patterns are well-established and documented |
-| Pitfalls | HIGH | Identified from WordPress REST API documentation and common integration issues |
+| Area | Level | Reason |
+|------|-------|--------|
+| Stack | HIGH | All existing AI providers support Vietnamese. No new libraries needed. |
+| Backend Changes | HIGH | Clear integration points identified. Simple field addition to models. |
+| Frontend Changes | HIGH | Simple checkbox addition to existing form. |
+| AI Service Changes | HIGH | Language parameter addition is straightforward. |
+| Prompt Engineering | HIGH | Language instruction in prompts is standard practice. |
+| Database Changes | HIGH | MongoDB schemaless - no migration needed. |
+| Integration | HIGH | Clear data flow from form → API → job queue → AI service. |
+| Pitfalls | HIGH | Research from searxng identified specific Vietnamese challenges. |
 
-**Overall confidence:** HIGH
+## Roadmap Implications
 
-### Gaps to Address
+**Recommended Phase Structure:**
 
-- **WordPress API rate limiting specifics:** Different hosting providers have different rate limits; implement exponential backoff and test with real sites during Phase 2
-- **WordPress REST API response variability:** Plugins and themes can modify post structure; add defensive coding and field validation in merge logic
-- **Token usage input/output separation:** Current model only tracks total per type; requires AI provider API changes for input/output breakdown (defer to v2+)
+1. **Phase 1: Backend Model and API** - Foundation for language field in Post model and API endpoints
+2. **Phase 2: AI Service Integration** - Core logic for language-aware content generation
+3. **Phase 3: Worker Pipeline Integration** - Async processing with language propagation
+4. **Phase 4: Frontend UI** - User interface for language selection
+5. **Phase 5: Testing and Validation** - End-to-end verification
+
+**Phase Ordering Rationale:**
+- Backend first (models → API) provides foundation for all other phases
+- AI service integration before worker tasks ensures functions are ready when called
+- Worker tasks after AI service ensures language parameter is available
+- Frontend last depends on backend API being ready
+
+**Research Flags for Phases:**
+- Phase 1: Standard Pydantic model patterns, no deep research needed
+- Phase 2: Vietnamese language prompt engineering may need testing/refinement
+- Phase 3: Worker job payload structure already established, straightforward integration
+- Phase 4: Standard React form patterns, no deep research needed
+- Phase 5: Standard testing procedures, no deep research needed
+
+## Open Questions
+
+None - all integration points identified, data flow clear, build order established based on dependencies.
 
 ## Sources
 
-### Primary (HIGH confidence)
-- MongoDB Aggregation Pipeline Documentation — https://www.mongodb.com/docs/manual/core/aggregation-pipeline/
-- MongoDB $group Operator Documentation — https://www.mongodb.com/docs/manual/reference/operator/aggregation/group/
-- MongoDB $sum Operator Documentation — https://www.mongodb.com/docs/manual/reference/operator/aggregation/sum/
-- TanStack Table Official Documentation — https://tanstack.com/table/latest/docs/introduction
-- TanStack Table Quick Start Guide — https://tanstack.com/table/latest/docs/guide/quick-start
-- WordPress REST API Posts Reference — https://developer.wordpress.org/rest-api/reference/posts/
-- WordPress REST API Authentication — https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/
-- WordPress REST API Global Parameters — https://developer.wordpress.org/rest-api/using-the-rest-api/global-parameters/
-
-### Secondary (MEDIUM confidence)
-- Recharts Official Documentation — https://recharts.org/ (for future consideration)
-- Existing codebase analysis — backend/requirements.txt, frontend/package.json, backend/app/services/wp_service.py, backend/app/models/post.py, frontend/src/components/Projects/ProjectDetail.jsx
-
-### Tertiary (LOW confidence)
-- None — all findings verified with primary sources
-
----
-*Research completed: 2026-04-14*
-*Ready for roadmap: yes*
+- **Searxng Search Results:** Vietnamese language AI generation challenges, prompt engineering for non-English languages, AI model limitations with Vietnamese, multilingual content generation pitfalls (HIGH confidence)
+- **Stanford AI Blog:** "Crossing Linguistic Horizons: Finetuning and Comprehensive Evaluation of Vietnamese Large Language Models" (HIGH confidence)
+- **Fortune:** "The world's best AI models operate in English. Other languages—even major ones like Cantonese—risk falling further behind" (HIGH confidence)
+- **NVIDIA Developer Blog:** "Processing High-Quality Vietnamese Language Data with NVIDIA NeMo Curator" (HIGH confidence)
+- **Arcee AI:** "Introducing Arcee-VyLinh - A Powerful 3B Parameter Vietnamese Language Model" (HIGH confidence)
+- **Codebase Analysis:** backend/app/services/ai_service.py, backend/app/models/post.py, backend/app/routers/posts.py, worker/app/workers/tasks.py, frontend/src/components/Projects/ProjectDetail.jsx (HIGH confidence)

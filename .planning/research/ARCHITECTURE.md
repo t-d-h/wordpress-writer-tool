@@ -1,737 +1,500 @@
-# Architecture Patterns
+# Architecture Research
 
-**Domain:** WordPress content management features (token usage display, All Posts tab)
-**Researched:** 2026-04-14
-**Overall confidence:** HIGH
+**Domain:** Vietnamese Language Support for AI Content Generation
+**Researched:** 2026-04-15
+**Confidence:** HIGH
 
-## Executive Summary
+## Standard Architecture
 
-The WordPress Writer Tool's existing architecture provides a solid foundation for both token usage aggregation and WordPress post listing features. The system already implements MongoDB aggregation patterns for statistics and has a working WordPress REST API integration layer. Token usage tracking is embedded in post documents with per-type fields (research, outline, content, thumbnail) and a calculated total. WordPress post listing is partially implemented via an existing endpoint and frontend component. Both features can be built using established patterns in the codebase without requiring architectural changes.
-
-## Key Findings
-
-**Stack:** Python/FastAPI backend with MongoDB aggregation, React frontend with existing API client patterns
-**Architecture:** Layered architecture with clear separation: Routers → Services → Database (backend), Components → API Client → Backend (frontend)
-**Critical pattern:** MongoDB aggregation pipeline for on-demand calculations, WordPress REST API service layer for external integration
-
-## Recommended Architecture
-
-### Token Usage Aggregation
+### System Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Frontend Layer                            │
+│                     Frontend Layer (React)                   │
 ├─────────────────────────────────────────────────────────────┤
-│  ProjectDetail.jsx (General Tab)                              │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ TokenUsageDisplay Component                              │ │
-│  │ - Breakdown by type (research, outline, content, thumb)  │ │
-│  │ - Total input/output tokens                              │ │
-│  │ - Calculated on-the-fly                                  │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ ProjectDetail│  │ Create Post  │  │ PostView     │      │
+│  │   .jsx       │  │   Modal      │  │   .jsx       │      │
+│  │              │  │              │  │              │      │
+│  │ Language     │  │ Language     │  │ Display      │      │
+│  │ Selector     │  │ Checkbox     │  │ Language     │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│         │                  │                  │              │
+└─────────┼──────────────────┼──────────────────┼──────────────┘
+          │                  │                  │
+          ↓                  ↓                  ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     API Client Layer                          │
+│                  Backend API Layer (FastAPI)                 │
 ├─────────────────────────────────────────────────────────────┤
-│  client.js                                                   │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ getProjectTokenUsage(projectId)                          │ │
-│  │   → GET /api/projects/{id}/token-usage                   │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ posts.py     │  │ Post Model   │  │ Project      │      │
+│  │ Router       │  │ (Pydantic)   │  │ Model        │      │
+│  │              │  │              │  │              │      │
+│  │ POST /posts  │  │ language:    │  │ (no change)  │      │
+│  │              │  │ str = "vi"   │  │              │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────────────┘      │
+│         │                  │                                 │
+└─────────┼──────────────────┼────────────────────────────────┘
+          │                  │
+          ↓                  ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     Backend Router Layer                     │
+│                  Service Layer (Python)                      │
 ├─────────────────────────────────────────────────────────────┤
-│  projects.py                                                 │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ @router.get("/{project_id}/token-usage")                 │ │
-│  │   - Validates project exists                             │ │
-│  │   - Calls aggregation service                           │ │
-│  │   - Returns TokenUsageResponse                           │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ ai_service   │  │ wp_service   │  │ job_service  │      │
+│  │              │  │              │  │              │      │
+│  │ research_    │  │ create_wp_  │  │ queue_next_  │      │
+│  │ topic()      │  │ post()       │  │ job()        │      │
+│  │              │  │              │  │              │      │
+│  │ + language   │  │ (no change) │  │ + language   │      │
+│  └──────┬───────┘  └──────────────┘  └──────┬───────┘      │
+│         │                                  │                  │
+└─────────┼──────────────────────────────────┼──────────────────┘
+          │                                  │
+          ↓                                  ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     Backend Service Layer                    │
+│                  Worker Layer (Async Tasks)                  │
 ├─────────────────────────────────────────────────────────────┤
-│  token_usage_service.py (NEW)                                │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ async def aggregate_project_tokens(project_id)           │ │
-│  │   - MongoDB aggregation pipeline                         │ │
-│  │   - Groups by project_id                                 │ │
-│  │   - Sums token_usage fields                              │ │
-│  │   - Includes deleted posts                               │ │
-│  └─────────────────────────────────────────────────────────┘ │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ run_         │  │ run_         │  │ run_         │      │
+│  │ research()   │  │ outline()    │  │ content()    │      │
+│  │              │  │              │  │              │      │
+│  │ Pass language│  │ Pass language│  │ Pass language│      │
+│  │ to AI service│  │ to AI service│  │ to AI service│      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+          │                  │                  │
+          ↓                  ↓                  ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     Database Layer                           │
+│                  Data Layer (MongoDB)                        │
 ├─────────────────────────────────────────────────────────────┤
-│  MongoDB posts collection                                    │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ Document structure:                                      │ │
-│  │ {                                                        │ │
-│  │   project_id: ObjectId,                                  │ │
-│  │   token_usage: {                                        │ │
-│  │     research: int,                                       │ │
-│  │     outline: int,                                        │ │
-│  │     content: int,                                        │ │
-│  │     thumbnail: int,                                      │ │
-│  │     total: int                                           │ │
-│  │   }                                                      │ │
-│  │ }                                                        │ │
-│  └─────────────────────────────────────────────────────────┘ │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ posts_col    │  │ projects_col │  │ jobs_col     │      │
+│  │              │  │              │  │              │      │
+│  │ language:    │  │ (no change)  │  │ + language   │      │
+│  │ "vi" | "en"  │  │              │  │ (optional)   │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### All Posts Tab Integration
+### Component Responsibilities
+
+| Component | Responsibility | Typical Implementation |
+|-----------|----------------|------------------------|
+| **Post Model** | Store language preference per post | Add `language: str = "vi"` field to `PostCreate` and `PostResponse` |
+| **AI Service** | Generate content in specified language | Add `language` parameter to all generation functions, update system prompts |
+| **Worker Tasks** | Pass language through pipeline | Extract language from post/job data, pass to AI service calls |
+| **Frontend Form** | Allow language selection | Add checkbox/radio after title field, default to Vietnamese |
+| **Posts Router** | Accept and persist language | Update `create_post()` to handle language field |
+| **Job Service** | Include language in job data | Add language to job payload when queuing |
+
+## Recommended Project Structure
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Frontend Layer                            │
-├─────────────────────────────────────────────────────────────┤
-│  ProjectDetail.jsx (New "All Posts" Tab)                      │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ AllPostsTab Component                                    │ │
-│  │ - Site selector (if multiple sites)                      │ │
-│  │ - Status filter (publish, draft, pending, any)          │ │
-│  │ - Search by title                                        │ │
-│  │ - Sort by date                                           │ │
-│  │ - Visual distinction: tool-created vs existing           │ │
-│  │ - Edit button → WordPress admin                          │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     API Client Layer                          │
-├─────────────────────────────────────────────────────────────┤
-│  client.js                                                   │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ getProjectAllPosts(projectId, params)                   │ │
-│  │   → GET /api/projects/{id}/all-posts                     │ │
-│  │     ?status={status}&search={query}&page={page}          │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Backend Router Layer                     │
-├─────────────────────────────────────────────────────────────┤
-│  projects.py                                                 │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ @router.get("/{project_id}/all-posts")                   │ │
-│  │   - Validates project exists                             │ │
-│  │   - Fetches tool posts from MongoDB                      │ │
-│  │   - Fetches WP posts via wp_service                      │ │
-│  │   - Merges and marks origin                              │ │
-│  │   - Applies filters/sorting                              │ │
-│  │   - Returns paginated response                           │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Backend Service Layer                    │
-├─────────────────────────────────────────────────────────────┤
-│  wp_service.py (EXTENDED)                                    │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ async def get_wp_posts(project_id, ...)                  │ │
-│  │   - Already exists                                       │ │
-│  │   - Supports pagination, status filter                    │ │
-│  │   - Returns {posts, total}                               │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                                                              │
-│  post_merge_service.py (NEW)                                 │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ async def merge_posts(tool_posts, wp_posts)              │ │
-│  │   - Matches by wp_post_id                               │ │
-│  │   - Marks origin: 'tool' | 'existing' | 'both'          │ │
-│  │   - Applies client-side filters/sorting                 │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     External Systems                         │
-├─────────────────────────────────────────────────────────────┤
-│  WordPress REST API                                          │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │ GET /wp-json/wp/v2/posts                                │ │
-│  │   ?per_page=100&page=1&status=publish                   │ │
-│  │   &search={query}&orderby=date&order=desc               │ │
-│  │   &_embed=wp:term (categories, tags)                     │ │
-│  └─────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+backend/
+├── app/
+│   ├── models/
+│   │   ├── post.py              # Add language field to PostCreate/PostResponse
+│   │   └── project.py            # No changes needed
+│   ├── services/
+│   │   ├── ai_service.py        # Add language parameter to all functions
+│   │   ├── wp_service.py        # No changes needed
+│   │   └── job_service.py       # Add language to job payload
+│   ├── routers/
+│   │   └── posts.py             # Update create_post() to handle language
+│   └── workers/
+│       └── tasks.py             # Pass language to AI service calls
+frontend/
+└── src/
+    └── components/
+        └── Projects/
+            └── ProjectDetail.jsx  # Add language selector to create form
 ```
 
-## Component Boundaries
+### Structure Rationale
 
-### Backend Components
+- **backend/app/models/post.py:** Language is a post-level attribute, not project-level. Each post can have different language requirements.
+- **backend/app/services/ai_service.py:** All AI generation functions need language awareness to produce appropriate content.
+- **backend/app/workers/tasks.py:** Worker tasks must pass language through the pipeline to ensure consistent generation.
+- **frontend/src/components/Projects/ProjectDetail.jsx:** Create post form is the natural place for language selection.
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| **projects.py (router)** | HTTP endpoints for project token usage and all posts | token_usage_service.py, post_merge_service.py, posts_col, wp_sites_col |
-| **token_usage_service.py (service)** | MongoDB aggregation for token usage statistics | posts_col (MongoDB) |
-| **post_merge_service.py (service)** | Merges tool-created and WordPress posts, applies filters | posts_col, wp_service.py |
-| **wp_service.py (service)** | WordPress REST API integration | External WordPress API |
-| **posts_col (database)** | Stores post documents with token_usage field | token_usage_service.py, post_merge_service.py |
+## Architectural Patterns
 
-### Frontend Components
+### Pattern 1: Parameter Propagation Through Pipeline
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| **ProjectDetail.jsx** | Main project view with tabs | API client, child components |
-| **TokenUsageDisplay.jsx** | Displays token usage breakdown | API client (getProjectTokenUsage) |
-| **AllPostsTab.jsx** | Displays merged WordPress posts | API client (getProjectAllPosts) |
-| **API client (client.js)** | HTTP communication with backend | Backend API endpoints |
+**What:** Language parameter flows from user input through all layers of the content generation pipeline.
 
-### Data Flow
+**When to use:** When a configuration parameter affects multiple stages of an async pipeline.
 
-#### Token Usage Aggregation Flow
-
-```
-User opens ProjectDetail → General tab
-  ↓
-TokenUsageDisplay component mounts
-  ↓
-API client calls GET /api/projects/{id}/token-usage
-  ↓
-Backend router validates project exists
-  ↓
-token_usage_service.py executes MongoDB aggregation:
-  [
-    {"$match": {"project_id": ObjectId(project_id)}},
-    {"$group": {
-      "_id": "$project_id",
-      "research": {"$sum": "$token_usage.research"},
-      "outline": {"$sum": "$token_usage.outline"},
-      "content": {"$sum": "$token_usage.content"},
-      "thumbnail": {"$sum": "$token_usage.thumbnail"},
-      "total": {"$sum": "$token_usage.total"}
-    }}
-  ]
-  ↓
-Aggregation results returned as JSON
-  ↓
-Frontend displays breakdown by type + total
-```
-
-**Key characteristics:**
-- On-demand calculation (no caching for MVP)
-- Includes all posts (deleted posts not filtered out)
-- Single MongoDB aggregation query (efficient)
-- No input/output token separation (current model only tracks total per type)
-
-#### All Posts Tab Flow
-
-```
-User opens ProjectDetail → All Posts tab
-  ↓
-AllPostsTab component mounts
-  ↓
-User selects filters (status, search, sort)
-  ↓
-API client calls GET /api/projects/{id}/all-posts?status={status}&search={query}
-  ↓
-Backend router validates project exists
-  ↓
-post_merge_service.py:
-  1. Fetches tool posts from MongoDB (posts_col)
-  2. Calls wp_service.get_wp_posts() for WordPress posts
-  3. Merges by wp_post_id matching
-  4. Marks origin: 'tool' (no wp_post_id), 'existing' (no match), 'both' (match)
-  5. Applies client-side filters (status, search, sort)
-  ↓
-Returns paginated response with merged posts
-  ↓
-Frontend displays table with visual distinction by origin
-  ↓
-User clicks "Edit" → Opens WordPress admin in new tab
-```
-
-**Key characteristics:**
-- Two data sources merged (MongoDB + WordPress REST API)
-- Origin tracking via wp_post_id presence
-- Client-side filtering/sorting (simpler for MVP)
-- WordPress API supports pagination, status filter, search
-- Edit action opens external WordPress admin (no in-app editing)
-
-## Patterns to Follow
-
-### Pattern 1: MongoDB Aggregation for Statistics
-
-**What:** Use MongoDB aggregation pipeline for on-demand calculations across multiple documents.
-
-**When:** Need to aggregate data from multiple documents (counts, sums, averages).
+**Trade-offs:**
+- **Pros:** Clear data flow, easy to trace, each stage has all context needed
+- **Cons:** More parameters to pass through, potential for parameter drift
 
 **Example:**
-
 ```python
-# In token_usage_service.py
-async def aggregate_project_tokens(project_id: str) -> dict:
-    pipeline = [
-        {"$match": {"project_id": ObjectId(project_id)}},
-        {"$group": {
-            "_id": "$project_id",
-            "research": {"$sum": "$token_usage.research"},
-            "outline": {"$sum": "$token_usage.outline"},
-            "content": {"$sum": "$token_usage.content"},
-            "thumbnail": {"$sum": "$token_usage.thumbnail"},
-            "total": {"$sum": "$token_usage.total"}
-        }}
-    ]
-    result = await posts_col.aggregate(pipeline).to_list(length=1)
-    if result:
-        return {
-            "research": result[0].get("research", 0),
-            "outline": result[0].get("outline", 0),
-            "content": result[0].get("content", 0),
-            "thumbnail": result[0].get("thumbnail", 0),
-            "total": result[0].get("total", 0)
+# Frontend: User selects language
+const [language, setLanguage] = useState('vi')  # Default Vietnamese
+
+# Backend: Router accepts language
+class PostCreate(BaseModel):
+    language: str = "vi"  # Default Vietnamese
+
+# Service: AI service uses language
+async def research_topic(topic: str, language: str = "vi", ...) -> tuple[dict, int]:
+    system_prompt = _get_system_prompt(language, "research")
+    # ... rest of function
+
+# Worker: Passes language to AI service
+async def run_research(job_data: dict):
+    language = job_data.get("language", "vi")
+    research_data, tokens = await ai_service.research_topic(
+        topic, additional, provider_id, model_name, language
+    )
+```
+
+### Pattern 2: Language-Aware System Prompts
+
+**What:** System prompts are dynamically generated based on language parameter.
+
+**When to use:** When AI instructions need to be localized for different languages.
+
+**Trade-offs:**
+- **Pros:** Consistent language output, no hardcoded language assumptions
+- **Cons:** More complex prompt management, need to maintain multiple prompt templates
+
+**Example:**
+```python
+def _get_system_prompt(language: str, task_type: str) -> str:
+    prompts = {
+        "vi": {
+            "research": "Bạn là một chuyên gia nghiên cứu nội dung SEO. Chỉ phản hồi bằng JSON hợp lệ.",
+            "outline": "Bạn là một chuyên gia chiến lược nội dung SEO. Chỉ phản hồi bằng JSON hợp lệ.",
+            "content": "Bạn là một chuyên gia viết nội dung blog. Viết nội dung hấp dẫn, chi tiết, tối ưu hóa SEO."
+        },
+        "en": {
+            "research": "You are an expert SEO content researcher. Respond only in valid JSON.",
+            "outline": "You are an expert SEO content strategist. Respond only in valid JSON.",
+            "content": "You are an expert blog content writer. Write engaging, detailed, SEO-optimized content."
         }
-    return {"research": 0, "outline": 0, "content": 0, "thumbnail": 0, "total": 0}
-```
-
-**Why this pattern:**
-- Efficient single-query aggregation
-- Leverages MongoDB's native aggregation capabilities
-- Consistent with existing patterns in projects.py and jobs.py
-- No need for pre-computed/cached values for MVP
-
-### Pattern 2: Service Layer for External API Integration
-
-**What:** Isolate external API calls in dedicated service modules.
-
-**When:** Integrating with third-party APIs (WordPress, AI providers).
-
-**Example:**
-
-```python
-# In wp_service.py (already exists)
-async def get_wp_posts(
-    project_id: str,
-    per_page: int = 100,
-    page: int = 1,
-    status: str = None,
-    search: str = None
-) -> dict:
-    """Fetch posts from WordPress REST API."""
-    wp_site = await _get_wp_site(project_id)
-    headers = _get_auth_header(wp_site["username"], wp_site["api_key"])
-
-    url = f"{wp_site['url'].rstrip('/')}/wp-json/wp/v2/posts"
-    params = {
-        "per_page": per_page,
-        "page": page,
-        "_embed": "wp:term"  # Include categories and tags
     }
-    if status:
-        params["status"] = status
-    if search:
-        params["search"] = search
-
-    async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.get(url, headers=headers, params=params)
-        response.raise_for_status()
-        posts = response.json()
-        total = int(response.headers.get("X-WP-Total", len(posts)))
-        return {"posts": posts, "total": total}
+    return prompts.get(language, {}).get(task_type, prompts["en"][task_type])
 ```
 
-**Why this pattern:**
-- Separates external API concerns from business logic
-- Centralizes authentication and error handling
-- Easy to mock for testing
-- Consistent with existing wp_service.py implementation
+### Pattern 3: Default Value at Model Level
 
-### Pattern 3: Data Merging with Origin Tracking
+**What:** Language field defaults to Vietnamese in the Pydantic model, ensuring all posts have a language value.
 
-**What:** Merge data from multiple sources while tracking origin for display purposes.
+**When to use:** When a field should always have a value and there's a sensible default.
 
-**When:** Combining internal data with external API results.
+**Trade-offs:**
+- **Pros:** No null/undefined language values, consistent behavior
+- **Cons:** Harder to change default later, requires migration if default changes
 
 **Example:**
-
 ```python
-# In post_merge_service.py (NEW)
-async def merge_posts(tool_posts: list, wp_posts: list) -> list:
-    """Merge tool-created posts with WordPress posts, tracking origin."""
-    # Create lookup by wp_post_id for tool posts
-    tool_by_wp_id = {p["wp_post_id"]: p for p in tool_posts if p.get("wp_post_id")}
+class PostCreate(BaseModel):
+    # ... other fields
+    language: str = "vi"  # Vietnamese is default
 
-    merged = []
-    tool_ids_seen = set()
-
-    # Process WordPress posts
-    for wp_post in wp_posts:
-        wp_id = wp_post.get("id")
-        if wp_id in tool_by_wp_id:
-            # Post exists in both systems
-            tool_post = tool_by_wp_id[wp_id]
-            merged.append({
-                **_format_wp_post(wp_post),
-                "origin": "both",
-                "tool_post_id": str(tool_post["_id"]),
-                "wp_post_id": wp_id
-            })
-            tool_ids_seen.add(str(tool_post["_id"]))
-        else:
-            # Post only exists in WordPress
-            merged.append({
-                **_format_wp_post(wp_post),
-                "origin": "existing",
-                "wp_post_id": wp_id
-            })
-
-    # Add tool-only posts (not published to WordPress yet)
-    for tool_post in tool_posts:
-        if str(tool_post["_id"]) not in tool_ids_seen:
-            merged.append({
-                **_format_tool_post(tool_post),
-                "origin": "tool",
-                "tool_post_id": str(tool_post["_id"])
-            })
-
-    return merged
+class PostResponse(BaseModel):
+    # ... other fields
+    language: str = "vi"  # Vietnamese is default
 ```
 
-**Why this pattern:**
-- Clear visual distinction in UI
-- Enables filtering by origin
-- Supports future features (e.g., "Import existing post")
-- Maintains data integrity across systems
+## Data Flow
 
-## Anti-Patterns to Avoid
+### Request Flow
 
-### Anti-Pattern 1: Pre-computed Token Totals
+```
+[User selects Vietnamese in Create Post form]
+    ↓
+[Frontend sends POST /api/posts with language="vi"]
+    ↓
+[Backend creates Post document with language="vi"]
+    ↓
+[Backend queues research job with language="vi"]
+    ↓
+[Worker picks up research job]
+    ↓
+[Worker calls ai_service.research_topic(language="vi")]
+    ↓
+[AI generates research in Vietnamese]
+    ↓
+[Worker queues outline job with language="vi"]
+    ↓
+[Worker calls ai_service.generate_outline(language="vi")]
+    ↓
+[AI generates outline in Vietnamese]
+    ↓
+[Worker queues content job with language="vi"]
+    ↓
+[Worker calls ai_service.generate_full_content(language="vi")]
+    ↓
+[AI generates content in Vietnamese]
+    ↓
+[Worker queues publish job]
+    ↓
+[Worker calls wp_service.create_wp_post()]
+    ↓
+[Post published to WordPress in Vietnamese]
+```
 
-**What:** Storing aggregated token totals in a separate collection or document.
+### State Management
 
-**Why bad:**
-- Adds complexity (need to update on every post change)
-- Risk of inconsistency (totals out of sync with individual posts)
-- Unnecessary for MVP scale (aggregation is fast enough)
+```
+[Post Document in MongoDB]
+    ↓ (read by worker)
+[Job Data with language="vi"]
+    ↓ (passed to AI service)
+[AI Service Functions]
+    ↓ (use language for system prompts)
+[Generated Content in Vietnamese]
+    ↓ (stored back to Post)
+[Post Document Updated with Vietnamese Content]
+```
 
-**Instead:** Calculate on-demand using MongoDB aggregation. Add caching later if performance becomes an issue.
+### Key Data Flows
 
-### Anti-Pattern 2: Client-Side WordPress API Calls
+1. **Language Selection Flow:** User selects language in form → Frontend state → API request → Post document → Job data → AI service calls
+2. **Content Generation Flow:** Research (Vietnamese) → Outline (Vietnamese) → Content (Vietnamese) → Thumbnail (language-agnostic) → Publish
+3. **Default Language Flow:** Pydantic model default → Frontend form default → All new posts default to Vietnamese
 
-**What:** Making WordPress REST API calls directly from the frontend.
+## Scaling Considerations
 
-**Why bad:**
-- Exposes WordPress credentials (username, application password)
-- CORS issues with WordPress sites
-- No centralized error handling or logging
-- Bypasses backend validation and business logic
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-1k users | Current architecture is sufficient. Language parameter adds minimal overhead. |
+| 1k-100k users | Consider caching language-specific prompts. Add language-specific model selection if needed. |
+| 100k+ users | Consider separate worker pools per language. Add language-specific rate limiting. |
 
-**Instead:** All WordPress API calls go through backend wp_service.py. Frontend only calls backend endpoints.
+### Scaling Priorities
 
-### Anti-Pattern 3: Separate Endpoints for Tool vs WordPress Posts
+1. **First bottleneck:** AI API rate limits. Language parameter doesn't change this, but Vietnamese generation may have different token costs.
+2. **Second bottleneck:** MongoDB query performance. Adding language field doesn't significantly impact queries, but could add index if filtering by language becomes common.
 
-**What:** Creating `/api/projects/{id}/tool-posts` and `/api/projects/{id}/wp-posts` endpoints.
+## Anti-Patterns
 
-**Why bad:**
-- Frontend has to make two requests and merge data
-- Inconsistent filtering/sorting across sources
-- Poor UX (loading states, synchronization issues)
-- Duplicates logic in two places
+### Anti-Pattern 1: Hardcoding Language in System Prompts
 
-**Instead:** Single `/api/projects/{id}/all-posts` endpoint that merges data server-side.
+**What people do:** Keep English system prompts and rely on AI to infer language from topic.
 
-## Scalability Considerations
+**Why it's wrong:** AI may generate mixed language content, inconsistent output, poor Vietnamese quality.
 
-| Concern | At 100 users | At 10K users | At 1M users |
-|---------|--------------|--------------|-------------|
-| Token usage aggregation | On-demand MongoDB aggregation (fast) | Add Redis caching for project stats | Pre-compute with background jobs |
-| WordPress post listing | On-demand merge (acceptable) | Cache WordPress posts in MongoDB | Implement incremental sync |
-| Post origin tracking | In-memory merge (fast) | Database-backed merge | Dedicated sync service |
-| Pagination | Client-side (acceptable) | Server-side pagination | Cursor-based pagination |
+**Do this instead:** Explicitly pass language parameter and use language-specific system prompts.
 
-**Current approach (MVP):**
-- On-demand aggregation for token usage
-- On-demand merge for WordPress posts
-- Client-side filtering/sorting
-- No caching
+### Anti-Pattern 2: Storing Language at Project Level
 
-**When to scale:**
-- Add Redis caching for project token usage (TTL: 5-10 minutes)
-- Cache WordPress posts in MongoDB with sync jobs
-- Move filtering/sorting to backend for large datasets
+**What people do:** Add language field to Project model and assume all posts in a project use the same language.
 
-## Build Order Dependencies
+**Why it's wrong:** Users may want mixed-language posts within a single project (e.g., bilingual blog).
 
-### Phase 1: Token Usage Display (Independent)
+**Do this instead:** Store language at Post level, allowing per-post language selection.
 
-**Dependencies:** None (can build in parallel with other features)
+### Anti-Pattern 3: Not Passing Language Through Worker Pipeline
 
-**Build order:**
-1. Backend models: `TokenUsageResponse` in `backend/app/models/project.py`
-2. Backend service: `token_usage_service.py` with aggregation logic
-3. Backend router: Add `GET /api/projects/{id}/token-usage` endpoint in `projects.py`
-4. Frontend API client: Add `getProjectTokenUsage()` in `client.js`
-5. Frontend component: Create `TokenUsageDisplay.jsx` component
-6. Frontend integration: Add to `ProjectDetail.jsx` General tab
+**What people do:** Store language in Post document but don't pass it to worker jobs, expecting workers to read from Post document.
 
-**Estimated effort:** 2-3 hours
+**Why it's wrong:** Workers may not have access to Post document at all times, adds unnecessary database reads, breaks job isolation.
 
-### Phase 2: All Posts Tab (Depends on existing WordPress integration)
+**Do this instead:** Include language in job payload when queuing, pass explicitly to AI service calls.
 
-**Dependencies:** Existing `wp_service.py` and `get_wp_posts()` function
+### Anti-Pattern 4: Using English as Default Without User Awareness
 
-**Build order:**
-1. Backend service: Create `post_merge_service.py` with merge logic
-2. Backend router: Add `GET /api/projects/{id}/all-posts` endpoint in `projects.py`
-3. Frontend API client: Add `getProjectAllPosts()` in `client.js`
-4. Frontend component: Create `AllPostsTab.jsx` component
-5. Frontend integration: Add new tab to `ProjectDetail.jsx`
-6. Styling: Add visual distinction for post origins
+**What people do:** Default to English but don't show language selector, users assume content will be in Vietnamese.
 
-**Estimated effort:** 4-5 hours
+**Why it's wrong:** Poor UX, users surprised by English content, violates requirement that Vietnamese is default.
 
-### Phase 3: Post Origin Tracking (Database Schema Change)
-
-**Dependencies:** Phase 2 (All Posts tab)
-
-**Build order:**
-1. Database migration: Add `origin` field to posts collection (optional, can be computed)
-2. Backend service: Update `post_merge_service.py` to persist origin
-3. Backend router: Update post creation to set origin
-4. Frontend: Update display to use persisted origin
-
-**Estimated effort:** 1-2 hours (optional for MVP)
-
-**Total estimated effort:** 7-10 hours for both features
+**Do this instead:** Default to Vietnamese, show language selector clearly, make default visible to users.
 
 ## Integration Points
 
-### Existing Codebase Integration
+### External Services
 
-**Token Usage Display:**
-- Reuses existing `posts_col` aggregation pattern from `projects.py`
-- Follows same router structure as `GET /api/projects/{id}/stats`
-- Integrates with existing `ProjectDetail.jsx` tab system
-- No database schema changes required
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| OpenAI API | Pass language in system prompt | OpenAI models support Vietnamese well, no special handling needed |
+| Gemini API | Pass language in system prompt | Gemini models support Vietnamese, ensure prompts are clear |
+| Anthropic API | Pass language in system prompt | Claude models support Vietnamese, may need more explicit instructions |
+| WordPress REST API | No language parameter needed | WordPress stores content as-is, language is content metadata only |
 
-**All Posts Tab:**
-- Extends existing `wp_service.py` (already has `get_wp_posts()`)
-- Reuses existing `AllPosts.jsx` patterns (site selector, status filter)
-- Integrates with existing `ProjectDetail.jsx` tab system
-- Optional: Add `origin` field to posts collection (can be computed on-the-fly)
+### Internal Boundaries
 
-### External System Integration
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| Frontend ↔ Backend API | HTTP POST with language field | Add `language` to request body, include in response |
+| Backend Router ↔ Service Layer | Function parameter | Pass language as explicit parameter to AI service functions |
+| Service Layer ↔ Worker Layer | Job payload | Include language in job data when queuing via Redis |
+| Worker ↔ AI Service | Function parameter | Extract language from job data, pass to AI service calls |
+| Worker ↔ MongoDB | Document field | Read/write language field in Post document |
 
-**WordPress REST API:**
-- Already integrated via `wp_service.py`
-- Supports pagination, filtering, sorting, search
-- Returns total count in `X-WP-Total` header
-- Supports `_embed` for related resources (categories, tags)
-- Authentication via Basic Auth (username + application password)
+## Build Order
 
-## Data Models
+Based on dependencies and integration points, recommended build order:
 
-### Token Usage Response Model
+### Phase 1: Backend Model and API (Foundation)
+1. **Update Post Model** (`backend/app/models/post.py`)
+   - Add `language: str = "vi"` to `PostCreate`
+   - Add `language: str = "vi"` to `PostResponse`
+   - Add `language: str = "vi"` to `BulkPostCreate`
 
-```python
-# backend/app/models/project.py
-class TokenUsageResponse(BaseModel):
-    research: int = 0
-    outline: int = 0
-    content: int = 0
-    thumbnail: int = 0
-    total: int = 0
-```
+2. **Update Posts Router** (`backend/app/routers/posts.py`)
+   - Update `create_post()` to handle language field
+   - Update `create_bulk_posts()` to handle language field
+   - Update `format_post()` to include language in response
+   - Pass language to job payload in `publish_job()`
 
-### All Posts Response Model
+### Phase 2: AI Service Integration (Core Logic)
+3. **Update AI Service** (`backend/app/services/ai_service.py`)
+   - Add `language` parameter to `research_topic()`
+   - Add `language` parameter to `generate_outline()`
+   - Add `language` parameter to `generate_section_content()`
+   - Add `language` parameter to `generate_introduction()`
+   - Add `language` parameter to `generate_full_content()`
+   - Implement `_get_system_prompt(language, task_type)` helper
+   - Update all system prompts to be language-aware
 
-```python
-# backend/app/models/project.py
-class PostOrigin(str, Enum):
-    TOOL = "tool"           # Created by tool, not published
-    EXISTING = "existing"   # Existed in WordPress before
-    BOTH = "both"           # Created by tool and published
+4. **Update Job Service** (`backend/app/services/job_service.py`)
+   - Add language to job payload when queuing
 
-class MergedPost(BaseModel):
-    id: int  # WordPress post ID
-    title: str
-    link: str
-    status: str
-    date: str
-    origin: PostOrigin
-    tool_post_id: Optional[str] = None  # MongoDB post ID if origin is 'tool' or 'both'
-    categories: List[dict] = []
-    tags: List[dict] = []
+### Phase 3: Worker Pipeline Integration (Async Processing)
+5. **Update Worker Tasks** (`worker/app/workers/tasks.py`)
+   - Update `run_research()` to pass language to AI service
+   - Update `run_outline()` to pass language to AI service
+   - Update `run_content()` to pass language to AI service
+   - Extract language from job data or post document
 
-class AllPostsResponse(BaseModel):
-    posts: List[MergedPost]
-    total: int
-    page: int
-    per_page: int
-```
+### Phase 4: Frontend UI (User Interface)
+6. **Update Create Post Form** (`frontend/src/components/Projects/ProjectDetail.jsx`)
+   - Add language state to `singleForm` and `bulkForm`
+   - Add language selector (checkbox/radio) after title field
+   - Default to Vietnamese (`"vi"`)
+   - Pass language in API calls
+   - Display language in post list/table
 
-## Error Handling
+### Phase 5: Testing and Validation
+7. **End-to-End Testing**
+   - Test Vietnamese content generation
+   - Test English content generation
+   - Verify language persistence in database
+   - Verify language flows through entire pipeline
 
-### Token Usage Aggregation
+## Data Model Changes
 
-**Error scenarios:**
-- Project not found: Return 404 with detail
-- No posts in project: Return zeros for all fields
-- Aggregation failure: Return 500 with error message
-
-**Example:**
-
-```python
-@router.get("/{project_id}/token-usage")
-async def get_project_token_usage(project_id: str):
-    project = await projects_col.find_one({"_id": ObjectId(project_id)})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    try:
-        usage = await aggregate_project_tokens(project_id)
-        return usage
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to aggregate token usage: {str(e)}")
-```
-
-### All Posts Tab
-
-**Error scenarios:**
-- Project not found: Return 404 with detail
-- WordPress site not configured: Return 400 with detail
-- WordPress API error: Return 502 with error message
-- Merge failure: Return 500 with error message
-
-**Example:**
+### Post Model Changes
 
 ```python
-@router.get("/{project_id}/all-posts")
-async def get_project_all_posts(project_id: str, status: str = None, search: str = None, page: int = 1):
-    project = await projects_col.find_one({"_id": ObjectId(project_id)})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+# backend/app/models/post.py
 
-    try:
-        # Fetch tool posts
-        tool_posts = await posts_col.find({"project_id": project_id}).to_list(length=None)
+class PostCreate(BaseModel):
+    project_id: str
+    topic: str
+    additional_requests: Optional[str] = ""
+    ai_provider_id: Optional[str] = None
+    model_name: Optional[str] = None
+    auto_publish: bool = False
+    thumbnail_source: str = "ai"
+    thumbnail_provider_id: Optional[str] = None
+    thumbnail_model_name: Optional[str] = None
+    target_word_count: Optional[int] = None
+    target_section_count: Optional[int] = None
+    language: str = "vi"  # NEW: Vietnamese is default
 
-        # Fetch WordPress posts
-        wp_result = await get_wp_posts(project_id, per_page=100, page=page, status=status, search=search)
+class BulkPostCreate(BaseModel):
+    project_id: str
+    topics: List[str]
+    additional_requests: Optional[str] = ""
+    ai_provider_id: Optional[str] = None
+    model_name: Optional[str] = None
+    auto_publish: bool = False
+    thumbnail_source: str = "ai"
+    thumbnail_provider_id: Optional[str] = None
+    thumbnail_model_name: Optional[str] = None
+    target_word_count: Optional[int] = None
+    target_section_count: Optional[int] = None
+    language: str = "vi"  # NEW: Vietnamese is default
 
-        # Merge
-        merged = await merge_posts(tool_posts, wp_result["posts"])
-
-        return {
-            "posts": merged,
-            "total": len(merged),
-            "page": page,
-            "per_page": 100
-        }
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"WordPress API error: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch posts: {str(e)}")
+class PostResponse(BaseModel):
+    id: str
+    project_id: str
+    topic: str
+    additional_requests: str
+    ai_provider_id: Optional[str] = None
+    model_name: Optional[str] = None
+    auto_publish: bool = False
+    thumbnail_source: str = "ai"
+    thumbnail_provider_id: Optional[str] = None
+    thumbnail_model_name: Optional[str] = None
+    target_word_count: Optional[int] = None
+    target_section_count: Optional[int] = None
+    language: str = "vi"  # NEW: Vietnamese is default
+    title: Optional[str] = None
+    meta_description: Optional[str] = None
+    outline: Optional[Dict[str, Any]] = None
+    sections: List[Section] = []
+    content: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    status: str = "draft"
+    research_data: Optional[Dict[str, Any]] = None
+    research_done: bool = False
+    content_done: bool = False
+    thumbnail_done: bool = False
+    token_usage: TokenUsage = TokenUsage()
+    jobs: List[JobInfo] = []
+    created_at: datetime
+    wp_post_id: Optional[int] = None
+    wp_post_url: Optional[str] = None
+    categories: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    origin: str = "tool"
 ```
 
-## Performance Considerations
+### Database Schema Changes
 
-### Token Usage Aggregation
+```python
+# backend/app/database.py
 
-**Current approach:** On-demand MongoDB aggregation
-
-**Performance characteristics:**
-- Single aggregation query (efficient)
-- O(n) where n = number of posts in project
-- For 100 posts: <10ms
-- For 10,000 posts: ~100ms
-- For 100,000 posts: ~1s (may need caching)
-
-**Optimization opportunities:**
-- Add Redis caching with 5-10 minute TTL
-- Pre-compute on post creation/update (eventual consistency)
-- Use MongoDB indexes on `project_id` field
-
-### All Posts Tab
-
-**Current approach:** On-demand merge of MongoDB + WordPress API
-
-**Performance characteristics:**
-- Two data sources (MongoDB + WordPress REST API)
-- WordPress API latency: 100-500ms (depends on site)
-- Merge operation: O(n+m) where n = tool posts, m = WordPress posts
-- For 100 posts total: ~600ms
-- For 1,000 posts total: ~1-2s
-
-**Optimization opportunities:**
-- Cache WordPress posts in MongoDB with background sync
-- Use WordPress `_fields` parameter to reduce payload size
-- Implement server-side pagination (not client-side)
-- Add loading states and progressive rendering
-
-## Security Considerations
-
-### Token Usage Display
-
-**Security concerns:**
-- None significant (read-only aggregation of existing data)
-- No sensitive data exposed
-
-**Recommendations:**
-- No additional security measures needed for MVP
-
-### All Posts Tab
-
-**Security concerns:**
-- WordPress credentials stored in database (already existing)
-- WordPress API calls expose credentials in Basic Auth header
-- Potential for credential leakage if logs are exposed
-
-**Recommendations:**
-- Ensure credentials are never logged (already implemented in wp_service.py)
-- Use HTTPS for all WordPress API calls (already required by WordPress)
-- Consider credential rotation mechanism for production
-- Add rate limiting for WordPress API calls (prevent abuse)
-
-## Testing Strategy
-
-### Token Usage Aggregation
-
-**Unit tests:**
-- Test aggregation with empty project (returns zeros)
-- Test aggregation with single post (returns post's token usage)
-- Test aggregation with multiple posts (sums correctly)
-- Test aggregation with deleted posts (includes in total)
-
-**Integration tests:**
-- Test endpoint returns correct response format
-- Test endpoint returns 404 for non-existent project
-- Test endpoint handles aggregation errors gracefully
-
-### All Posts Tab
-
-**Unit tests:**
-- Test merge with only tool posts (all marked 'tool')
-- Test merge with only WordPress posts (all marked 'existing')
-- Test merge with matching posts (marked 'both')
-- Test merge with no matches (correct separation)
-
-**Integration tests:**
-- Test endpoint returns correct response format
-- Test endpoint returns 404 for non-existent project
-- Test endpoint handles WordPress API errors gracefully
-- Test filtering by status works correctly
-- Test search by title works correctly
+# No index changes needed for language field
+# Language is stored as a simple string field in Post documents
+# Example Post document structure:
+{
+    "_id": ObjectId("..."),
+    "project_id": "...",
+    "topic": "How to improve website SEO",
+    "language": "vi",  # NEW: "vi" for Vietnamese, "en" for English
+    "additional_requests": "",
+    "ai_provider_id": "...",
+    "model_name": "gpt-4o",
+    "auto_publish": false,
+    "thumbnail_source": "ai",
+    "target_word_count": 500,
+    "target_section_count": 4,
+    "title": "Cách cải thiện SEO website",
+    "meta_description": "Hướng dẫn chi tiết...",
+    "outline": {...},
+    "sections": [...],
+    "content": "<h2>Giới thiệu</h2>...",
+    "thumbnail_url": "/tmp/wp_images/...",
+    "status": "draft",
+    "research_data": {...},
+    "research_done": true,
+    "content_done": true,
+    "thumbnail_done": true,
+    "token_usage": {...},
+    "jobs": [...],
+    "created_at": datetime(...),
+    "wp_post_id": 123,
+    "wp_post_url": "https://example.com/?p=123"
+}
+```
 
 ## Sources
 
-- WordPress REST API documentation: https://developer.wordpress.org/rest-api/reference/posts/ (HIGH confidence)
-- WordPress REST API global parameters: https://developer.wordpress.org/rest-api/using-the-rest-api/global-parameters/ (HIGH confidence)
-- MongoDB aggregation documentation: https://www.mongodb.com/docs/manual/core/aggregation-pipeline/ (HIGH confidence)
-- Existing codebase analysis: backend/app/routers/projects.py, backend/app/routers/jobs.py, backend/app/services/wp_service.py, frontend/src/components/ProjectDetail.jsx (HIGH confidence)
-- FastAPI documentation: https://fastapi.tiangolo.com/ (HIGH confidence)
+- Existing codebase analysis: `backend/app/models/post.py`, `backend/app/services/ai_service.py`, `worker/app/workers/tasks.py`, `frontend/src/components/Projects/ProjectDetail.jsx`
+- Project requirements: `.planning/PROJECT.md` (v1.2 Vietnamese Language Support milestone)
+- FastAPI documentation: https://fastapi.tiangolo.com/
+- Pydantic documentation: https://docs.pydantic.dev/
+- React documentation: https://react.dev/
+
+---
+*Architecture research for: Vietnamese Language Support in WordPress Writer Tool*
+*Researched: 2026-04-15*
