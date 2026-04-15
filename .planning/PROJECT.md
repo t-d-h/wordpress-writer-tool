@@ -41,16 +41,14 @@ Validate WordPress site connectivity and credentials before saving, so users kno
   - Post URL display with security attributes
   - Post categories and tags display as badges
   - Validated in Phase 03: All Posts Tab UI
+- Backend API enhancement with caching, pagination, and search/sort — v1.1
+- Data transformation for WordPress REST API responses — v1.1
+- Frontend UI with table view, search, sort, filter, and pagination — v1.1
+- Cleanup of legacy PostCard component and infinite scroll — v1.1
 
 ### Active
 
-- All Posts table view in ProjectDetail
-- Table layout with columns: Title, URL, Categories, Tags, Date, Status, Actions
-- Search by title functionality
-- Sort by date/title/status functionality
-- Status filter functionality
-- Manual pagination (100 posts per page)
-- Project-scoped WordPress site posts (no site selection)
+None — all v1.1 requirements shipped
 
 ## Current Milestone: v1.1 All Posts Table View
 
@@ -69,7 +67,7 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ## Current State
 
-**Version:** v1.1 (in progress)
+**Version:** v1.1 (shipped 2026-04-15)
 
 **Shipped Features (v1.0 MVP):**
 - Token usage display with breakdown by post type
@@ -78,7 +76,7 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 - Post origin tracking (tool-created vs existing)
 - Post URL, categories, and tags display
 
-**Completed in v1.1:**
+**Shipped Features (v1.1 All Posts Table View):**
 - Backend API enhancement with caching, pagination, and search/sort
 - Data transformation for WordPress REST API responses
 - Frontend UI with table view, search, sort, filter, and pagination
@@ -89,7 +87,6 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 - Cleanup verification (Phase 11 complete)
 
 **Next Milestone Goals:**
-- All Posts table view with enhanced filtering
 - Security improvements (credential encryption, input validation)
 - Performance optimizations (caching, database indexes)
 - Additional features (bulk operations, advanced filtering)
@@ -107,20 +104,29 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ## Context
 
-This is a brownfield project with existing codebase mapped in `.planning/codebase/`. The system has a working AI content generation pipeline with job processing, WordPress integration, and project management. All three planned phases (Token Usage Display, WordPress Integration Backend, All Posts Tab UI) are now complete and shipped as v1.0 MVP.
+This is a brownfield project with existing codebase mapped in `.planning/codebase/`. The system has a working AI content generation pipeline with job processing, WordPress integration, and project management.
 
-**Current State:**
+**v1.0 MVP State:**
 - 3 phases completed, 14 plans executed, 38 tasks delivered
 - 16,329 lines of code added (Python + JavaScript/JSX)
 - 8 days of development (2026-04-06 → 2026-04-14)
 - UAT completed: 18/20 tests passed, 2 skipped (external dependencies)
 - Code review: 10 findings (2 critical, 5 warnings, 3 info) — documented in 03-REVIEW.md
 
+**v1.1 All Posts Table View State:**
+- 8 phases completed, 14 plans executed, 43 tasks delivered
+- 5,305 lines of code added, 445 lines removed (Python + JavaScript/JSX)
+- 8 days of development (2026-04-06 → 2026-04-15)
+- All 18 v1.1 requirements verified and documented
+- Backend API with caching, pagination, and search/sort
+- Frontend table view with search, sort, filter, and pagination
+- Comprehensive verification documentation for all phases
+
 **Known Issues:**
 - Plain-text credential storage (deferred for security milestone)
 - URL format validation gap (minor, not blocking)
 - No pre-save connectivity check (feature for future milestone)
-- Code review findings documented but not yet fixed (can be addressed in v1.1)
+- Code review findings documented but not yet fixed (can be addressed in future milestones)
 
 ## Constraints
 
@@ -139,6 +145,12 @@ This is a brownfield project with existing codebase mapped in `.planning/codebas
 | Client-side filtering for MVP | Simpler implementation, move to backend later | ⚠️ Revisit — Moved to server-side in Phase 03 for better performance |
 | Infinite scroll for pagination | Better UX than manual page controls | ✓ Good — Implemented in Phase 03, 20 posts per page with loading indicator |
 | WordPress REST API with rate limiting | Prevent API abuse and handle errors gracefully | ✓ Good — Implemented in Phase 02, exponential backoff works well |
+| Cache WordPress posts in MongoDB with TTL | Reduce API calls and improve performance | ✓ Good — Implemented in Phase 04, 3-hour TTL with automatic expiration |
+| Hybrid pagination (cache first, WordPress API fallback) | Balance performance with data freshness | ✓ Good — Implemented in Phase 04, search bypasses cache |
+| Transform WordPress REST API responses in backend | Simplify frontend, provide table-ready data | ✓ Good — Implemented in Phase 05, categories, tags, formatted dates, edit URLs |
+| Replace PostCard grid with table view | Better data density, standard UI pattern | ✓ Good — Implemented in Phase 06, table layout with search/sort/filter/pagination |
+| Remove PostCard component and infinite scroll | Eliminate legacy code, simplify codebase | ✓ Good — Implemented in Phase 07, cleaner codebase with table view |
+| Create verification documentation for all phases | Formal verification of requirements with evidence | ✓ Good — Implemented in Phases 8, 9, 10, 11, all requirements verified |
 
 ## Evolution
 
@@ -158,4 +170,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-15 after Phase 11 (Cleanup Verification) complete*
+*Last updated: 2026-04-15 after v1.1 milestone complete*

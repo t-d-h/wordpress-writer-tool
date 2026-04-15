@@ -1,13 +1,12 @@
 # Roadmap
 
 **Project:** WordPress Writer Tool
-**Milestone:** v1.1 All Posts Table View
-**Last Updated:** 2026-04-14
+**Last Updated:** 2026-04-15
 
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1-3 (shipped 2026-04-14)
-- 🔄 **v1.1 All Posts Table View** — Phases 4-7 (in progress)
+- ✅ **v1.1 All Posts Table View** — Phases 4-11 (shipped 2026-04-15)
 
 ## Phases
 
@@ -21,172 +20,18 @@
 </details>
 
 <details>
-<summary>🔄 v1.1 All Posts Table View (Phases 4-11) — IN PROGRESS</summary>
+<summary>✅ v1.1 All Posts Table View (Phases 4-11) — SHIPPED 2026-04-15</summary>
 
-  - [ ] Phase 4: Backend API Enhancement — 3/3 plans complete
-  - [ ] Phase 5: Data Transformation — 1/1 plan complete
-  - [ ] Phase 6: Frontend UI — 3/3 plans complete
-  - [ ] Phase 7: Cleanup — 3/3 plans complete
-  - [x] Phase 8: Backend API Verification — 1/1 plan complete
-  - [ ] Phase 9: Data Transformation Documentation — Not started
-  - [x] Phase 10: Frontend UI Verification — 1/1 plan complete
-  - [ ] Phase 11: Cleanup Verification — Not started
+- [x] Phase 4: Backend API Enhancement (3/3 plans) — completed 2026-04-15
+- [x] Phase 5: Data Transformation (1/1 plan) — completed 2026-04-15
+- [x] Phase 6: Frontend UI (3/3 plans) — completed 2026-04-15
+- [x] Phase 7: Cleanup (3/3 plans) — completed 2026-04-15
+- [x] Phase 8: Backend API Verification (1/1 plan) — completed 2026-04-15
+- [x] Phase 9: Data Transformation Documentation (1/1 plan) — completed 2026-04-15
+- [x] Phase 10: Frontend UI Verification (1/1 plan) — completed 2026-04-15
+- [x] Phase 11: Cleanup Verification (1/1 plan) — completed 2026-04-15
 
 </details>
-
-## Phase Details
-
-### Phase 4: Backend API Enhancement
-
-**Goal**: Backend provides efficient post retrieval with caching, pagination, and search/sort capabilities
-
-**Depends on**: Phase 3 (v1.0 All Posts Tab UI)
-
-**Requirements**: BACKEND-01, BACKEND-02, BACKEND-03, BACKEND-04, BACKEND-05, BACKEND-06
-
-**Success Criteria** (what must be TRUE):
-1. Backend API returns 100 posts per page with pagination parameters
-2. Backend API supports search by title, sort by date/title/status
-3. Backend API caches WordPress posts in MongoDB or Redis
-4. Backend API invalidates cache when posts are created/updated/deleted
-5. Backend API provides manual cache refresh endpoint
-
-**Plans**: 3 plans
-- [ ] 04-01-PLAN.md — Create WordPress post cache service with MongoDB storage and TTL
-- [ ] 04-02-PLAN.md — Update get_site_posts endpoint with search/sort parameters
-- [ ] 04-03-PLAN.md — Integrate cache service with hybrid pagination and refresh endpoint
-
-### Phase 5: Data Transformation
-
-**Goal**: WordPress REST API responses are transformed into table-ready format
-
-**Depends on**: Phase 4
-
-**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04
-
-**Success Criteria** (what must be TRUE):
-1. WordPress REST API response is transformed to table format with all required fields
-2. Nested categories and tags from _embedded['wp:term'] are extracted correctly
-3. Dates are formatted for display in table
-4. Edit URLs are generated for WordPress admin
-
-**Plans**: TBD
-
-### Phase 6: Frontend UI
-
-**Goal**: Users can view and manage posts in a table with search, sort, filter, and pagination
-
-**Depends on**: Phase 5
-
-**Requirements**: FRONTEND-01, FRONTEND-02, FRONTEND-03, FRONTEND-04, FRONTEND-05, FRONTEND-06, FRONTEND-07
-
-**Success Criteria** (what must be TRUE):
-1. User can view posts in table layout with columns: Title, URL, Categories, Tags, Date, Status, Actions
-2. User can search posts by title using search input field
-3. User can sort posts by date, title, or status using sort dropdown
-4. User can filter posts by status using status filter dropdown
-5. User can navigate between pages using Previous/Next pagination controls
-6. User sees loading states when pagination changes
-7. User sees appropriate empty state when no posts match criteria
-
-**Plans**: 3 plans
-- [x] 06-01-PLAN.md — Update API client and add search/sort state management
-- [x] 06-02-PLAN.md — Add search input and sort dropdown UI controls
-- [x] 06-03-PLAN.md — Verify all frontend requirements through comprehensive testing
-
-**UI hint**: yes
-
-### Phase 7: Cleanup
-
-**Goal**: Legacy code and unused components are removed
-
-**Depends on**: Phase 6
-
-**Requirements**: CLEANUP-01, CLEANUP-02, CLEANUP-03, CLEANUP-04
-
-**Success Criteria** (what must be TRUE):
-1. PostCard component is removed from All Posts tab
-2. Origin badges are removed from All Posts tab
-3. Infinite scroll logic and event listeners are removed
-4. Unused state variables are removed
-
-**Plans**: 3 plans
-- [x] 07-01-PLAN.md — Remove PostCard component and import
-- [x] 07-02-PLAN.md — Remove infinite scroll logic and unused state variables
-- [x] 07-03-PLAN.md — Remove unused CSS classes
-
-### Phase 8: Backend API Verification
-
-**Goal**: Create VERIFICATION.md for Phase 4 to formally verify all backend API requirements
-
-**Depends on**: Phase 4
-
-**Requirements**: BACKEND-01, BACKEND-02, BACKEND-03, BACKEND-04, BACKEND-05, BACKEND-06
-
-**Success Criteria** (what must be TRUE):
-1. VERIFICATION.md file exists for Phase 4
-2. All 6 backend requirements are verified with evidence
-3. Verification status is "passed"
-
-**Gap Closure**: Closes verification gaps from v1.1 audit
-
-**Plans**: 1 plan
-- [x] 08-01-PLAN.md — Create VERIFICATION.md for Phase 4
-
-### Phase 9: Data Transformation Documentation
-
-**Goal**: Update Phase 5 SUMMARY with requirements-completed field
-
-**Depends on**: Phase 5
-
-**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04
-
-**Success Criteria** (what must be TRUE):
-1. Phase 5 SUMMARY.md has requirements-completed field in YAML frontmatter
-2. All 4 data transformation requirements are listed
-3. Requirements are marked as complete
-
-**Gap Closure**: Closes documentation gaps from v1.1 audit
-
-**Plans**: 1 plan
-- [x] 09-01-PLAN.md — Update Phase 5 SUMMARY with requirements-completed field
-
-### Phase 10: Frontend UI Verification
-
-**Goal**: Create VERIFICATION.md for Phase 6 to formally verify all frontend UI requirements
-
-**Depends on**: Phase 6
-
-**Requirements**: FRONTEND-04, FRONTEND-05
-
-**Success Criteria** (what must be TRUE):
-1. VERIFICATION.md file exists for Phase 6
-2. FRONTEND-04 (pagination) is verified with evidence
-3. FRONTEND-05 (loading states) is verified with evidence
-4. Verification status is "passed"
-
-**Gap Closure**: Closes verification gaps from v1.1 audit
-
-**Plans**: 1 plan
-- [x] 10-01-PLAN.md — Create VERIFICATION.md for Phase 6
-
-### Phase 11: Cleanup Verification
-
-**Goal**: Create VERIFICATION.md for Phase 7 to formally verify cleanup requirements
-
-**Depends on**: Phase 7
-
-**Requirements**: CLEANUP-02
-
-**Success Criteria** (what must be TRUE):
-1. VERIFICATION.md file exists for Phase 7
-2. CLEANUP-02 (origin badges removal) is verified with evidence
-3. Verification status is "passed"
-
-**Gap Closure**: Closes verification gaps from v1.1 audit
-
-**Plans**: 1 plan
-- [x] 11-01-PLAN.md — Create VERIFICATION.md for Phase 7
 
 ## Progress
 
@@ -200,10 +45,11 @@
 | 6. Frontend UI | v1.1 | 3/3 | Complete | 2026-04-15 |
 | 7. Cleanup | v1.1 | 3/3 | Complete | 2026-04-15 |
 | 8. Backend API Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
-| 9. Data Transformation Documentation | v1.1 | 0/1 | Not started | - |
-| 10. Frontend UI Verification | v1.1 | 1/1 | Complete    | 2026-04-15 |
-| 11. Cleanup Verification | v1.1 | 1/1 | Complete    | 2026-04-15 |
+| 9. Data Transformation Documentation | v1.1 | 1/1 | Complete | 2026-04-15 |
+| 10. Frontend UI Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
+| 11. Cleanup Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
 
 ---
 
 **See `.planning/milestones/v1.0-ROADMAP.md` for full v1.0 milestone details.**
+**See `.planning/milestones/v1.1-ROADMAP.md` for full v1.1 milestone details.**

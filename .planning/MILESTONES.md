@@ -1,5 +1,26 @@
 # Milestones
 
+## v1.1 All Posts Table View (Shipped: 2026-04-15)
+
+**Phases completed:** 8 phases, 14 plans, 43 tasks
+
+**Key accomplishments:**
+
+- Status:
+- Status:
+- Status:
+- API client updated with search/sort parameters and AllPosts component with state management for filtering and ordering posts
+- Search input and sort dropdown UI controls added to AllPosts toolbar with consistent styling and event handling
+- All 7 frontend requirements verified through comprehensive testing with 22 test scenarios, all passing
+- PostCard component and all references removed from codebase after being replaced by table view in Phase 6
+- Infinite scroll logic and all related state variables, functions, and event listeners removed from ProjectDetail.jsx after being replaced by manual pagination in Phase 6
+- All unused CSS classes for PostCard component removed from index.css after component deletion in Plan 07-01
+- Status:
+- Formal verification report for Phase 6 frontend UI requirements with comprehensive evidence for pagination controls and loading states
+- Formal verification documentation for Phase 7 cleanup with CLEANUP-02 (origin badges removal) verified and passed
+
+---
+
 ## v1.0 MVP (Shipped: 2026-04-14)
 
 **Phases completed:** 3 phases, 14 plans, 38 tasks
