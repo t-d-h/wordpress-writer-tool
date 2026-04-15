@@ -11,6 +11,9 @@ export default function AllPosts() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [statusFilter, setStatusFilter] = useState('any')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState('date')
+  const [sortOrder, setSortOrder] = useState('desc')
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -21,7 +24,7 @@ export default function AllPosts() {
     if (selectedSite) {
       loadPosts()
     }
-  }, [selectedSite, page, statusFilter])
+  }, [selectedSite, page, statusFilter, searchQuery, sortBy, sortOrder])
 
   const loadSites = async () => {
     try {
@@ -44,7 +47,15 @@ export default function AllPosts() {
     setFetchingPosts(true)
     setError(null)
     try {
-      const { data } = await getSitePosts(selectedSite.id, 100, page, statusFilter === 'any' ? null : statusFilter)
+      const { data } = await getSitePosts(
+        selectedSite.id,
+        100,
+        page,
+        statusFilter === 'any' ? null : statusFilter,
+        searchQuery || null,
+        sortBy,
+        sortOrder
+      )
       setPosts(data.posts || [])
       setTotal(data.total || 0)
     } catch (e) {
@@ -53,6 +64,19 @@ export default function AllPosts() {
     } finally {
       setFetchingPosts(false)
     }
+  }
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value)
+    setPage(1)
+  }
+
+  const handleSortChange = (e) => {
+    const value = e.target.value
+    const [sortBy, sortOrder] = value.split('-')
+    setSortBy(sortBy)
+    setSortOrder(sortOrder)
+    setPage(1)
   }
 
   const formatDate = (dateString) => {
