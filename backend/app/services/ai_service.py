@@ -197,6 +197,7 @@ async def research_topic(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    language: str = "vietnamese",
 ) -> tuple[dict, int]:
     """Research a topic: audience, keywords, key points to mention."""
     system_prompt = (
