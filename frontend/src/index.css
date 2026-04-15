@@ -1074,6 +1074,28 @@ tbody tr:last-child td {
   gap: 8px;
 }
 
+.toolbar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-search-input {
+  width: 200px;
+  min-width: 150px;
+}
+
+.toolbar-sort-select {
+  width: 180px;
+  min-width: 140px;
+}
+
 /* === Action buttons in table === */
 .action-buttons {
   display: flex;
