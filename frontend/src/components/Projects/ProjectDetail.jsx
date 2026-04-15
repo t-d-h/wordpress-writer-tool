@@ -19,6 +19,9 @@ export default function ProjectDetail() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('date-desc')
   const [searchQuery, setSearchQuery] = useState('')
+  const [wpPosts, setWpPosts] = useState([])
+  const [loadingWpPosts, setLoadingWpPosts] = useState(false)
+  const [wpPostsError, setWpPostsError] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createMode, setCreateMode] = useState('single')
   const [singleForm, setSingleForm] = useState({
@@ -168,9 +171,9 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     if (activeTab === 'all-posts' && project && project.wp_site_id) {
-      loadAllPosts(1, true)
+      loadWpPosts()
     }
-  }, [activeTab, id, project])
+  }, [activeTab, id, project, statusFilter, sortBy, searchQuery])
 
   const load = async () => {
     try {
@@ -228,6 +231,30 @@ export default function ProjectDetail() {
       console.error(e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadWpPosts = async () => {
+    if (!project || !project.wp_site_id) return
+
+    setLoadingWpPosts(true)
+    setWpPostsError(null)
+    try {
+      const { data } = await getSitePosts(
+        project.wp_site_id,
+        100,
+        1,
+        statusFilter === 'all' ? null : statusFilter,
+        searchQuery || null,
+        sortBy.split('-')[0],
+        sortBy.split('-')[1]
+      )
+      setWpPosts(data.posts || [])
+    } catch (e) {
+      console.error('Failed to load WordPress posts:', e)
+      setWpPostsError('Failed to load posts from WordPress')
+    } finally {
+      setLoadingWpPosts(false)
     }
   }
 
@@ -545,13 +572,13 @@ export default function ProjectDetail() {
 
       {activeTab === 'all-posts' && (
         <>
-          {loadingAllPosts ? (
+          {loadingWpPosts ? (
             <div className="loading-page"><div className="loading-spinner" /></div>
-          ) : allPostsError ? (
+          ) : wpPostsError ? (
             <div className="empty-state">
               <div className="empty-state-icon">⚠️</div>
               <div className="empty-state-title">Error Loading Posts</div>
-              <div className="empty-state-text">{allPostsError}</div>
+              <div className="empty-state-text">{wpPostsError}</div>
             </div>
           ) : (
             <>
@@ -591,29 +618,89 @@ export default function ProjectDetail() {
                   />
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-                  {allPosts.length} post{allPosts.length !== 1 ? 's' : ''}
+                  {wpPosts.length} post{wpPosts.length !== 1 ? 's' : ''}
                 </div>
               </div>
 
-              {allPosts.length === 0 ? (
+              {wpPosts.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-state-icon">📄</div>
                   <div className="empty-state-title">No Posts Found</div>
                   <div className="empty-state-text">
-                    {allPosts.length === 0
-                      ? 'No WordPress posts found for this project'
-                      : 'No posts match your filter, sort, or search criteria'}
+                    {searchQuery || statusFilter !== 'all'
+                      ? 'No posts match your filter, sort, or search criteria'
+                      : 'No WordPress posts found for this project'}
                   </div>
                 </div>
-                ) : (
-                  <>
-                    {/* PostCard removed - replaced by table view in Phase 6 */}
-                  </>
-                )}
-             </>
-           )}
-         </>
-       )}
+              ) : (
+                <div className="table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Title / Topic</th>
+                        <th>URL</th>
+                        <th>Categories</th>
+                        <th>Tags</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {wpPosts.map(post => (
+                        <tr key={post.id}>
+                          <td>
+                            <button
+                              onClick={() => window.open(post.link, '_blank')}
+                              style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textAlign: 'left', padding: 0, fontSize: 14 }}
+                            >
+                              {post.title?.rendered || 'Untitled'}
+                            </button>
+                          </td>
+                          <td>
+                            {post.link ? (
+                              <a
+                                href={post.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: 'var(--text-muted)', fontSize: 12, textDecoration: 'none' }}
+                              >
+                                {post.link}
+                              </a>
+                            ) : '-'}
+                          </td>
+                          <td>
+                            {post._embedded?.['wp:term']?.[0]?.map(cat => cat.name).join(', ') || '-'}
+                          </td>
+                          <td>
+                            {post._embedded?.['wp:term']?.[1]?.map(tag => tag.name).join(', ') || '-'}
+                          </td>
+                          <td>
+                            {post.date ? new Date(post.date).toLocaleDateString() : '-'}
+                          </td>
+                          <td>
+                            <span className={`status-badge status-${post.status}`}>
+                              {post.status}
+                            </span>
+                          </td>
+                          <td>
+                            <button
+                              onClick={() => window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.id}&action=edit`, '_blank')}
+                              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, fontSize: 12 }}
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
 
        {/* Create Post Modal */}
       {showCreateModal && (
