@@ -84,14 +84,16 @@ async def run_research(job_data: dict):
         additional = job_data.get("additional_requests", "")
         provider_id = job_data.get("ai_provider_id")
         model_name = job_data.get("model_name")
+        language = job_data.get("language", "vietnamese")
 
         logger.info(f"[RESEARCH] Topic: {topic}")
         logger.info(f"[RESEARCH] Additional requests: {additional}")
         logger.info(f"[RESEARCH] Using AI provider: {provider_id}")
         logger.info(f"[RESEARCH] Calling AI model: {model_name}")
+        logger.info(f"[RESEARCH] Language: {language}")
 
         research_data, total_tokens = await ai_service.research_topic(
-            topic, additional, provider_id, model_name
+            topic, additional, provider_id, model_name, language
         )
 
         logger.info(f"[RESEARCH] AI call completed, {total_tokens} tokens used")
