@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
@@ -21,6 +21,7 @@ class PostCreate(BaseModel):
     thumbnail_model_name: Optional[str] = None
     target_word_count: Optional[int] = None
     target_section_count: Optional[int] = None
+    language: str = Field(default="vietnamese", pattern="^(vietnamese|english)$")
 
 
 class BulkPostCreate(BaseModel):
@@ -35,6 +36,7 @@ class BulkPostCreate(BaseModel):
     thumbnail_model_name: Optional[str] = None
     target_word_count: Optional[int] = None
     target_section_count: Optional[int] = None
+    language: str = Field(default="vietnamese", pattern="^(vietnamese|english)$")
 
 
 class PostUpdate(BaseModel):
@@ -43,6 +45,7 @@ class PostUpdate(BaseModel):
     content: Optional[str] = None
     sections: Optional[List[Section]] = None
     thumbnail_url: Optional[str] = None
+    language: Optional[str] = Field(None, pattern="^(vietnamese|english)$")
 
 
 class JobInfo(BaseModel):
@@ -94,3 +97,4 @@ class PostResponse(BaseModel):
     categories: Optional[List[str]] = None
     tags: Optional[List[str]] = None
     origin: str = "tool"  # "tool" or "wordpress"
+    language: str = "vietnamese"
