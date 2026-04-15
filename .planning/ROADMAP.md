@@ -23,10 +23,10 @@
 <details>
 <summary>🔄 v1.1 All Posts Table View (Phases 4-7) — IN PROGRESS</summary>
 
-- [ ] Phase 4: Backend API Enhancement — 3/3 plans planned
-- [ ] Phase 5: Data Transformation — Not started
-- [ ] Phase 6: Frontend UI — Not started
-- [ ] Phase 7: Cleanup — Not started
+ - [ ] Phase 4: Backend API Enhancement — 3/3 plans planned
+ - [ ] Phase 5: Data Transformation — Not started
+ - [ ] Phase 6: Frontend UI — 3/3 plans planned
+ - [ ] Phase 7: Cleanup — Not started
 
 </details>
 
@@ -85,7 +85,10 @@
 6. User sees loading states when pagination changes
 7. User sees appropriate empty state when no posts match criteria
 
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 06-01-PLAN.md — Update API client and add search/sort state management
+- [ ] 06-02-PLAN.md — Add search input and sort dropdown UI controls
+- [ ] 06-03-PLAN.md — Verify all frontend requirements through comprehensive testing
 
 **UI hint**: yes
 
@@ -114,7 +117,7 @@
 | 3. All Posts Tab UI | v1.0 | 7/7 | Complete | 2026-04-14 |
 | 4. Backend API Enhancement | v1.1 | 0/3 | Planned | - |
 | 5. Data Transformation | v1.1 | 0/0 | Not started | - |
-| 6. Frontend UI | v1.1 | 0/0 | Not started | - |
+| 6. Frontend UI | v1.1 | 0/3 | Planned | - |
 | 7. Cleanup | v1.1 | 0/0 | Not started | - |
 
 ---
