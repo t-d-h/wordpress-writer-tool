@@ -195,6 +195,7 @@ async def create_bulk_posts(data: BulkPostCreate):
             thumbnail_model_name=data.thumbnail_model_name,
             target_word_count=data.target_word_count,
             target_section_count=data.target_section_count,
+            language=data.language,
         )
         # Reuse single post creation logic
         post = await create_post(single)
