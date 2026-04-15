@@ -8,12 +8,12 @@
 
 ### Backend API
 
-- [ ] **BACKEND-01**: Backend exposes search, orderby, and order parameters in get_site_posts endpoint
-- [ ] **BACKEND-02**: Backend supports 100 posts per page pagination
-- [ ] **BACKEND-03**: Backend returns WordPress REST API data with proper transformation
-- [ ] **BACKEND-04**: Backend caches WordPress posts in MongoDB or Redis for faster retrieval
-- [ ] **BACKEND-05**: Backend implements cache invalidation when posts are created/updated/deleted
-- [ ] **BACKEND-06**: Backend provides cache refresh mechanism for manual sync
+- [x] **BACKEND-01**: Backend exposes search, orderby, and order parameters in get_site_posts endpoint
+- [x] **BACKEND-02**: Backend supports 100 posts per page pagination
+- [x] **BACKEND-03**: Backend returns WordPress REST API data with proper transformation
+- [x] **BACKEND-04**: Backend caches WordPress posts in MongoDB or Redis for faster retrieval
+- [x] **BACKEND-05**: Backend implements cache invalidation when posts are created/updated/deleted
+- [x] **BACKEND-06**: Backend provides cache refresh mechanism for manual sync
 
 ### Frontend UI
 
@@ -55,12 +55,12 @@ None deferred for this milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BACKEND-01 | Phase 8 | Pending |
-| BACKEND-02 | Phase 8 | Pending |
-| BACKEND-03 | Phase 8 | Pending |
-| BACKEND-04 | Phase 8 | Pending |
-| BACKEND-05 | Phase 8 | Pending |
-| BACKEND-06 | Phase 8 | Pending |
+| BACKEND-01 | Phase 8 | Complete |
+| BACKEND-02 | Phase 8 | Complete |
+| BACKEND-03 | Phase 8 | Complete |
+| BACKEND-04 | Phase 8 | Complete |
+| BACKEND-05 | Phase 8 | Complete |
+| BACKEND-06 | Phase 8 | Complete |
 | FRONTEND-01 | Phase 6 | Complete |
 | FRONTEND-02 | Phase 6 | Complete |
 | FRONTEND-03 | Phase 6 | Complete |
