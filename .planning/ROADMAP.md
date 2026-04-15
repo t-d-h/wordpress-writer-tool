@@ -21,12 +21,16 @@
 </details>
 
 <details>
-<summary>🔄 v1.1 All Posts Table View (Phases 4-7) — IN PROGRESS</summary>
+<summary>🔄 v1.1 All Posts Table View (Phases 4-11) — IN PROGRESS</summary>
 
- - [ ] Phase 4: Backend API Enhancement — 3/3 plans planned
- - [ ] Phase 5: Data Transformation — Not started
- - [ ] Phase 6: Frontend UI — 3/3 plans planned
- - [ ] Phase 7: Cleanup — Not started
+  - [ ] Phase 4: Backend API Enhancement — 3/3 plans complete
+  - [ ] Phase 5: Data Transformation — 1/1 plan complete
+  - [ ] Phase 6: Frontend UI — 3/3 plans complete
+  - [ ] Phase 7: Cleanup — 3/3 plans complete
+  - [ ] Phase 8: Backend API Verification — Not started
+  - [ ] Phase 9: Data Transformation Documentation — Not started
+  - [ ] Phase 10: Frontend UI Verification — Not started
+  - [ ] Phase 11: Cleanup Verification — Not started
 
 </details>
 
@@ -111,6 +115,79 @@
 - [x] 07-02-PLAN.md — Remove infinite scroll logic and unused state variables
 - [x] 07-03-PLAN.md — Remove unused CSS classes
 
+### Phase 8: Backend API Verification
+
+**Goal**: Create VERIFICATION.md for Phase 4 to formally verify all backend API requirements
+
+**Depends on**: Phase 4
+
+**Requirements**: BACKEND-01, BACKEND-02, BACKEND-03, BACKEND-04, BACKEND-05, BACKEND-06
+
+**Success Criteria** (what must be TRUE):
+1. VERIFICATION.md file exists for Phase 4
+2. All 6 backend requirements are verified with evidence
+3. Verification status is "passed"
+
+**Gap Closure**: Closes verification gaps from v1.1 audit
+
+**Plans**: 1 plan
+- [ ] 08-01-PLAN.md — Create VERIFICATION.md for Phase 4
+
+### Phase 9: Data Transformation Documentation
+
+**Goal**: Update Phase 5 SUMMARY with requirements-completed field
+
+**Depends on**: Phase 5
+
+**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04
+
+**Success Criteria** (what must be TRUE):
+1. Phase 5 SUMMARY.md has requirements-completed field in YAML frontmatter
+2. All 4 data transformation requirements are listed
+3. Requirements are marked as complete
+
+**Gap Closure**: Closes documentation gaps from v1.1 audit
+
+**Plans**: 1 plan
+- [ ] 09-01-PLAN.md — Update Phase 5 SUMMARY with requirements-completed field
+
+### Phase 10: Frontend UI Verification
+
+**Goal**: Create VERIFICATION.md for Phase 6 to formally verify all frontend UI requirements
+
+**Depends on**: Phase 6
+
+**Requirements**: FRONTEND-04, FRONTEND-05
+
+**Success Criteria** (what must be TRUE):
+1. VERIFICATION.md file exists for Phase 6
+2. FRONTEND-04 (pagination) is verified with evidence
+3. FRONTEND-05 (loading states) is verified with evidence
+4. Verification status is "passed"
+
+**Gap Closure**: Closes verification gaps from v1.1 audit
+
+**Plans**: 1 plan
+- [ ] 10-01-PLAN.md — Create VERIFICATION.md for Phase 6
+
+### Phase 11: Cleanup Verification
+
+**Goal**: Create VERIFICATION.md for Phase 7 to formally verify cleanup requirements
+
+**Depends on**: Phase 7
+
+**Requirements**: CLEANUP-02
+
+**Success Criteria** (what must be TRUE):
+1. VERIFICATION.md file exists for Phase 7
+2. CLEANUP-02 (origin badges removal) is verified with evidence
+3. Verification status is "passed"
+
+**Gap Closure**: Closes verification gaps from v1.1 audit
+
+**Plans**: 1 plan
+- [ ] 11-01-PLAN.md — Create VERIFICATION.md for Phase 7
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -118,10 +195,14 @@
 | 1. Token Usage Display | v1.0 | 4/4 | Complete | 2026-04-14 |
 | 2. WordPress Integration Backend | v1.0 | 3/3 | Complete | 2026-04-14 |
 | 3. All Posts Tab UI | v1.0 | 7/7 | Complete | 2026-04-14 |
-| 4. Backend API Enhancement | v1.1 | 0/3 | Planned | - |
-| 5. Data Transformation | v1.1 | 0/0 | Not started | - |
-| 6. Frontend UI | v1.1 | 3/3 | Complete   | 2026-04-15 |
-| 7. Cleanup | v1.1 | 3/3 | Complete   | 2026-04-15 |
+| 4. Backend API Enhancement | v1.1 | 3/3 | Complete | 2026-04-15 |
+| 5. Data Transformation | v1.1 | 1/1 | Complete | 2026-04-15 |
+| 6. Frontend UI | v1.1 | 3/3 | Complete | 2026-04-15 |
+| 7. Cleanup | v1.1 | 3/3 | Complete | 2026-04-15 |
+| 8. Backend API Verification | v1.1 | 0/1 | Not started | - |
+| 9. Data Transformation Documentation | v1.1 | 0/1 | Not started | - |
+| 10. Frontend UI Verification | v1.1 | 0/1 | Not started | - |
+| 11. Cleanup Verification | v1.1 | 0/1 | Not started | - |
 
 ---
 

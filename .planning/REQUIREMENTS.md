@@ -20,15 +20,15 @@
 - [x] **FRONTEND-01**: User can view posts in table layout with columns: Title, URL, Categories, Tags, Date, Status, Actions
 - [x] **FRONTEND-02**: User can search posts by title using search input field
 - [x] **FRONTEND-03**: User can sort posts by date, title, or status using sort dropdown
-- [x] **FRONTEND-04**: User can filter posts by status using status filter dropdown
-- [x] **FRONTEND-05**: User can navigate between pages using Previous/Next pagination controls
+- [ ] **FRONTEND-04**: User can navigate between pages using Previous/Next pagination controls
+- [ ] **FRONTEND-05**: User sees loading states when pagination changes
 - [x] **FRONTEND-06**: User sees loading states when pagination changes
 - [x] **FRONTEND-07**: User sees appropriate empty state when no posts match criteria
 
 ### Cleanup
 
 - [x] **CLEANUP-01**: PostCard component is removed from All Posts tab
-- [x] **CLEANUP-02**: Origin badges are removed from All Posts tab
+- [ ] **CLEANUP-02**: Origin badges are removed from All Posts tab
 - [x] **CLEANUP-03**: Infinite scroll logic and event listeners are removed
 - [x] **CLEANUP-04**: Unused state variables are removed
 
@@ -55,24 +55,24 @@ None deferred for this milestone.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BACKEND-01 | Phase 4 | Pending |
-| BACKEND-02 | Phase 4 | Pending |
-| BACKEND-03 | Phase 4 | Pending |
-| BACKEND-04 | Phase 4 | Pending |
-| BACKEND-05 | Phase 4 | Pending |
-| BACKEND-06 | Phase 4 | Pending |
+| BACKEND-01 | Phase 8 | Pending |
+| BACKEND-02 | Phase 8 | Pending |
+| BACKEND-03 | Phase 8 | Pending |
+| BACKEND-04 | Phase 8 | Pending |
+| BACKEND-05 | Phase 8 | Pending |
+| BACKEND-06 | Phase 8 | Pending |
 | FRONTEND-01 | Phase 6 | Complete |
 | FRONTEND-02 | Phase 6 | Complete |
 | FRONTEND-03 | Phase 6 | Complete |
-| FRONTEND-04 | Phase 6 | Complete |
-| FRONTEND-05 | Phase 6 | Complete |
+| FRONTEND-04 | Phase 10 | Pending |
+| FRONTEND-05 | Phase 10 | Pending |
 | FRONTEND-06 | Phase 6 | Complete |
 | FRONTEND-07 | Phase 6 | Complete |
 | CLEANUP-01 | Phase 7 | Complete |
-| CLEANUP-02 | Phase 7 | Complete |
+| CLEANUP-02 | Phase 11 | Pending |
 | CLEANUP-03 | Phase 7 | Complete |
 | CLEANUP-04 | Phase 7 | Complete |
-| DATA-01 | Phase 5 | Pending |
-| DATA-02 | Phase 5 | Pending |
-| DATA-03 | Phase 5 | Pending |
-| DATA-04 | Phase 5 | Pending |
+| DATA-01 | Phase 9 | Pending |
+| DATA-02 | Phase 9 | Pending |
+| DATA-03 | Phase 9 | Pending |
+| DATA-04 | Phase 9 | Pending |
