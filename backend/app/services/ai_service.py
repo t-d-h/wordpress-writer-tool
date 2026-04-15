@@ -360,13 +360,14 @@ async def generate_full_content(
     provider_id: str = None,
     model_name: str = None,
     target_word_count: int = None,
+    language: str = "vietnamese",
 ) -> tuple[str, list, int]:
     """Generate the full post content from an outline. Returns (full_html, sections_list, total_tokens)."""
     total_tokens = 0
 
     # Generate introduction
     intro_html, intro_tokens = await generate_introduction(
-        topic, outline, additional_requests, provider_id, model_name
+        topic, outline, additional_requests, provider_id, model_name, language
     )
     total_tokens += intro_tokens
 
@@ -391,6 +392,7 @@ async def generate_full_content(
             provider_id,
             model_name,
             words_per_section,
+            language,
         )
         total_tokens += sec_tokens
         sections.append(
