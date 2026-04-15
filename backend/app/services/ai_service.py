@@ -294,6 +294,7 @@ async def generate_section_content(
     provider_id: str = None,
     model_name: str = None,
     target_word_count: int = None,
+    language: str = "vietnamese",
 ) -> tuple[str, int]:
     """Generate content for a single section."""
     system_prompt = "You are an expert blog content writer. Write engaging, detailed, SEO-optimized content."
