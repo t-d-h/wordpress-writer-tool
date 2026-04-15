@@ -84,6 +84,7 @@ export default function AllPosts() {
   }
 
   const getEditUrl = (postId) => {
+    if (!selectedSite?.url) return '#'
     const baseUrl = selectedSite.url.replace(/\/$/, '')
     return `${baseUrl}/wp-admin/post.php?post=${postId}&action=edit`
   }
