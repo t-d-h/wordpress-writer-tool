@@ -227,6 +227,7 @@ async def run_content(job_data: dict):
         model_name = post.get("model_name")
         target_word_count = post.get("target_word_count")
         target_section_count = post.get("target_section_count")
+        language = post.get("language", "vietnamese")
 
         logger.info(f"[CONTENT] Topic: {topic}")
         logger.info(
@@ -236,6 +237,7 @@ async def run_content(job_data: dict):
         logger.info(f"[CONTENT] Calling AI model: {model_name}")
         logger.info(f"[CONTENT] Target word count: {target_word_count}")
         logger.info(f"[CONTENT] Target section count: {target_section_count}")
+        logger.info(f"[CONTENT] Language: {language}")
 
         if not outline:
             raise Exception("No outline found. Generate outline first.")
@@ -245,7 +247,13 @@ async def run_content(job_data: dict):
             sections,
             total_tokens,
         ) = await ai_service.generate_full_content(
-            topic, outline, additional, provider_id, model_name, target_word_count
+            topic,
+            outline,
+            additional,
+            provider_id,
+            model_name,
+            target_word_count,
+            language,
         )
 
         logger.info(f"[CONTENT] AI call completed, {total_tokens} tokens used")
