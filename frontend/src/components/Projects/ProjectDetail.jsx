@@ -4,7 +4,6 @@ import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath } from 'react-icons/hi2'
 import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts, getSitePosts } from '../../api/client'
 import TokenUsageCard from './TokenUsageCard'
-import PostCard from './PostCard'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -704,22 +703,10 @@ export default function ProjectDetail() {
                       : 'No posts match your filter, sort, or search criteria'}
                   </div>
                 </div>
-               ) : (
-                 <>
-                   <div className="stats-grid">
-                     {allPosts.map(post => (
-                       <PostCard
-                         key={post.id}
-                         post={post}
-                         onEdit={(post) => {
-                           if (post.wp_post_id && project.wp_site_url) {
-                             window.open(`${project.wp_site_url}/wp-admin/post.php?post=${post.wp_post_id}&action=edit`, '_blank')
-                           }
-                         }}
-                       />
-                     ))}
-                   </div>
-                   {loadingMore && (
+                ) : (
+                  <>
+                    {/* PostCard removed - replaced by table view in Phase 6 */}
+                    {loadingMore && (
                      <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
                        <div className="loading-spinner" style={{ margin: '0 auto 10px' }} />
                        <div>Loading more posts...</div>
