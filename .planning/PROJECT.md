@@ -81,6 +81,14 @@ None — all v1.2 requirements to be defined
 - Frontend UI verification (Phase 10 complete)
 - Cleanup verification (Phase 11 complete)
 
+**In Progress (v1.2 Vietnamese Language Support):**
+- Backend foundation for language support (Phase 12 complete)
+  - Language field added to Post Pydantic models with pattern validation
+  - Language field stored in MongoDB
+  - API validates language is "vietnamese" or "english"
+  - Backward compatibility: existing posts default to "english"
+  - Test infrastructure created with pytest and fixtures
+
 **Next Milestone Goals:**
 - Vietnamese language support for post creation
 - Vietnamese as default language option
@@ -165,4 +173,6 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
+
+**Last updated:** 2026-04-15 (Phase 12 complete)
 *Last updated: 2026-04-15 starting v1.2 milestone*
