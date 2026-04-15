@@ -69,24 +69,6 @@ export default function ProjectDetail() {
   useEffect(() => { load() }, [id])
 
   useEffect(() => {
-    let interval = null
-
-    const hasActiveJobs = Array.isArray(posts) && posts.some(p =>
-      p.jobs?.some(j => j.status === 'pending' || j.status === 'running')
-    )
-
-    if (hasActiveJobs) {
-      interval = setInterval(() => {
-        load()
-      }, 3000)
-    }
-
-    return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [posts, id])
-
-  useEffect(() => {
     if (showCreateModal) {
       // Initialize form with default values when opening modal
       if (createMode === 'single') {
@@ -173,7 +155,7 @@ export default function ProjectDetail() {
     if (activeTab === 'all-posts' && project && project.wp_site_id) {
       loadWpPosts()
     }
-  }, [activeTab, id, project, statusFilter, sortBy, searchQuery])
+  }, [activeTab, id, project?.wp_site_id, statusFilter, sortBy, searchQuery])
 
   const load = async () => {
     try {
@@ -495,9 +477,14 @@ export default function ProjectDetail() {
         <>
           <div className="toolbar">
             <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>{stats.total} post{stats.total !== 1 ? 's' : ''}</div>
-            <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-              <HiOutlinePlus /> Create Post
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-secondary" onClick={() => load()}>
+                <HiArrowPath /> Refresh
+              </button>
+              <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
+                <HiOutlinePlus /> Create Post
+              </button>
+            </div>
           </div>
 
           {posts.length === 0 ? (
@@ -617,8 +604,13 @@ export default function ProjectDetail() {
                     style={{ flex: 1, maxWidth: 300, padding: '8px 12px' }}
                   />
                 </div>
-                <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-                  {wpPosts.length} post{wpPosts.length !== 1 ? 's' : ''}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button className="btn btn-secondary" onClick={() => loadWpPosts()}>
+                    <HiArrowPath /> Refresh
+                  </button>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+                    {wpPosts.length} post{wpPosts.length !== 1 ? 's' : ''}
+                  </div>
                 </div>
               </div>
 
