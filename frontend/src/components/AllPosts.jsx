@@ -121,8 +121,10 @@ export default function AllPosts() {
             value={selectedSite?.id || ''}
             onChange={(e) => {
               const site = sites.find(s => s.id === e.target.value)
-              setSelectedSite(site)
-              setPage(1)
+              if (site) {
+                setSelectedSite(site)
+                setPage(1)
+              }
             }}
             style={{ minWidth: '200px' }}
           >
