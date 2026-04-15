@@ -7,6 +7,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-3 (shipped 2026-04-14)
 - ✅ **v1.1 All Posts Table View** — Phases 4-11 (shipped 2026-04-15)
+- ⏳ **v1.2 Vietnamese Language Support** — Phases 12-14 (in progress)
 
 ## Phases
 
@@ -33,6 +34,15 @@
 
 </details>
 
+<details>
+<summary>⏳ v1.2 Vietnamese Language Support (Phases 12-14) — IN PROGRESS</summary>
+
+- [ ] Phase 12: Backend Foundation (0/0 plans) — not started
+- [ ] Phase 13: AI Service Integration (0/0 plans) — not started
+- [ ] Phase 14: Frontend UI (0/0 plans) — not started
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -48,8 +58,12 @@
 | 9. Data Transformation Documentation | v1.1 | 1/1 | Complete | 2026-04-15 |
 | 10. Frontend UI Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
 | 11. Cleanup Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
+| 12. Backend Foundation | v1.2 | 0/0 | Pending | — |
+| 13. AI Service Integration | v1.2 | 0/0 | Pending | — |
+| 14. Frontend UI | v1.2 | 0/0 | Pending | — |
 
 ---
 
 **See `.planning/milestones/v1.0-ROADMAP.md` for full v1.0 milestone details.**
 **See `.planning/milestones/v1.1-ROADMAP.md` for full v1.1 milestone details.**
+**See `.planning/ROADMAP.md` for full v1.2 milestone details.**
