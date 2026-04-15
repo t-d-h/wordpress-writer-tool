@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { HiOutlinePencil, HiOutlineArrowPath } from 'react-icons/hi2'
+import { HiOutlinePencil, HiOutlineArrowPath, HiOutlineMagnifyingGlass } from 'react-icons/hi2'
 import { getSites, getSitePosts } from '../api/client'
 
 export default function AllPosts() {
@@ -144,6 +144,18 @@ export default function AllPosts() {
             <option value="draft">Draft</option>
             <option value="pending">Pending</option>
           </select>
+        </div>
+
+        <div className="toolbar-group">
+          <label className="form-label" style={{ marginRight: '8px' }}>Search:</label>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="Search by title..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            style={{ width: '200px', minWidth: '150px' }}
+          />
         </div>
 
         <button
