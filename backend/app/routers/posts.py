@@ -33,6 +33,7 @@ def format_post(doc: dict) -> dict:
         thumbnail_model_name=doc.get("thumbnail_model_name"),
         target_word_count=doc.get("target_word_count"),
         target_section_count=doc.get("target_section_count"),
+        language=doc.get("language", "english"),
         title=doc.get("title"),
         meta_description=doc.get("meta_description"),
         outline=doc.get("outline"),
