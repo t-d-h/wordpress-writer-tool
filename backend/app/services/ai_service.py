@@ -200,9 +200,18 @@ async def research_topic(
     language: str = "vietnamese",
 ) -> tuple[dict, int]:
     """Research a topic: audience, keywords, key points to mention."""
-    system_prompt = (
-        "You are an expert SEO content researcher. Respond only in valid JSON."
-    )
+    # Language-specific system prompt
+    if language == "vietnamese":
+        system_prompt = (
+            "You are an expert SEO content researcher for Vietnamese content. "
+            "Write all content in Vietnamese. Use formal, professional Vietnamese "
+            "with appropriate cultural context. Respond only in valid JSON."
+        )
+    else:  # english
+        system_prompt = (
+            "You are an expert SEO content researcher. "
+            "Write all content in English. Respond only in valid JSON."
+        )
     prompt = f"""Research the following topic for a WordPress blog post.
 
 Topic: {topic}
@@ -241,9 +250,18 @@ async def generate_outline(
     language: str = "vietnamese",
 ) -> tuple[dict, int]:
     """Generate a post outline: SEO title, meta description, intro, sections."""
-    system_prompt = (
-        "You are an expert SEO content strategist. Respond only in valid JSON."
-    )
+    # Language-specific system prompt
+    if language == "vietnamese":
+        system_prompt = (
+            "You are an expert SEO content strategist for Vietnamese content. "
+            "Write all content in Vietnamese. Use formal, professional Vietnamese "
+            "with appropriate cultural context. Respond only in valid JSON."
+        )
+    else:  # english
+        system_prompt = (
+            "You are an expert SEO content strategist. "
+            "Write all content in English. Respond only in valid JSON."
+        )
     section_count_hint = (
         f"Create exactly {target_section_count} sections"
         if target_section_count
@@ -297,7 +315,18 @@ async def generate_section_content(
     language: str = "vietnamese",
 ) -> tuple[str, int]:
     """Generate content for a single section."""
-    system_prompt = "You are an expert blog content writer. Write engaging, detailed, SEO-optimized content."
+    # Language-specific system prompt
+    if language == "vietnamese":
+        system_prompt = (
+            "You are an expert blog content writer for Vietnamese content. "
+            "Write engaging, detailed, SEO-optimized content in Vietnamese. "
+            "Use formal, professional Vietnamese with appropriate cultural context."
+        )
+    else:  # english
+        system_prompt = (
+            "You are an expert blog content writer. "
+            "Write engaging, detailed, SEO-optimized content in English."
+        )
     word_count_hint = (
         f"Write approximately {target_word_count} words"
         if target_word_count
@@ -331,9 +360,18 @@ async def generate_introduction(
 ) -> tuple[str, int]:
     """Generate the introduction based on hook/problem/promise."""
     intro = outline.get("introduction", {})
-    system_prompt = (
-        "You are an expert blog content writer. Write engaging introductions."
-    )
+    # Language-specific system prompt
+    if language == "vietnamese":
+        system_prompt = (
+            "You are an expert blog content writer for Vietnamese content. "
+            "Write engaging introductions in Vietnamese. "
+            "Use formal, professional Vietnamese with appropriate cultural context."
+        )
+    else:  # english
+        system_prompt = (
+            "You are an expert blog content writer. "
+            "Write engaging introductions in English."
+        )
     prompt = f"""Write the introduction for a blog post.
 
 Topic: {topic}
