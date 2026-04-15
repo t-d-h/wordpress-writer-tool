@@ -158,6 +158,22 @@ export default function AllPosts() {
           />
         </div>
 
+        <div className="toolbar-group">
+          <label className="form-label" style={{ marginRight: '8px' }}>Sort:</label>
+          <select
+            className="form-select"
+            value={`${sortBy}-${sortOrder}`}
+            onChange={handleSortChange}
+            style={{ width: '180px', minWidth: '140px' }}
+          >
+            <option value="date-desc">Date (Newest)</option>
+            <option value="date-asc">Date (Oldest)</option>
+            <option value="title-asc">Title (A-Z)</option>
+            <option value="title-desc">Title (Z-A)</option>
+            <option value="status-asc">Status</option>
+          </select>
+        </div>
+
         <button
           className="btn btn-secondary"
           onClick={loadPosts}
