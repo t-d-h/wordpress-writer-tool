@@ -27,10 +27,10 @@
 
 ### Cleanup
 
-- [ ] **CLEANUP-01**: PostCard component is removed from All Posts tab
-- [ ] **CLEANUP-02**: Origin badges are removed from All Posts tab
-- [ ] **CLEANUP-03**: Infinite scroll logic and event listeners are removed
-- [ ] **CLEANUP-04**: Unused state variables are removed
+- [x] **CLEANUP-01**: PostCard component is removed from All Posts tab
+- [x] **CLEANUP-02**: Origin badges are removed from All Posts tab
+- [x] **CLEANUP-03**: Infinite scroll logic and event listeners are removed
+- [x] **CLEANUP-04**: Unused state variables are removed
 
 ### Data Transformation
 
@@ -68,10 +68,10 @@ None deferred for this milestone.
 | FRONTEND-05 | Phase 6 | Complete |
 | FRONTEND-06 | Phase 6 | Complete |
 | FRONTEND-07 | Phase 6 | Complete |
-| CLEANUP-01 | Phase 7 | Pending |
-| CLEANUP-02 | Phase 7 | Pending |
-| CLEANUP-03 | Phase 7 | Pending |
-| CLEANUP-04 | Phase 7 | Pending |
+| CLEANUP-01 | Phase 7 | Complete |
+| CLEANUP-02 | Phase 7 | Complete |
+| CLEANUP-03 | Phase 7 | Complete |
+| CLEANUP-04 | Phase 7 | Complete |
 | DATA-01 | Phase 5 | Pending |
 | DATA-02 | Phase 5 | Pending |
 | DATA-03 | Phase 5 | Pending |
