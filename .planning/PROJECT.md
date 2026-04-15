@@ -48,22 +48,17 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ### Active
 
-None — all v1.1 requirements shipped
+None — all v1.2 requirements to be defined
 
-## Current Milestone: v1.1 All Posts Table View
+## Current Milestone: v1.2 Vietnamese Language Support
 
-**Goal:** Replace the "All Posts" tab in ProjectDetail with a table view similar to /all-posts, keeping search/sort/filter functionality while using manual pagination.
+**Goal:** Add Vietnamese language option for post creation with Vietnamese as the default language.
 
 **Target features:**
-- Replace PostCard grid layout with table layout
-- Use /all-posts columns: Title, URL, Categories, Tags, Date, Status, Actions
-- Keep search by title functionality
-- Keep sort by date/title/status functionality
-- Keep status filter functionality
-- Switch from infinite scroll to manual pagination (100 posts per page)
-- Scope to project's WordPress site only (no site selection dropdown)
-- Discard PostCard component usage in this tab
-- Discard origin badges (not needed in table view)
+- Add language selection checkbox (Vietnamese/English) in Create post form after the title field
+- Vietnamese is the default language for all new posts globally
+- Language selection is passed through the content generation pipeline
+- AI generates content in the selected language
 
 ## Current State
 
@@ -87,9 +82,9 @@ None — all v1.1 requirements shipped
 - Cleanup verification (Phase 11 complete)
 
 **Next Milestone Goals:**
-- Security improvements (credential encryption, input validation)
-- Performance optimizations (caching, database indexes)
-- Additional features (bulk operations, advanced filtering)
+- Vietnamese language support for post creation
+- Vietnamese as default language option
+- Language selection in Create post form
 
 **Technical Debt:**
 - 10 code review findings documented (2 critical, 5 warnings, 3 info)
@@ -170,4 +165,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-15 after v1.1 milestone complete*
+*Last updated: 2026-04-15 starting v1.2 milestone*
