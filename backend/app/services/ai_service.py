@@ -238,6 +238,7 @@ async def generate_outline(
     provider_id: str = None,
     model_name: str = None,
     target_section_count: int = None,
+    language: str = "vietnamese",
 ) -> tuple[dict, int]:
     """Generate a post outline: SEO title, meta description, intro, sections."""
     system_prompt = (
