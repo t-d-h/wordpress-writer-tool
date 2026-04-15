@@ -217,17 +217,19 @@ class PostCreate(BaseModel):
 
 **If this table is empty:** All claims in this research were verified or cited — no user confirmation needed.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Case sensitivity for language values**
+1. **Case sensitivity for language values** (RESOLVED)
    - What we know: Regex pattern `^(vietnamese|english)$` is case-sensitive
    - What's unclear: Should we accept "Vietnamese" or "VIETNAMESE"?
-   - Recommendation: Keep case-sensitive for now (matches existing `provider_type` pattern), document clearly in API spec
+   - **Decision:** Keep case-sensitive for now (matches existing `provider_type` pattern), document clearly in API spec
+   - **Rationale:** Consistent with existing codebase patterns, simpler validation, no need for case conversion
 
-2. **Language field in PostUpdate model**
+2. **Language field in PostUpdate model** (RESOLVED)
    - What we know: LANG-08 mentions validation for PUT /posts/{id} endpoint
    - What's unclear: Should `PostUpdate` include optional `language` field for updates?
-   - Recommendation: Add `language: Optional[str] = Field(None, pattern="^(vietnamese|english)$")` to `PostUpdate` to allow language changes
+   - **Decision:** Add `language: Optional[str] = Field(None, pattern="^(vietnamese|english)$")` to `PostUpdate` to allow language changes
+   - **Rationale:** Users may want to change language after creation, optional field maintains backward compatibility
 
 ## Environment Availability
 
