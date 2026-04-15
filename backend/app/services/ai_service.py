@@ -327,6 +327,7 @@ async def generate_introduction(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    language: str = "vietnamese",
 ) -> tuple[str, int]:
     """Generate the introduction based on hook/problem/promise."""
     intro = outline.get("introduction", {})
