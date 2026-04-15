@@ -95,12 +95,12 @@ export default function AllPosts() {
   }
 
   const getCategoryNames = (categories) => {
-    if (!categories || categories.length === 0) return '-'
+    if (!categories || !Array.isArray(categories) || categories.length === 0) return '-'
     return categories.map(c => c.name).join(', ')
   }
 
   const getTagNames = (tags) => {
-    if (!tags || tags.length === 0) return '-'
+    if (!tags || !Array.isArray(tags) || tags.length === 0) return '-'
     return tags.map(t => t.name).join(', ')
   }
 
