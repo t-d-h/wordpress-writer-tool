@@ -509,6 +509,7 @@ export default function ProjectDetail() {
                 <thead>
                   <tr>
                     <th>Title / Topic</th>
+                    <th>Language</th>
                     <th>Research</th>
                     <th>Outline</th>
                     <th>Content</th>
