@@ -73,6 +73,7 @@ export default function ProjectDetail() {
   useEffect(() => {
     if (showCreateModal) {
       // Initialize form with default values when opening modal
+      const savedLanguage = localStorage.getItem('languagePreference') || 'vietnamese'
       if (createMode === 'single') {
         setSingleForm({
           topic: '',
@@ -86,7 +87,7 @@ export default function ProjectDetail() {
           target_word_count: 500,
           target_section_count: 4,
           thumbnail_file: null,
-          language: 'vietnamese'
+          language: savedLanguage
         })
       } else {
         setBulkForm({
@@ -101,7 +102,7 @@ export default function ProjectDetail() {
           target_word_count: 500,
           target_section_count: 4,
           thumbnail_file: null,
-          language: 'vietnamese'
+          language: savedLanguage
         })
       }
 
@@ -156,6 +157,19 @@ export default function ProjectDetail() {
       })
     }
   }, [showCreateModal, createMode])
+
+  // Persist language preference to localStorage
+  useEffect(() => {
+    if (singleForm.language) {
+      localStorage.setItem('languagePreference', singleForm.language)
+    }
+  }, [singleForm.language])
+
+  useEffect(() => {
+    if (bulkForm.language) {
+      localStorage.setItem('languagePreference', bulkForm.language)
+    }
+  }, [bulkForm.language])
 
   useEffect(() => {
     if (activeTab === 'all-posts' && project && project.wp_site_id) {
