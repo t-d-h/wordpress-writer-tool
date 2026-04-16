@@ -51,7 +51,7 @@
     - [x] 14-03-PLAN.md — Add language badge to post detail view
     - [x] 14-04-PLAN.md — Add localStorage persistence for language selection (gap closure)
     - [x] 14-05-PLAN.md — Set up frontend testing infrastructure (gap closure)
-    - [ ] 14-06-PLAN.md — Add language parameter to worker AI service (gap closure)
+    - [x] 14-06-PLAN.md — Add language parameter to worker AI service (gap closure)
 
 </details>
 
