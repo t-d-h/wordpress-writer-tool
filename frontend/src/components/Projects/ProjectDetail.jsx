@@ -35,7 +35,8 @@ export default function ProjectDetail() {
     thumbnail_model_name: '',
     target_word_count: 500,
     target_section_count: 4,
-    thumbnail_file: null
+    thumbnail_file: null,
+    language: 'vietnamese'
   })
   const [bulkForm, setBulkForm] = useState({
     topics: '',
@@ -48,7 +49,8 @@ export default function ProjectDetail() {
     thumbnail_model_name: '',
     target_word_count: 500,
     target_section_count: 4,
-    thumbnail_file: null
+    thumbnail_file: null,
+    language: 'vietnamese'
   })
   const [providers, setProviders] = useState([])
   const [contentModels, setContentModels] = useState([])
@@ -83,7 +85,8 @@ export default function ProjectDetail() {
           thumbnail_model_name: defaultModels.image_model_name || '',
           target_word_count: 500,
           target_section_count: 4,
-          thumbnail_file: null
+          thumbnail_file: null,
+          language: 'vietnamese'
         })
       } else {
         setBulkForm({
@@ -97,7 +100,8 @@ export default function ProjectDetail() {
           thumbnail_model_name: defaultModels.image_model_name || '',
           target_word_count: 500,
           target_section_count: 4,
-          thumbnail_file: null
+          thumbnail_file: null,
+          language: 'vietnamese'
         })
       }
 
@@ -133,7 +137,8 @@ export default function ProjectDetail() {
         thumbnail_model_name: '',
         target_word_count: 500,
         target_section_count: 4,
-        thumbnail_file: null
+        thumbnail_file: null,
+        language: 'vietnamese'
       })
       setBulkForm({
         topics: '',
@@ -146,7 +151,8 @@ export default function ProjectDetail() {
         thumbnail_model_name: '',
         target_word_count: 500,
         target_section_count: 4,
-        thumbnail_file: null
+        thumbnail_file: null,
+        language: 'vietnamese'
       })
     }
   }, [showCreateModal, createMode])
@@ -243,35 +249,36 @@ export default function ProjectDetail() {
   const handleCreateSingle = async (e) => {
     e.preventDefault()
 
-    if (singleForm.thumbnail_source === 'ai' && singleForm.thumbnail_provider_id) {
-      const provider = providers.find(p => p.id === singleForm.thumbnail_provider_id)
-      if (provider && provider.provider_type === 'openai_compatible' && !singleForm.thumbnail_model_name) {
-        alert('Please select a model for thumbnail generation')
-        return
+      if (singleForm.thumbnail_source === 'ai' && singleForm.thumbnail_provider_id) {
+        const provider = providers.find(p => p.id === singleForm.thumbnail_provider_id)
+        if (provider && provider.provider_type === 'openai_compatible' && !singleForm.thumbnail_model_name) {
+          alert('Please select a model for thumbnail generation')
+          return
+        }
       }
-    }
 
-    if (singleForm.ai_provider_id) {
-      const provider = providers.find(p => p.id === singleForm.ai_provider_id)
-      if (provider && provider.provider_type === 'openai_compatible' && !singleForm.model_name) {
-        alert('Please select a model for content generation')
-        return
+      if (singleForm.ai_provider_id) {
+        const provider = providers.find(p => p.id === singleForm.ai_provider_id)
+        if (provider && provider.provider_type === 'openai_compatible' && !singleForm.model_name) {
+          alert('Please select a model for content generation')
+          return
+        }
       }
-    }
 
-    try {
-      const formData = new FormData()
-      formData.append('project_id', id)
-      formData.append('topic', singleForm.topic)
-      formData.append('additional_requests', singleForm.additional_requests)
-      if (singleForm.ai_provider_id) formData.append('ai_provider_id', singleForm.ai_provider_id)
-      if (singleForm.model_name) formData.append('model_name', singleForm.model_name)
-      formData.append('auto_publish', singleForm.auto_publish)
-      formData.append('thumbnail_source', singleForm.thumbnail_source)
-      if (singleForm.thumbnail_provider_id) formData.append('thumbnail_provider_id', singleForm.thumbnail_provider_id)
-      if (singleForm.thumbnail_model_name) formData.append('thumbnail_model_name', singleForm.thumbnail_model_name)
-      if (singleForm.target_word_count) formData.append('target_word_count', singleForm.target_word_count)
-      if (singleForm.target_section_count) formData.append('target_section_count', singleForm.target_section_count)
+      try {
+        const formData = new FormData()
+        formData.append('project_id', id)
+        formData.append('topic', singleForm.topic)
+        formData.append('additional_requests', singleForm.additional_requests)
+        if (singleForm.ai_provider_id) formData.append('ai_provider_id', singleForm.ai_provider_id)
+        if (singleForm.model_name) formData.append('model_name', singleForm.model_name)
+        formData.append('auto_publish', singleForm.auto_publish)
+        formData.append('thumbnail_source', singleForm.thumbnail_source)
+        if (singleForm.thumbnail_provider_id) formData.append('thumbnail_provider_id', singleForm.thumbnail_provider_id)
+        if (singleForm.thumbnail_model_name) formData.append('thumbnail_model_name', singleForm.thumbnail_model_name)
+        if (singleForm.target_word_count) formData.append('target_word_count', singleForm.target_word_count)
+        if (singleForm.target_section_count) formData.append('target_section_count', singleForm.target_section_count)
+        formData.append('language', singleForm.language)
 
       const response = await createPost(Object.fromEntries(formData))
 
@@ -287,7 +294,8 @@ export default function ProjectDetail() {
         thumbnail_model_name: '',
         target_word_count: 500,
         target_section_count: 4,
-        thumbnail_file: null
+        thumbnail_file: null,
+        language: 'vietnamese'
       })
       load()
       if (response?.data?.id) {
@@ -332,6 +340,7 @@ export default function ProjectDetail() {
         thumbnail_model_name: bulkForm.thumbnail_model_name,
         target_word_count: bulkForm.target_word_count,
         target_section_count: bulkForm.target_section_count,
+        language: bulkForm.language,
       })
       setShowCreateModal(false)
       setBulkForm({
@@ -345,7 +354,8 @@ export default function ProjectDetail() {
         thumbnail_model_name: '',
         target_word_count: 500,
         target_section_count: 4,
-        thumbnail_file: null
+        thumbnail_file: null,
+        language: 'vietnamese'
       })
       load()
     } catch (e) {
@@ -509,47 +519,48 @@ export default function ProjectDetail() {
                   </tr>
                 </thead>
                  <tbody>
-                    {Array.isArray(posts) && posts.map(p => (
-                      <tr key={p.id}>
-                       <td>
-                         <button
-                           className="link-button"
-                           onClick={() => navigate(`/posts/${p.id}`)}
-                           style={{ fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, textAlign: 'left', fontSize: 'inherit' }}
-                         >
-                           {p.title || p.topic}
-                         </button>
-                       </td>
-                       <td><JobStatusBadge jobs={p.jobs} jobType="research" /></td>
-                       <td><JobStatusBadge jobs={p.jobs} jobType="outline" /></td>
-                       <td><JobStatusBadge jobs={p.jobs} jobType="content" /></td>
-                       <td><JobStatusBadge jobs={p.jobs} jobType="thumbnail" /></td>
-                       <td><BoolBadge value={!!p.wp_post_id} /></td>
-                       <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
-                       <td>
-                         <div className="action-buttons">
-                           <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)}>View</button>
-                           {p.status === 'published' ? (
-                             <button className="action-btn" onClick={() => handleAction('unpublish', p.id)}>Unpublish</button>
-                           ) : (
-                             <button className="action-btn" onClick={() => handleAction('publish', p.id)}>Publish</button>
-                           )}
-                           {p.wp_post_id && project.wp_site_url && (
-                             <a
-                               className="action-btn"
-                               href={`${project.wp_site_url}/?p=${p.wp_post_id}`}
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               style={{ textDecoration: 'none', display: 'inline-block' }}
-                             >
-                               View on WordPress
-                             </a>
-                           )}
-                           <button className="action-btn danger" onClick={() => handleAction('delete', p.id)}>Delete</button>
-                         </div>
-                       </td>
-                     </tr>
-                   ))}
+                     {Array.isArray(posts) && posts.map(p => (
+                       <tr key={p.id}>
+                        <td>
+                          <button
+                            className="link-button"
+                            onClick={() => navigate(`/posts/${p.id}`)}
+                            style={{ fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, textAlign: 'left', fontSize: 'inherit' }}
+                          >
+                            {p.title || p.topic}
+                          </button>
+                        </td>
+                        <td><LanguageBadge language={p.language} /></td>
+                        <td><JobStatusBadge jobs={p.jobs} jobType="research" /></td>
+                        <td><JobStatusBadge jobs={p.jobs} jobType="outline" /></td>
+                        <td><JobStatusBadge jobs={p.jobs} jobType="content" /></td>
+                        <td><JobStatusBadge jobs={p.jobs} jobType="thumbnail" /></td>
+                        <td><BoolBadge value={!!p.wp_post_id} /></td>
+                        <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
+                        <td>
+                          <div className="action-buttons">
+                            <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)}>View</button>
+                            {p.status === 'published' ? (
+                              <button className="action-btn" onClick={() => handleAction('unpublish', p.id)}>Unpublish</button>
+                            ) : (
+                              <button className="action-btn" onClick={() => handleAction('publish', p.id)}>Publish</button>
+                            )}
+                            {p.wp_post_id && project.wp_site_url && (
+                              <a
+                                className="action-btn"
+                                href={`${project.wp_site_url}/?p=${p.wp_post_id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ textDecoration: 'none', display: 'inline-block' }}
+                              >
+                                View on WordPress
+                              </a>
+                            )}
+                            <button className="action-btn danger" onClick={() => handleAction('delete', p.id)}>Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -803,6 +814,33 @@ export default function ProjectDetail() {
                   <input className="form-input" placeholder="e.g. How to Improve Your Website SEO" value={singleForm.topic} onChange={e => setSingleForm({ ...singleForm, topic: e.target.value })} required />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Language</label>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="language"
+                        value="vietnamese"
+                        checked={singleForm.language === 'vietnamese'}
+                        onChange={e => setSingleForm({ ...singleForm, language: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Tiếng Việt</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="language"
+                        value="english"
+                        checked={singleForm.language === 'english'}
+                        onChange={e => setSingleForm({ ...singleForm, language: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>English</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="form-group">
                   <label className="form-label">Additional Requests (Optional)</label>
                   <textarea className="form-textarea" placeholder="Any specific requirements..." value={singleForm.additional_requests} onChange={e => setSingleForm({ ...singleForm, additional_requests: e.target.value })} />
                 </div>
@@ -906,6 +944,33 @@ export default function ProjectDetail() {
                   <textarea className="form-textarea" style={{ minHeight: 150 }} placeholder={"Topic 1\nTopic 2\nTopic 3"} value={bulkForm.topics} onChange={e => setBulkForm({ ...bulkForm, topics: e.target.value })} required />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Language</label>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="language"
+                        value="vietnamese"
+                        checked={bulkForm.language === 'vietnamese'}
+                        onChange={e => setBulkForm({ ...bulkForm, language: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Tiếng Việt</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="language"
+                        value="english"
+                        checked={bulkForm.language === 'english'}
+                        onChange={e => setBulkForm({ ...bulkForm, language: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>English</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="form-group">
                   <label className="form-label">Additional Requests (Optional)</label>
                   <textarea className="form-textarea" placeholder="Applied to all posts..." value={bulkForm.additional_requests} onChange={e => setBulkForm({ ...bulkForm, additional_requests: e.target.value })} />
                 </div>
@@ -957,4 +1022,22 @@ BoolBadge.propTypes = {
 JobStatusBadge.propTypes = {
   jobs: PropTypes.array.isRequired,
   jobType: PropTypes.string.isRequired
+}
+
+function LanguageBadge({ language }) {
+  const langConfig = {
+    vietnamese: { label: 'Tiếng Việt', color: 'var(--success)' },
+    english: { label: 'English', color: 'var(--primary)' },
+  }
+  const config = langConfig[language] || langConfig.english
+
+  return (
+    <span className="status-badge" style={{ background: `${config.color}20`, color: config.color, border: `1px solid ${config.color}40` }}>
+      {config.label}
+    </span>
+  )
+}
+
+LanguageBadge.propTypes = {
+  language: PropTypes.string
 }
