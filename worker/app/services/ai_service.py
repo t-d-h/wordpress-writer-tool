@@ -197,11 +197,21 @@ async def research_topic(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    language: str = "vietnamese",
 ) -> tuple[dict, int]:
     """Research a topic: audience, keywords, key points to mention."""
-    system_prompt = (
-        "You are an expert SEO content researcher. Respond only in valid JSON."
-    )
+    # Language-specific system prompt
+    if language == "vietnamese":
+        system_prompt = (
+            "You are an expert SEO content researcher for Vietnamese content. "
+            "Write all content in Vietnamese. Use formal, professional Vietnamese "
+            "with appropriate cultural context. Respond only in valid JSON."
+        )
+    else:  # english
+        system_prompt = (
+            "You are an expert SEO content researcher. "
+            "Write all content in English. Respond only in valid JSON."
+        )
     prompt = f"""Research the following topic for a WordPress blog post.
 
 Topic: {topic}
@@ -236,10 +246,26 @@ async def generate_outline(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
+    target_section_count: int = None,
+    language: str = "vietnamese",
 ) -> tuple[dict, int]:
     """Generate a post outline: SEO title, meta description, intro, sections."""
-    system_prompt = (
-        "You are an expert SEO content strategist. Respond only in valid JSON."
+    # Language-specific system prompt
+    if language == "vietnamese":
+        system_prompt = (
+            "You are an expert SEO content strategist for Vietnamese content. "
+            "Write all content in Vietnamese. Use formal, professional Vietnamese "
+            "with appropriate cultural context. Respond only in valid JSON."
+        )
+    else:  # english
+        system_prompt = (
+            "You are an expert SEO content strategist. "
+            "Write all content in English. Respond only in valid JSON."
+        )
+    section_count_hint = (
+        f"Create exactly {target_section_count} sections"
+        if target_section_count
+        else "Create 5-8 sections"
     )
     prompt = f"""Create a detailed blog post outline based on:
 
@@ -261,7 +287,7 @@ Create an outline as JSON:
             "title": "Section 1 Title",
             "key_points": ["point to cover", "another point"]
         }},
-        ...more sections (aim for 5-8 sections for a comprehensive post)
+        ...more sections ({section_count_hint} for a comprehensive post)
     ]
 }}"""
 
@@ -285,10 +311,27 @@ async def generate_section_content(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
-    target_words: int = 500,
+    target_word_count: int = None,
+    language: str = "vietnamese",
 ) -> tuple[str, int]:
     """Generate content for a single section."""
-    system_prompt = "You are an expert blog content writer. Write engaging, detailed, SEO-optimized content."
+    # Language-specific system prompt
+    if language == "vietnamese":
+        system_prompt = (
+            "You are an expert blog content writer for Vietnamese content. "
+            "Write engaging, detailed, SEO-optimized content in Vietnamese. "
+            "Use formal, professional Vietnamese with appropriate cultural context."
+        )
+    else:  # english
+        system_prompt = (
+            "You are an expert blog content writer. "
+            "Write engaging, detailed, SEO-optimized content in English."
+        )
+    word_count_hint = (
+        f"Write approximately {target_word_count} words"
+        if target_word_count
+        else "Write 400-800 words"
+    )
     prompt = f"""Write the content for a blog post section.
 
 Blog post topic: {topic}
@@ -297,7 +340,7 @@ Section title: {section_title}
 Key points to cover: {json.dumps(key_points)}
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
-Write approximately {target_words} words of detailed, engaging content for this section.
+{word_count_hint} of detailed, engaging content for this section.
 Use subheadings (H3) where appropriate.
 Include relevant examples and practical advice.
 Do NOT include the section title itself — just the body content.
@@ -313,13 +356,22 @@ async def generate_introduction(
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
-    target_words: int = 200,
+    language: str = "vietnamese",
 ) -> tuple[str, int]:
     """Generate the introduction based on hook/problem/promise."""
     intro = outline.get("introduction", {})
-    system_prompt = (
-        "You are an expert blog content writer. Write engaging introductions."
-    )
+    # Language-specific system prompt
+    if language == "vietnamese":
+        system_prompt = (
+            "You are an expert blog content writer for Vietnamese content. "
+            "Write engaging introductions in Vietnamese. "
+            "Use formal, professional Vietnamese with appropriate cultural context."
+        )
+    else:  # english
+        system_prompt = (
+            "You are an expert blog content writer. "
+            "Write engaging introductions in English."
+        )
     prompt = f"""Write the introduction for a blog post.
 
 Topic: {topic}
@@ -329,7 +381,7 @@ Problem to present: {intro.get("problem", "")}
 Promise to make: {intro.get("promise", "")}
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
-Write a compelling {target_words} word introduction that:
+Write a compelling 150-300 word introduction that:
 1. Opens with an engaging hook
 2. Presents the problem
 3. Promises what the reader will learn
@@ -346,31 +398,25 @@ async def generate_full_content(
     provider_id: str = None,
     model_name: str = None,
     target_word_count: int = None,
+    language: str = "vietnamese",
 ) -> tuple[str, list, int]:
     """Generate the full post content from an outline. Returns (full_html, sections_list, total_tokens)."""
     total_tokens = 0
 
-    outline_sections = outline.get("sections", [])
-    num_sections = len(outline_sections)
-    
-    intro_words = 200
-    section_words = 500
-    
-    if target_word_count:
-        if num_sections > 0:
-            intro_words = max(100, int(target_word_count * 0.1))
-            section_words = max(100, int((target_word_count * 0.9) / num_sections))
-        else:
-            intro_words = target_word_count
-
     # Generate introduction
     intro_html, intro_tokens = await generate_introduction(
-        topic, outline, additional_requests, provider_id, model_name, intro_words
+        topic, outline, additional_requests, provider_id, model_name, language
     )
     total_tokens += intro_tokens
 
     sections = []
     full_html = intro_html
+
+    outline_sections = outline.get("sections", [])
+    # Calculate target words per section if target_word_count is provided
+    words_per_section = None
+    if target_word_count and len(outline_sections) > 0:
+        words_per_section = target_word_count // len(outline_sections)
 
     for sec in outline_sections:
         sec_title = sec.get("title", "")
@@ -383,7 +429,8 @@ async def generate_full_content(
             additional_requests,
             provider_id,
             model_name,
-            section_words,
+            words_per_section,
+            language,
         )
         total_tokens += sec_tokens
         sections.append(
