@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { HiOutlineArrowLeft, HiOutlineArrowPath, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles } from 'react-icons/hi2'
+import PropTypes from 'prop-types'
+import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles } from 'react-icons/hi2'
 import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP } from '../../api/client'
 
 export default function PostView() {
@@ -84,7 +85,6 @@ export default function PostView() {
   }
 
   const handleStageClick = (stepKey, isDone) => {
-    // Allow clicking on thumbnail and publish stages even if not done (to show options/guidance)
     if (!isDone && stepKey !== 'thumbnail' && stepKey !== 'publish') return
     setExpandedStage(expandedStage === stepKey ? null : stepKey)
   }
@@ -138,7 +138,7 @@ export default function PostView() {
     }
     try {
       setUpdatingThumbnailToWP(true)
-      const res = await updateThumbnailToWP(id)
+      await updateThumbnailToWP(id)
       alert('Thumbnail uploaded to WordPress successfully!')
       load()
     } catch (e) {
@@ -183,6 +183,7 @@ export default function PostView() {
       <div className="page-header">
         <h1 className="page-title">{post.title || post.topic}</h1>
         <div className="page-header-actions">
+          <LanguageBadge language={post.language} />
           <span className={`status-badge status-${post.status}`}>{post.status.replace('_', ' ')}</span>
           {post.research_done && !post.outline && (
             <button className="btn btn-secondary btn-sm" onClick={() => handleAction('outline')} disabled={getStepStatus('outline') === 'running'}><HiOutlineRocketLaunch /> Generate Outline</button>
@@ -499,4 +500,22 @@ export default function PostView() {
       )}
     </div>
   )
+}
+
+function LanguageBadge({ language }) {
+  const langConfig = {
+    vietnamese: { label: 'Tiếng Việt', color: 'var(--success)' },
+    english: { label: 'English', color: 'var(--primary)' },
+  }
+  const config = langConfig[language] || langConfig.english
+
+  return (
+    <span className="status-badge" style={{ background: `${config.color}20`, color: config.color, border: `1px solid ${config.color}40` }}>
+      {config.label}
+    </span>
+  )
+}
+
+LanguageBadge.propTypes = {
+  language: PropTypes.string
 }
