@@ -1,0 +1,516 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: W
+      - generic [ref=e7]:
+        - generic [ref=e8]: WP Writer
+        - generic [ref=e9]: AI-Powered
+      - button "Switch to dark mode" [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+    - navigation [ref=e13]:
+      - button "Create Project" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+        - text: Create Project
+      - generic [ref=e17]: Menu
+      - link "All Posts" [ref=e19] [cursor=pointer]:
+        - /url: /all-posts
+        - img [ref=e20]
+        - generic [ref=e22]: All Posts
+      - generic [ref=e24] [cursor=pointer]:
+        - img [ref=e25]
+        - generic [ref=e27]: Projects
+        - img [ref=e28]
+      - generic [ref=e31] [cursor=pointer]:
+        - img [ref=e32]
+        - generic [ref=e35]: Settings
+        - img [ref=e36]
+  - main [ref=e38]:
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - heading "test" [level=1] [ref=e67]
+        - paragraph [ref=e68]: fasdf · test
+      - generic [ref=e69]:
+        - button "General" [ref=e70] [cursor=pointer]
+        - button "Content" [ref=e71] [cursor=pointer]
+        - button "All Posts" [ref=e72] [cursor=pointer]
+      - generic [ref=e73]:
+        - generic [ref=e74]: 22 posts
+        - button "Create Post" [ref=e75] [cursor=pointer]:
+          - img [ref=e76]
+          - text: Create Post
+      - table [ref=e79]:
+        - rowgroup [ref=e80]:
+          - row "Title / Topic Research Outline Content Thumb Uploaded Status Actions" [ref=e81]:
+            - columnheader "Title / Topic" [ref=e82]
+            - columnheader "Research" [ref=e83]
+            - columnheader "Outline" [ref=e84]
+            - columnheader "Content" [ref=e85]
+            - columnheader "Thumb" [ref=e86]
+            - columnheader "Uploaded" [ref=e87]
+            - columnheader "Status" [ref=e88]
+            - columnheader "Actions" [ref=e89]
+        - rowgroup [ref=e90]:
+          - row "Enhancing Web SEO Effectiveness draft View Publish Delete" [ref=e91]:
+            - cell "Enhancing Web SEO Effectiveness" [ref=e92]:
+              - button "Enhancing Web SEO Effectiveness" [ref=e93] [cursor=pointer]
+            - cell [ref=e94]:
+              - img [ref=e96]
+            - cell [ref=e98]:
+              - img [ref=e100]
+            - cell [ref=e102]:
+              - img [ref=e104]
+            - cell [ref=e106]:
+              - img [ref=e108]
+            - cell [ref=e110]:
+              - img [ref=e112]
+            - cell "draft" [ref=e114]:
+              - generic [ref=e115]: draft
+            - cell "View Publish Delete" [ref=e116]:
+              - generic [ref=e117]:
+                - button "View" [ref=e118] [cursor=pointer]
+                - button "Publish" [ref=e119] [cursor=pointer]
+                - button "Delete" [ref=e120] [cursor=pointer]
+          - 'row "How to Shutdown Your Computer Safely: A Comprehensive Guide published View Unpublish View on WordPress Delete" [ref=e121]':
+            - 'cell "How to Shutdown Your Computer Safely: A Comprehensive Guide" [ref=e122]':
+              - 'button "How to Shutdown Your Computer Safely: A Comprehensive Guide" [ref=e123] [cursor=pointer]'
+            - cell [ref=e124]:
+              - img [ref=e126]
+            - cell [ref=e128]:
+              - img [ref=e130]
+            - cell [ref=e132]:
+              - img [ref=e134]
+            - cell [ref=e136]:
+              - img [ref=e138]
+            - cell [ref=e140]:
+              - img [ref=e142]
+            - cell "published" [ref=e144]:
+              - generic [ref=e145]: published
+            - cell "View Unpublish View on WordPress Delete" [ref=e146]:
+              - generic [ref=e147]:
+                - button "View" [ref=e148] [cursor=pointer]
+                - button "Unpublish" [ref=e149] [cursor=pointer]
+                - link "View on WordPress" [ref=e150] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1195
+                - button "Delete" [ref=e151] [cursor=pointer]
+          - row "Mastering Pizza Powder Selection for Perfect Results published View Unpublish View on WordPress Delete" [ref=e152]:
+            - cell "Mastering Pizza Powder Selection for Perfect Results" [ref=e153]:
+              - button "Mastering Pizza Powder Selection for Perfect Results" [ref=e154] [cursor=pointer]
+            - cell [ref=e155]:
+              - img [ref=e157]
+            - cell [ref=e159]:
+              - img [ref=e161]
+            - cell [ref=e163]:
+              - img [ref=e165]
+            - cell [ref=e167]:
+              - img [ref=e169]
+            - cell [ref=e171]:
+              - img [ref=e173]
+            - cell "published" [ref=e175]:
+              - generic [ref=e176]: published
+            - cell "View Unpublish View on WordPress Delete" [ref=e177]:
+              - generic [ref=e178]:
+                - button "View" [ref=e179] [cursor=pointer]
+                - button "Unpublish" [ref=e180] [cursor=pointer]
+                - link "View on WordPress" [ref=e181] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1191
+                - button "Delete" [ref=e182] [cursor=pointer]
+          - 'row "How to Change a Car Tire: A Comprehensive Guide published View Unpublish View on WordPress Delete" [ref=e183]':
+            - 'cell "How to Change a Car Tire: A Comprehensive Guide" [ref=e184]':
+              - 'button "How to Change a Car Tire: A Comprehensive Guide" [ref=e185] [cursor=pointer]'
+            - cell [ref=e186]:
+              - img [ref=e188]
+            - cell [ref=e190]:
+              - img [ref=e192]
+            - cell [ref=e194]:
+              - img [ref=e196]
+            - cell [ref=e198]:
+              - img [ref=e200]
+            - cell [ref=e202]:
+              - img [ref=e204]
+            - cell "published" [ref=e206]:
+              - generic [ref=e207]: published
+            - cell "View Unpublish View on WordPress Delete" [ref=e208]:
+              - generic [ref=e209]:
+                - button "View" [ref=e210] [cursor=pointer]
+                - button "Unpublish" [ref=e211] [cursor=pointer]
+                - link "View on WordPress" [ref=e212] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1190
+                - button "Delete" [ref=e213] [cursor=pointer]
+          - 'row "How to Make Beer: A Beginner''s Guide published View Unpublish View on WordPress Delete" [ref=e214]':
+            - 'cell "How to Make Beer: A Beginner''s Guide" [ref=e215]':
+              - 'button "How to Make Beer: A Beginner''s Guide" [ref=e216] [cursor=pointer]'
+            - cell [ref=e217]:
+              - img [ref=e219]
+            - cell [ref=e221]:
+              - img [ref=e223]
+            - cell [ref=e225]:
+              - img [ref=e227]
+            - cell [ref=e229]:
+              - img [ref=e231]
+            - cell [ref=e233]:
+              - img [ref=e235]
+            - cell "published" [ref=e237]:
+              - generic [ref=e238]: published
+            - cell "View Unpublish View on WordPress Delete" [ref=e239]:
+              - generic [ref=e240]:
+                - button "View" [ref=e241] [cursor=pointer]
+                - button "Unpublish" [ref=e242] [cursor=pointer]
+                - link "View on WordPress" [ref=e243] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1189
+                - button "Delete" [ref=e244] [cursor=pointer]
+          - row "Mastering Pizza Powder Selection for Perfect Results draft View Publish Delete" [ref=e245]:
+            - cell "Mastering Pizza Powder Selection for Perfect Results" [ref=e246]:
+              - button "Mastering Pizza Powder Selection for Perfect Results" [ref=e247] [cursor=pointer]
+            - cell [ref=e248]:
+              - img [ref=e250]
+            - cell [ref=e252]:
+              - img [ref=e254]
+            - cell [ref=e256]:
+              - img [ref=e258]
+            - cell [ref=e260]:
+              - img [ref=e262]
+            - cell [ref=e264]:
+              - img [ref=e266]
+            - cell "draft" [ref=e268]:
+              - generic [ref=e269]: draft
+            - cell "View Publish Delete" [ref=e270]:
+              - generic [ref=e271]:
+                - button "View" [ref=e272] [cursor=pointer]
+                - button "Publish" [ref=e273] [cursor=pointer]
+                - button "Delete" [ref=e274] [cursor=pointer]
+          - 'row "Choosing Electric Vehicles: A Sustainable Transition — draft View Publish Delete" [ref=e275]':
+            - 'cell "Choosing Electric Vehicles: A Sustainable Transition" [ref=e276]':
+              - 'button "Choosing Electric Vehicles: A Sustainable Transition" [ref=e277] [cursor=pointer]'
+            - cell [ref=e278]:
+              - img [ref=e280]
+            - cell [ref=e282]:
+              - img [ref=e284]
+            - cell [ref=e286]:
+              - img [ref=e288]
+            - cell "—" [ref=e290]:
+              - generic [ref=e291]: —
+            - cell [ref=e292]:
+              - img [ref=e294]
+            - cell "draft" [ref=e296]:
+              - generic [ref=e297]: draft
+            - cell "View Publish Delete" [ref=e298]:
+              - generic [ref=e299]:
+                - button "View" [ref=e300] [cursor=pointer]
+                - button "Publish" [ref=e301] [cursor=pointer]
+                - button "Delete" [ref=e302] [cursor=pointer]
+          - row "Optimizing Plant Longevity Through Seasonal Planning published View Unpublish View on WordPress Delete" [ref=e303]:
+            - cell "Optimizing Plant Longevity Through Seasonal Planning" [ref=e304]:
+              - button "Optimizing Plant Longevity Through Seasonal Planning" [ref=e305] [cursor=pointer]
+            - cell [ref=e306]:
+              - img [ref=e308]
+            - cell [ref=e310]:
+              - img [ref=e312]
+            - cell [ref=e314]:
+              - img [ref=e316]
+            - cell [ref=e318]:
+              - img [ref=e320]
+            - cell [ref=e322]:
+              - img [ref=e324]
+            - cell "published" [ref=e326]:
+              - generic [ref=e327]: published
+            - cell "View Unpublish View on WordPress Delete" [ref=e328]:
+              - generic [ref=e329]:
+                - button "View" [ref=e330] [cursor=pointer]
+                - button "Unpublish" [ref=e331] [cursor=pointer]
+                - link "View on WordPress" [ref=e332] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1185
+                - button "Delete" [ref=e333] [cursor=pointer]
+          - row "Optimal Coffee Cup Search Guide draft View Publish View on WordPress Delete" [ref=e334]:
+            - cell "Optimal Coffee Cup Search Guide" [ref=e335]:
+              - button "Optimal Coffee Cup Search Guide" [ref=e336] [cursor=pointer]
+            - cell [ref=e337]:
+              - img [ref=e339]
+            - cell [ref=e341]:
+              - img [ref=e343]
+            - cell [ref=e345]:
+              - img [ref=e347]
+            - cell [ref=e349]:
+              - img [ref=e351]
+            - cell [ref=e353]:
+              - img [ref=e355]
+            - cell "draft" [ref=e357]:
+              - generic [ref=e358]: draft
+            - cell "View Publish View on WordPress Delete" [ref=e359]:
+              - generic [ref=e360]:
+                - button "View" [ref=e361] [cursor=pointer]
+                - button "Publish" [ref=e362] [cursor=pointer]
+                - link "View on WordPress" [ref=e363] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1187
+                - button "Delete" [ref=e364] [cursor=pointer]
+          - row "Current Gold Price Trends — draft View Publish Delete" [ref=e365]:
+            - cell "Current Gold Price Trends" [ref=e366]:
+              - button "Current Gold Price Trends" [ref=e367] [cursor=pointer]
+            - cell [ref=e368]:
+              - img [ref=e370]
+            - cell [ref=e372]:
+              - img [ref=e374]
+            - cell [ref=e376]:
+              - img [ref=e378]
+            - cell "—" [ref=e380]:
+              - generic [ref=e381]: —
+            - cell [ref=e382]:
+              - img [ref=e384]
+            - cell "draft" [ref=e386]:
+              - generic [ref=e387]: draft
+            - cell "View Publish Delete" [ref=e388]:
+              - generic [ref=e389]:
+                - button "View" [ref=e390] [cursor=pointer]
+                - button "Publish" [ref=e391] [cursor=pointer]
+                - button "Delete" [ref=e392] [cursor=pointer]
+          - row "SEO Optimized Guide to Pho Gà draft View Publish Delete" [ref=e393]:
+            - cell "SEO Optimized Guide to Pho Gà" [ref=e394]:
+              - button "SEO Optimized Guide to Pho Gà" [ref=e395] [cursor=pointer]
+            - cell [ref=e396]:
+              - img [ref=e398]
+            - cell [ref=e400]:
+              - img [ref=e402]
+            - cell [ref=e404]:
+              - img [ref=e406]
+            - cell [ref=e408]:
+              - img [ref=e410]
+            - cell [ref=e412]:
+              - img [ref=e414]
+            - cell "draft" [ref=e416]:
+              - generic [ref=e417]: draft
+            - cell "View Publish Delete" [ref=e418]:
+              - generic [ref=e419]:
+                - button "View" [ref=e420] [cursor=pointer]
+                - button "Publish" [ref=e421] [cursor=pointer]
+                - button "Delete" [ref=e422] [cursor=pointer]
+          - 'row "How to Make Authentic Pho Cuon: A Vietnamese Noodle Soup Guide draft View Publish Delete" [ref=e423]':
+            - 'cell "How to Make Authentic Pho Cuon: A Vietnamese Noodle Soup Guide" [ref=e424]':
+              - 'button "How to Make Authentic Pho Cuon: A Vietnamese Noodle Soup Guide" [ref=e425] [cursor=pointer]'
+            - cell [ref=e426]:
+              - img [ref=e428]
+            - cell [ref=e430]:
+              - img [ref=e432]
+            - cell [ref=e434]:
+              - img [ref=e436]
+            - cell [ref=e438]:
+              - img [ref=e440]
+            - cell [ref=e442]:
+              - img [ref=e444]
+            - cell "draft" [ref=e446]:
+              - generic [ref=e447]: draft
+            - cell "View Publish Delete" [ref=e448]:
+              - generic [ref=e449]:
+                - button "View" [ref=e450] [cursor=pointer]
+                - button "Publish" [ref=e451] [cursor=pointer]
+                - button "Delete" [ref=e452] [cursor=pointer]
+          - row "Authentic Vietnamese Chicken Pho Recipe — — draft View Publish Delete" [ref=e453]:
+            - cell "Authentic Vietnamese Chicken Pho Recipe" [ref=e454]:
+              - button "Authentic Vietnamese Chicken Pho Recipe" [ref=e455] [cursor=pointer]
+            - cell [ref=e456]:
+              - img [ref=e458]
+            - cell [ref=e460]:
+              - img [ref=e462]
+            - cell "—" [ref=e464]:
+              - generic [ref=e465]: —
+            - cell "—" [ref=e466]:
+              - generic [ref=e467]: —
+            - cell [ref=e468]:
+              - img [ref=e470]
+            - cell "draft" [ref=e472]:
+              - generic [ref=e473]: draft
+            - cell "View Publish Delete" [ref=e474]:
+              - generic [ref=e475]:
+                - button "View" [ref=e476] [cursor=pointer]
+                - button "Publish" [ref=e477] [cursor=pointer]
+                - button "Delete" [ref=e478] [cursor=pointer]
+          - row "Easy Vietnamese Spring Rolls Guide draft View Publish View on WordPress Delete" [ref=e479]:
+            - cell "Easy Vietnamese Spring Rolls Guide" [ref=e480]:
+              - button "Easy Vietnamese Spring Rolls Guide" [ref=e481] [cursor=pointer]
+            - cell [ref=e482]:
+              - img [ref=e484]
+            - cell [ref=e486]:
+              - img [ref=e488]
+            - cell [ref=e490]:
+              - img [ref=e492]
+            - cell [ref=e494]:
+              - img [ref=e496]
+            - cell [ref=e498]:
+              - img [ref=e500]
+            - cell "draft" [ref=e502]:
+              - generic [ref=e503]: draft
+            - cell "View Publish View on WordPress Delete" [ref=e504]:
+              - generic [ref=e505]:
+                - button "View" [ref=e506] [cursor=pointer]
+                - button "Publish" [ref=e507] [cursor=pointer]
+                - link "View on WordPress" [ref=e508] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1183
+                - button "Delete" [ref=e509] [cursor=pointer]
+          - 'row "Tet Foliage Festival: A Deep Dive into Vietnamese Tradition draft View Publish View on WordPress Delete" [ref=e510]':
+            - 'cell "Tet Foliage Festival: A Deep Dive into Vietnamese Tradition" [ref=e511]':
+              - 'button "Tet Foliage Festival: A Deep Dive into Vietnamese Tradition" [ref=e512] [cursor=pointer]'
+            - cell [ref=e513]:
+              - img [ref=e515]
+            - cell [ref=e517]:
+              - img [ref=e519]
+            - cell [ref=e521]:
+              - img [ref=e523]
+            - cell [ref=e525]:
+              - img [ref=e527]
+            - cell [ref=e529]:
+              - img [ref=e531]
+            - cell "draft" [ref=e533]:
+              - generic [ref=e534]: draft
+            - cell "View Publish View on WordPress Delete" [ref=e535]:
+              - generic [ref=e536]:
+                - button "View" [ref=e537] [cursor=pointer]
+                - button "Publish" [ref=e538] [cursor=pointer]
+                - link "View on WordPress" [ref=e539] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1179
+                - button "Delete" [ref=e540] [cursor=pointer]
+          - row "Tử vi tháng 4 cung Song tử draft View Publish Delete" [ref=e541]:
+            - cell "Tử vi tháng 4 cung Song tử" [ref=e542]:
+              - button "Tử vi tháng 4 cung Song tử" [ref=e543] [cursor=pointer]
+            - cell [ref=e544]:
+              - img [ref=e546]
+            - cell [ref=e548]:
+              - img [ref=e550]
+            - cell [ref=e552]:
+              - img [ref=e554]
+            - cell [ref=e556]:
+              - img [ref=e558]
+            - cell [ref=e560]:
+              - img [ref=e562]
+            - cell "draft" [ref=e564]:
+              - generic [ref=e565]: draft
+            - cell "View Publish Delete" [ref=e566]:
+              - generic [ref=e567]:
+                - button "View" [ref=e568] [cursor=pointer]
+                - button "Publish" [ref=e569] [cursor=pointer]
+                - button "Delete" [ref=e570] [cursor=pointer]
+          - 'row "Understanding Tử vi Tháng 4: Vietnamese Cultural Customs draft View Publish View on WordPress Delete" [ref=e571]':
+            - 'cell "Understanding Tử vi Tháng 4: Vietnamese Cultural Customs" [ref=e572]':
+              - 'button "Understanding Tử vi Tháng 4: Vietnamese Cultural Customs" [ref=e573] [cursor=pointer]'
+            - cell [ref=e574]:
+              - img [ref=e576]
+            - cell [ref=e578]:
+              - img [ref=e580]
+            - cell [ref=e582]:
+              - img [ref=e584]
+            - cell [ref=e586]:
+              - img [ref=e588]
+            - cell [ref=e590]:
+              - img [ref=e592]
+            - cell "draft" [ref=e594]:
+              - generic [ref=e595]: draft
+            - cell "View Publish View on WordPress Delete" [ref=e596]:
+              - generic [ref=e597]:
+                - button "View" [ref=e598] [cursor=pointer]
+                - button "Publish" [ref=e599] [cursor=pointer]
+                - link "View on WordPress" [ref=e600] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1177
+                - button "Delete" [ref=e601] [cursor=pointer]
+          - row "Tử vi tháng 4 cung Song tử — draft View Publish Delete" [ref=e602]:
+            - cell "Tử vi tháng 4 cung Song tử" [ref=e603]:
+              - button "Tử vi tháng 4 cung Song tử" [ref=e604] [cursor=pointer]
+            - cell [ref=e605]:
+              - img [ref=e607]
+            - cell [ref=e609]:
+              - img [ref=e611]
+            - cell [ref=e613]:
+              - img [ref=e615]
+            - cell "—" [ref=e617]:
+              - generic [ref=e618]: —
+            - cell [ref=e619]:
+              - img [ref=e621]
+            - cell "draft" [ref=e623]:
+              - generic [ref=e624]: draft
+            - cell "View Publish Delete" [ref=e625]:
+              - generic [ref=e626]:
+                - button "View" [ref=e627] [cursor=pointer]
+                - button "Publish" [ref=e628] [cursor=pointer]
+                - button "Delete" [ref=e629] [cursor=pointer]
+          - 'row "How to Make Wine for Beginners: A Beginner''s Guide — draft View Publish View on WordPress Delete" [ref=e630]':
+            - 'cell "How to Make Wine for Beginners: A Beginner''s Guide" [ref=e631]':
+              - 'button "How to Make Wine for Beginners: A Beginner''s Guide" [ref=e632] [cursor=pointer]'
+            - cell [ref=e633]:
+              - img [ref=e635]
+            - cell [ref=e637]:
+              - img [ref=e639]
+            - cell [ref=e641]:
+              - img [ref=e643]
+            - cell "—" [ref=e645]:
+              - generic [ref=e646]: —
+            - cell [ref=e647]:
+              - img [ref=e649]
+            - cell "draft" [ref=e651]:
+              - generic [ref=e652]: draft
+            - cell "View Publish View on WordPress Delete" [ref=e653]:
+              - generic [ref=e654]:
+                - button "View" [ref=e655] [cursor=pointer]
+                - button "Publish" [ref=e656] [cursor=pointer]
+                - link "View on WordPress" [ref=e657] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1175
+                - button "Delete" [ref=e658] [cursor=pointer]
+          - row "How to Create a Professional WordPress Website for Beginners — draft View Publish Delete" [ref=e659]:
+            - cell "How to Create a Professional WordPress Website for Beginners" [ref=e660]:
+              - button "How to Create a Professional WordPress Website for Beginners" [ref=e661] [cursor=pointer]
+            - cell [ref=e662]:
+              - img [ref=e664]
+            - cell [ref=e666]:
+              - img [ref=e668]
+            - cell [ref=e670]:
+              - img [ref=e672]
+            - cell "—" [ref=e674]:
+              - generic [ref=e675]: —
+            - cell [ref=e676]:
+              - img [ref=e678]
+            - cell "draft" [ref=e680]:
+              - generic [ref=e681]: draft
+            - cell "View Publish Delete" [ref=e682]:
+              - generic [ref=e683]:
+                - button "View" [ref=e684] [cursor=pointer]
+                - button "Publish" [ref=e685] [cursor=pointer]
+                - button "Delete" [ref=e686] [cursor=pointer]
+          - 'row "Hanoi Pho Cooking Guide: Authentic Recipe for Home Kitchen — draft View Publish View on WordPress Delete" [ref=e687]':
+            - 'cell "Hanoi Pho Cooking Guide: Authentic Recipe for Home Kitchen" [ref=e688]':
+              - 'button "Hanoi Pho Cooking Guide: Authentic Recipe for Home Kitchen" [ref=e689] [cursor=pointer]'
+            - cell [ref=e690]:
+              - img [ref=e692]
+            - cell [ref=e694]:
+              - img [ref=e696]
+            - cell [ref=e698]:
+              - img [ref=e700]
+            - cell "—" [ref=e702]:
+              - generic [ref=e703]: —
+            - cell [ref=e704]:
+              - img [ref=e706]
+            - cell "draft" [ref=e708]:
+              - generic [ref=e709]: draft
+            - cell "View Publish View on WordPress Delete" [ref=e710]:
+              - generic [ref=e711]:
+                - button "View" [ref=e712] [cursor=pointer]
+                - button "Publish" [ref=e713] [cursor=pointer]
+                - link "View on WordPress" [ref=e714] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1174
+                - button "Delete" [ref=e715] [cursor=pointer]
+          - 'row "MasterHomemade Pizza: Best Dough, Sauce & Baking Tips for Perfect Crust draft View Publish View on WordPress Delete" [ref=e716]':
+            - 'cell "MasterHomemade Pizza: Best Dough, Sauce & Baking Tips for Perfect Crust" [ref=e717]':
+              - 'button "MasterHomemade Pizza: Best Dough, Sauce & Baking Tips for Perfect Crust" [ref=e718] [cursor=pointer]'
+            - cell [ref=e719]:
+              - img [ref=e721]
+            - cell [ref=e723]:
+              - img [ref=e725]
+            - cell [ref=e727]:
+              - img [ref=e729]
+            - cell [ref=e731]:
+              - img [ref=e733]
+            - cell [ref=e735]:
+              - img [ref=e737]
+            - cell "draft" [ref=e739]:
+              - generic [ref=e740]: draft
+            - cell "View Publish View on WordPress Delete" [ref=e741]:
+              - generic [ref=e742]:
+                - button "View" [ref=e743] [cursor=pointer]
+                - button "Publish" [ref=e744] [cursor=pointer]
+                - link "View on WordPress" [ref=e745] [cursor=pointer]:
+                  - /url: https://test.hoantran.me//?p=1172
+                - button "Delete" [ref=e746] [cursor=pointer]

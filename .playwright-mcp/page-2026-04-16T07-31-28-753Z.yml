@@ -1,0 +1,146 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: W
+      - generic [ref=e7]:
+        - generic [ref=e8]: WP Writer
+        - generic [ref=e9]: AI-Powered
+      - button "Switch to dark mode" [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+    - navigation [ref=e13]:
+      - button "Create Project" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+        - text: Create Project
+      - generic [ref=e17]: Menu
+      - generic [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+        - generic [ref=e22]: Projects
+        - img [ref=e23]
+      - generic [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+        - generic [ref=e30]: Settings
+        - img [ref=e31]
+  - main [ref=e33]:
+    - generic [ref=e34]:
+      - button "Back" [ref=e36] [cursor=pointer]:
+        - img [ref=e37]
+        - text: Back
+      - generic [ref=e39]:
+        - heading "cách nầu phở" [level=1] [ref=e40]
+        - generic [ref=e41]:
+          - generic [ref=e42]: Tiếng Việt
+          - generic [ref=e43]: draft
+          - button "Publish" [ref=e44] [cursor=pointer]:
+            - img [ref=e45]
+            - text: Publish
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - generic [ref=e49]: Research
+          - generic [ref=e50]: 2,378
+        - generic [ref=e51]:
+          - generic [ref=e52]: Outline
+          - generic [ref=e53]: 4,431
+        - generic [ref=e54]:
+          - generic [ref=e55]: Content
+          - generic [ref=e56]: 3,188
+        - generic [ref=e57]:
+          - generic [ref=e58]: Thumbnail
+          - generic [ref=e59]: "0"
+        - generic [ref=e60]:
+          - generic [ref=e61]: Total
+          - generic [ref=e62]: 9,997
+      - generic [ref=e63]:
+        - heading "Pipeline Progress" [level=3] [ref=e64]
+        - generic [ref=e65]:
+          - generic [ref=e67] [cursor=pointer]:
+            - img [ref=e69]
+            - generic [ref=e71]: Research
+            - generic [ref=e72]: Completed
+          - generic [ref=e75] [cursor=pointer]:
+            - img [ref=e77]
+            - generic [ref=e79]: Outline
+            - generic [ref=e80]: Completed
+          - generic [ref=e83] [cursor=pointer]:
+            - img [ref=e85]
+            - generic [ref=e87]: Content
+            - generic [ref=e88]: Completed
+          - generic [ref=e91] [cursor=pointer]:
+            - img [ref=e93]
+            - generic [ref=e95]: Thumbnail
+            - generic [ref=e96]: Failed
+          - generic [ref=e99] [cursor=pointer]:
+            - img [ref=e101]
+            - generic [ref=e103]: Upload to WordPress
+            - generic [ref=e104]: Pending
+      - generic [ref=e140]:
+        - heading "Outline" [level=3] [ref=e141]
+        - generic [ref=e142]:
+          - generic [ref=e143]: Introduction
+          - generic [ref=e144]:
+            - strong [ref=e145]: "Hook:"
+            - text: Trên nền tảng kết nối văn hóa, phở hay còn nổi tiếng với truyền thống nghề này đang đối mặt thách thức từ xu hướng điện tử.
+          - generic [ref=e146]:
+            - strong [ref=e147]: "Problem:"
+            - text: Nhiều người đang tìm kiếm giải pháp giải quyết điều kiện thuận lợi cho nghiên cứu trong mạng lưới SEO.
+          - generic [ref=e148]:
+            - strong [ref=e149]: "Promise:"
+            - text: Bộ cách xử lý được chiến thuật này sẽ giúp duy trì tầm ảnh hưởng tối ưu trên các nền tảng chiều rộng.
+        - generic [ref=e150]:
+          - generic [ref=e151]: 1. Chế biến theo truyền thống
+          - list [ref=e152]:
+            - listitem [ref=e153]: Phát hiện và điều chỉnh công thức trên định dạng truyền thống
+            - listitem [ref=e154]: Kết nối với các phương thức hiện đại như streaming hoặc quản lý kỹ thuật trực tuyến
+        - generic [ref=e155]:
+          - generic [ref=e156]: 2. Nguyên nhân liên quan
+          - list [ref=e157]:
+            - listitem [ref=e158]: Chênh lệch giữa truyền thống và hiện đại
+            - listitem [ref=e159]: Nhu cầu thị trường hiện nay đòi hỏi sự kết hợp giữa cốt truyền thống và công nghệ mới
+        - generic [ref=e160]:
+          - generic [ref=e161]: 3. Truyền thống đi kèm
+          - list [ref=e162]:
+            - listitem [ref=e163]: Sử dụng các yêu cầu kỹ thuật cụ thể
+            - listitem [ref=e164]: Kết nối với bộ dịch vụ đa ngành
+        - generic [ref=e165]:
+          - generic [ref=e166]: 4. Mùa tiêu chuẩn
+          - list [ref=e167]:
+            - listitem [ref=e168]: Chỉnh sửa nhịp làm mặt trận
+            - listitem [ref=e169]: Tập trung vào phần được ưu tiên trong SEO tạo trọn vẹn
+        - generic [ref=e170]:
+          - generic [ref=e171]: 5. Vấn đề kỹ thuật
+          - list [ref=e172]:
+            - listitem [ref=e173]: Cân bằng giữa chất liệu và hiệu suất
+            - listitem [ref=e174]: Tối ưu hóa trải nghiệm người dùng để tăng vận hành SEO
+      - generic [ref=e105]:
+        - heading "Job History" [level=3] [ref=e106]
+        - table [ref=e108]:
+          - rowgroup [ref=e109]:
+            - row "Type Status Error Created" [ref=e110]:
+              - columnheader "Type" [ref=e111]
+              - columnheader "Status" [ref=e112]
+              - columnheader "Error" [ref=e113]
+              - columnheader "Created" [ref=e114]
+          - rowgroup [ref=e115]:
+            - 'row "thumbnail failed Image generation not supported for provider type: openai_compatible 4/16/2026, 7:10:07 AM" [ref=e116]':
+              - cell "thumbnail" [ref=e117]
+              - cell "failed" [ref=e118]:
+                - generic [ref=e119]: failed
+              - 'cell "Image generation not supported for provider type: openai_compatible" [ref=e120]'
+              - cell "4/16/2026, 7:10:07 AM" [ref=e121]
+            - row "content completed — 4/16/2026, 7:09:56 AM" [ref=e122]:
+              - cell "content" [ref=e123]
+              - cell "completed" [ref=e124]:
+                - generic [ref=e125]: completed
+              - cell "—" [ref=e126]
+              - cell "4/16/2026, 7:09:56 AM" [ref=e127]
+            - row "outline completed — 4/16/2026, 7:09:46 AM" [ref=e128]:
+              - cell "outline" [ref=e129]
+              - cell "completed" [ref=e130]:
+                - generic [ref=e131]: completed
+              - cell "—" [ref=e132]
+              - cell "4/16/2026, 7:09:46 AM" [ref=e133]
+            - row "research completed — 4/16/2026, 7:09:37 AM" [ref=e134]:
+              - cell "research" [ref=e135]
+              - cell "completed" [ref=e136]:
+                - generic [ref=e137]: completed
+              - cell "—" [ref=e138]
+              - cell "4/16/2026, 7:09:37 AM" [ref=e139]

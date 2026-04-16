@@ -1,0 +1,87 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: W
+      - generic [ref=e7]:
+        - generic [ref=e8]: WP Writer
+        - generic [ref=e9]: AI-Powered
+      - button "Switch to dark mode" [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+    - navigation [ref=e13]:
+      - button "Create Project" [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+        - text: Create Project
+      - generic [ref=e17]: Menu
+      - generic [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+        - generic [ref=e22]: Projects
+        - img [ref=e23]
+      - generic [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+        - generic [ref=e30]: Settings
+        - img [ref=e31]
+  - main [ref=e33]:
+    - generic [ref=e871]:
+      - button "Back" [ref=e872] [cursor=pointer]:
+        - img [ref=e873]
+        - text: Back
+      - generic [ref=e875]:
+        - heading "cách nấu phở" [level=1] [ref=e876]
+        - generic [ref=e877]:
+          - generic [ref=e878]: Tiếng Việt
+          - generic [ref=e879]: draft
+      - generic [ref=e880]:
+        - generic [ref=e881]:
+          - generic [ref=e882]: Research
+          - generic [ref=e883]: "0"
+        - generic [ref=e884]:
+          - generic [ref=e885]: Outline
+          - generic [ref=e886]: "0"
+        - generic [ref=e887]:
+          - generic [ref=e888]: Content
+          - generic [ref=e889]: "0"
+        - generic [ref=e890]:
+          - generic [ref=e891]: Thumbnail
+          - generic [ref=e892]: "0"
+        - generic [ref=e893]:
+          - generic [ref=e894]: Total
+          - generic [ref=e895]: "0"
+      - generic [ref=e896]:
+        - heading "Pipeline Progress" [level=3] [ref=e897]
+        - generic [ref=e898]:
+          - generic [ref=e900]:
+            - img [ref=e902]
+            - generic [ref=e904]: Research
+            - generic [ref=e905]: Failed
+          - generic [ref=e908]:
+            - img [ref=e910]
+            - generic [ref=e912]: Outline
+            - generic [ref=e913]: Pending
+          - generic [ref=e916]:
+            - img [ref=e918]
+            - generic [ref=e920]: Content
+            - generic [ref=e921]: Pending
+          - generic [ref=e924] [cursor=pointer]:
+            - img [ref=e926]
+            - generic [ref=e928]: Thumbnail
+            - generic [ref=e929]: Pending
+          - generic [ref=e932] [cursor=pointer]:
+            - img [ref=e934]
+            - generic [ref=e936]: Upload to WordPress
+            - generic [ref=e937]: Pending
+      - generic [ref=e938]:
+        - heading "Job History" [level=3] [ref=e939]
+        - table [ref=e941]:
+          - rowgroup [ref=e942]:
+            - row "Type Status Error Created" [ref=e943]:
+              - columnheader "Type" [ref=e944]
+              - columnheader "Status" [ref=e945]
+              - columnheader "Error" [ref=e946]
+              - columnheader "Created" [ref=e947]
+          - rowgroup [ref=e948]:
+            - row "research failed research_topic() takes from 1 to 4 positional arguments but 5 were given 4/16/2026, 4:45:13 AM" [ref=e949]:
+              - cell "research" [ref=e950]
+              - cell "failed" [ref=e951]:
+                - generic [ref=e952]: failed
+              - cell "research_topic() takes from 1 to 4 positional arguments but 5 were given" [ref=e953]
+              - cell "4/16/2026, 4:45:13 AM" [ref=e954]

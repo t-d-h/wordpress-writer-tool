@@ -1,97 +1,105 @@
 # Pitfalls
 
-## Vietnamese Language Support Pitfalls
+## Content Quality Improvements Pitfalls
 
-### AI Model Quality Issues with Vietnamese
+### HTML Cleaning Issues
 
-- **Warning signs:** AI-generated Vietnamese content has poor grammar, incorrect tone, or cultural insensitivity; content quality significantly lower than English equivalent; user complaints about Vietnamese content quality
-- **Prevention strategy:** Use explicit language instructions in system prompts; test Vietnamese content generation across all AI providers; implement quality checks for Vietnamese output; consider using Vietnamese-specific models if available
-- **Phase to address:** Phase 2 (AI Service Integration)
-- **Severity:** HIGH - affects core functionality and user satisfaction
+- **Warning signs:** AI-generated content contains markdown code blocks, backticks, or other artifacts; content appears broken in WordPress editor; users report content needs manual cleanup; HTML tags are malformed or nested incorrectly
+- **Prevention strategy:** Implement BeautifulSoup4 + lxml for robust HTML sanitization; define clear whitelist of allowed HTML tags and attributes; test cleaning with all AI providers; log when cleaning removes content
+- **Phase to address:** Phase 1 (HTML Cleaning)
+- **Severity:** HIGH - affects core functionality and user experience
 
-### Prompt Engineering Challenges for Non-English Languages
+### Word Count Validation Failures
 
-- **Warning signs:** Vietnamese content generation fails or produces English content; prompts don't respect language parameter; inconsistent language output across different AI providers
-- **Prevention strategy:** Add explicit language parameter to all AI service functions; include language instruction in system prompts (e.g., "Write all content in Vietnamese"); test prompts with each AI provider; validate language parameter flows through entire pipeline
-- **Phase to address:** Phase 2 (AI Service Integration)
-- **Severity:** HIGH - breaks core feature
+- **Warning signs:** Word count validation always fails or passes incorrectly; validation doesn't account for Vietnamese word segmentation; tolerance thresholds are too strict or too loose; users complain about inaccurate word counts
+- **Prevention strategy:** Use textstat for accurate word counting; implement tolerance-based validation (±20%); test with both English and Vietnamese content; log validation results for debugging
+- **Phase to address:** Phase 2 (Validation Functions)
+- **Severity:** HIGH - affects core feature reliability
 
-### Cultural Context and Nuance Issues
+### Section Count Validation Failures
 
-- **Warning signs:** Vietnamese content uses inappropriate formality levels; cultural references are Western-centric; content doesn't resonate with Vietnamese audience; tone is too formal or too informal for context
-- **Prevention strategy:** Include cultural context in prompts; specify formality level (formal/informal); use Vietnamese cultural references when possible; test with Vietnamese speakers for cultural appropriateness
-- **Phase to address:** Phase 2 (AI Service Integration)
-- **Severity:** MEDIUM - affects user experience but not functionality
+- **Warning signs:** Section count validation doesn't match actual outline structure; validation counts empty sections or ignores nested sections; tolerance thresholds are inappropriate; users report incorrect section counts
+- **Prevention strategy:** Validate section count against outline structure (not content); implement tolerance-based validation (±1 section); handle edge cases (empty sections, nested sections); test with various outline structures
+- **Phase to address:** Phase 2 (Validation Functions)
+- **Severity:** MEDIUM - affects feature accuracy
 
-### Data Model Issues with Language Field
+### Research Data Not Utilized
 
-- **Warning signs:** Language field not persisted in database; language parameter lost during job processing; existing posts don't have language field; inconsistent language values in database
-- **Prevention strategy:** Add language field to PostCreate and PostResponse models with default value "vietnamese"; ensure language field is passed through job queue; validate language field in API endpoints; handle missing language field gracefully for existing posts
-- **Phase to address:** Phase 1 (Backend Model and API)
-- **Severity:** HIGH - data integrity issue
+- **Warning signs:** Content generation doesn't use research data; content quality is lower than expected; users report content lacks depth; research phase feels disconnected from content
+- **Prevention strategy:** Pass research_data to generate_full_content(); update prompts to include research context; test that research data influences content; log when research data is missing or empty
+- **Phase to address:** Phase 3 (Research Data Utilization)
+- **Severity:** MEDIUM - affects content quality
 
-### Integration Pitfalls with Existing AI Providers
+### Additional Requests Not Honored
 
-- **Warning signs:** Language parameter not passed to AI service calls; different AI providers handle language parameter differently; Vietnamese generation fails for specific providers; inconsistent behavior across providers
-- **Prevention strategy:** Test Vietnamese generation with all three providers (OpenAI, Gemini, Anthropic); document provider-specific language handling; implement fallback mechanisms if provider fails; ensure language parameter is consistently passed through all AI service functions
-- **Phase to address:** Phase 2 (AI Service Integration)
-- **Severity:** HIGH - affects reliability
+- **Warning signs:** AI ignores additional requests; content doesn't reflect user instructions; users report additional requests are ineffective; no mechanism to detect instruction adherence
+- **Prevention strategy:** Log when additional_requests provided; add warning if AI output doesn't reflect requests; test with various additional request types; document known limitations
+- **Phase to address:** Phase 4 (Additional Requests Validation)
+- **Severity:** LOW - affects user experience but not functionality
 
-### Testing Challenges for Multilingual Content
+### Integration Pitfalls with Existing Pipeline
 
-- **Warning signs:** No tests for Vietnamese content generation; tests only validate English content; quality checks don't verify language; manual testing required for Vietnamese
-- **Prevention strategy:** Create test cases for Vietnamese content generation; validate language parameter in test assertions; add quality checks for Vietnamese output; test with sample Vietnamese topics; include Vietnamese in integration tests
-- **Phase to address:** Phase 5 (Testing and Validation)
-- **Severity:** MEDIUM - affects quality assurance
+- **Warning signs:** Validation functions break existing pipeline; content generation fails after adding validation; job processing errors increase; performance degrades significantly
+- **Prevention strategy:** Add validation as non-blocking checks (log warnings, don't fail); test with existing pipeline; monitor performance impact; ensure backward compatibility
+- **Phase to address:** All phases (integration testing)
+- **Severity:** HIGH - affects system stability
 
-### UI/UX Pitfalls in Language Selection
+### Vietnamese Word Counting Accuracy
 
-- **Warning signs:** Users confused about language selection; Vietnamese not set as default; language selection not visible; users accidentally select wrong language; language preference not persisted
-- **Prevention strategy:** Place language selection prominently after title field; set Vietnamese as default in form state; provide clear labels ("Tiếng Việt" and "English"); show visual indication of selected language; persist language preference in localStorage
-- **Phase to address:** Phase 4 (Frontend UI)
-- **Severity:** MEDIUM - affects user experience
+- **Warning signs:** Word count validation is inaccurate for Vietnamese; textstat doesn't handle Vietnamese word segmentation; users report incorrect word counts for Vietnamese content
+- **Prevention strategy:** Test textstat with Vietnamese content; if accuracy is insufficient, consider underthesea or pyvi; document Vietnamese-specific limitations; provide tolerance for Vietnamese content
+- **Phase to address:** Phase 2 (Validation Functions)
+- **Severity:** MEDIUM - affects feature accuracy for Vietnamese users
 
-### Pipeline Integration Issues
+### HTML Sanitization Policy Issues
 
-- **Warning signs:** Language parameter lost between pipeline stages; research generates in different language than content; outline language doesn't match content language; inconsistent language across post sections
-- **Prevention strategy:** Pass language parameter through entire pipeline (research → outline → content); validate language consistency across all stages; include language in job payload; log language parameter at each stage for debugging
-- **Phase to address:** Phase 3 (Worker Pipeline Integration)
-- **Severity:** HIGH - breaks feature functionality
+- **Warning signs:** Too much content is removed during sanitization; allowed tags are too restrictive; WordPress formatting is lost; users report content is over-sanitized
+- **Prevention strategy:** Define clear whitelist based on WordPress requirements; test sanitization with sample content; allow common formatting tags (h1-h6, p, strong, em, ul, ol, li, a, img); log when content is removed
+- **Phase to address:** Phase 1 (HTML Cleaning)
+- **Severity:** MEDIUM - affects content quality
 
-### Performance Concerns with Vietnamese Generation
+### Performance Concerns with Validation
 
-- **Warning signs:** Vietnamese content generation slower than English; higher token costs for Vietnamese; timeouts during Vietnamese generation; inconsistent response times
-- **Prevention strategy:** Monitor token usage for Vietnamese vs English; implement timeout handling; test performance with Vietnamese content generation; optimize prompts for Vietnamese efficiency; provide user feedback during generation
-- **Phase to address:** Phase 5 (Testing and Validation)
+- **Warning signs:** Content generation becomes significantly slower; validation adds noticeable delay; timeouts occur during generation; users report performance degradation
+- **Prevention strategy:** Keep validation lightweight (word count, section count, HTML cleaning); avoid complex NLP operations; monitor performance metrics; optimize if needed
+- **Phase to address:** All phases (performance monitoring)
 - **Severity:** LOW - affects user experience but not functionality
 
 ### Backward Compatibility Issues
 
-- **Warning signs:** Existing posts without language field; API calls fail for posts without language; Frontend crashes when displaying posts without language; Database queries fail for missing language field
-- **Prevention strategy:** Default language to "english" for existing posts; handle missing language field gracefully in API responses; Update frontend to display language or default; Add database migration to populate language field for existing posts
-- **Phase to address:** Phase 1 (Backend Model and API)
+- **Warning signs:** Existing posts without validation fields; API calls fail for posts without validation; Frontend crashes when displaying validation results; Database queries fail for missing validation fields
+- **Prevention strategy:** Handle missing validation fields gracefully; Default validation results to "not_validated"; Update frontend to display validation or default; Add database migration to populate validation fields for existing posts
+- **Phase to address:** All phases (backward compatibility)
 - **Severity:** MEDIUM - affects existing data
 
 ## General Architecture Pitfalls
 
-### Over-Engineering Language Support
+### Over-Engineering Validation
 
-- **Warning signs:** Complex language management system; Per-user language preferences; Per-project language settings; Multi-language dropdown with 10+ options
-- **Prevention strategy:** Keep it simple: binary choice (Vietnamese/English); Global default (Vietnamese); Per-post language selection only; No per-user or per-project settings for MVP
-- **Phase to address:** Phase 4 (Frontend UI)
+- **Warning signs:** Complex validation system with multiple layers; Validation rules are configurable per user; Validation requires database lookups; Validation adds significant overhead
+- **Prevention strategy:** Keep validation simple and consistent; Use fixed tolerance thresholds; Avoid per-user or per-project validation settings; Validation should be fast and lightweight
+- **Phase to address:** All phases (design)
 - **Severity:** LOW - affects maintainability
 
-### Translation Workflow Anti-Pattern
+### Strict Enforcement Anti-Pattern
 
-- **Warning signs:** Generate in English then translate to Vietnamese; Separate translation step; Translation service integration; Double token costs (generation + translation)
-- **Prevention strategy:** Generate directly in target language; Use language parameter in prompts; Avoid translation services; Direct generation is simpler and more cost-effective
-- **Phase to address:** Phase 2 (AI Service Integration)
-- **Severity:** MEDIUM - affects cost and quality
+- **Warning signs:** Validation failures block content generation; Content is truncated or padded to meet targets; Users cannot publish content that doesn't meet validation; Validation is enforced rather than advisory
+- **Prevention strategy:** Use validation as warnings, not blocks; Allow users to publish content that doesn't meet validation; Provide clear feedback on validation failures; Let users decide whether to regenerate
+- **Phase to address:** All phases (design)
+- **Severity:** MEDIUM - affects user experience
+
+### Validation Result Storage Anti-Pattern
+
+- **Warning signs:** Validation results stored in separate collection; Complex queries needed to retrieve validation; Validation results are not versioned; Validation results are lost when content is regenerated
+- **Prevention strategy:** Store validation results in post document; Include validation timestamp; Allow validation results to be updated; Keep validation results simple (word_count, section_count, html_clean)
+- **Phase to address:** Phase 2 (Validation Functions)
+- **Severity:** LOW - affects data model
 
 ## Sources
 
-- Stanford AI Blog: "Crossing Linguistic Horizons: Finetuning and Comprehensive Evaluation of Vietnamese Large Language Models" (HIGH confidence - official research)
-- Fortune: "The world's best AI models operate in English. Other languages—even major ones like Cantonese—risk falling further behind" (HIGH confidence - industry analysis)
-- NVIDIA Developer Blog: "Processing High-Quality Vietnamese Language Data with NVIDIA NeMo Curator" (HIGH confidence - technical documentation)
-- Arcee AI: "Introducing Arcee-VyLinh - A Powerful 3B Parameter Vietnamese Language Model" (HIGH confidence - model documentation)
-- Various multilingual content generation research papers and articles (MEDIUM confidence - industry best practices)
+- **Existing codebase analysis** — backend/app/services/ai_service.py, backend/app/workers/tasks.py, backend/app/models/post.py - HIGH confidence (direct code inspection)
+- **Content quality best practices** — Industry standards for AI content generation - MEDIUM confidence (general knowledge)
+- **WordPress content requirements** — WordPress REST API documentation - HIGH confidence (official documentation)
+- **AI model limitations** — OpenAI, Gemini, Anthropic documentation - HIGH confidence (official documentation)
+- **HTML sanitization best practices** — OWASP guidelines, lxml documentation - HIGH confidence (official documentation)
+- **Text analysis libraries** — textstat documentation, BeautifulSoup4 documentation - HIGH confidence (official documentation)

@@ -1,7 +1,7 @@
 # Architecture Research
 
-**Domain:** Vietnamese Language Support for AI Content Generation
-**Researched:** 2026-04-15
+**Domain:** Content Quality Improvements for AI Content Generation
+**Researched:** 2026-04-16
 **Confidence:** HIGH
 
 ## Standard Architecture
@@ -13,11 +13,12 @@
 │                     Frontend Layer (React)                   │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ ProjectDetail│  │ Create Post  │  │ PostView     │      │
-│  │   .jsx       │  │   Modal      │  │   .jsx       │      │
+│  │ ProjectDetail│  │ PostView     │  │ PostList     │      │
+│  │   .jsx       │  │   .jsx       │  │   .jsx       │      │
 │  │              │  │              │  │              │      │
-│  │ Language     │  │ Language     │  │ Display      │      │
-│  │ Selector     │  │ Checkbox     │  │ Language     │      │
+│  │ Display      │  │ Display      │  │ Display      │      │
+│  │ Validation   │  │ Validation   │  │ Validation   │      │
+│  │ Results      │  │ Results      │  │ Results      │      │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
 │         │                  │                  │              │
 └─────────┼──────────────────┼──────────────────┼──────────────┘
@@ -27,31 +28,33 @@
 │                  Backend API Layer (FastAPI)                 │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ posts.py     │  │ Post Model   │  │ Project      │      │
+│  │ posts.py     │  │ Post Model   │  │ Validation   │      │
 │  │ Router       │  │ (Pydantic)   │  │ Model        │      │
 │  │              │  │              │  │              │      │
-│  │ POST /posts  │  │ language:    │  │ (no change)  │      │
-│  │              │  │ str = "vi"   │  │              │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────────────┘      │
-│         │                  │                                 │
-└─────────┼──────────────────┼────────────────────────────────┘
-          │                  │
-          ↓                  ↓
+│  │ GET /posts   │  │ validation:  │  │ word_count:  │      │
+│  │              │  │ dict         │  │ int          │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│         │                  │                  │              │
+└─────────┼──────────────────┼──────────────────┼──────────────┘
+          │                  │                  │
+          ↓                  ↓                  ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                  Service Layer (Python)                      │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ ai_service   │  │ wp_service   │  │ job_service  │      │
-│  │              │  │              │  │              │      │
-│  │ research_    │  │ create_wp_  │  │ queue_next_  │      │
-│  │ topic()      │  │ post()       │  │ job()        │      │
-│  │              │  │              │  │              │      │
-│  │ + language   │  │ (no change) │  │ + language   │      │
-│  └──────┬───────┘  └──────────────┘  └──────┬───────┘      │
-│         │                                  │                  │
-└─────────┼──────────────────────────────────┼──────────────────┘
-          │                                  │
-          ↓                                  ↓
+│  │ ai_service   │  │ validation   │  │ wp_service   │      │
+│  │              │  │ _service     │  │              │      │
+│  │ research_    │  │              │  │ (no change)  │      │
+│  │ topic()      │  │ clean_html() │  │              │      │
+│  │              │  │ validate_    │  │              │      │
+│  │ + HTML       │  │ word_count() │  │              │      │
+│  │   cleaning   │  │ validate_    │  │              │      │
+│  │ + validation │  │ section_     │  │              │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│         │                  │                  │              │
+└─────────┼──────────────────┼──────────────────┼──────────────┘
+          │                  │                  │
+          ↓                  ↓                  ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                  Worker Layer (Async Tasks)                  │
 ├─────────────────────────────────────────────────────────────┤
@@ -59,9 +62,10 @@
 │  │ run_         │  │ run_         │  │ run_         │      │
 │  │ research()   │  │ outline()    │  │ content()    │      │
 │  │              │  │              │  │              │      │
-│  │ Pass language│  │ Pass language│  │ Pass language│      │
-│  │ to AI service│  │ to AI service│  │ to AI service│      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│  │ Call AI      │  │ Call AI      │  │ Call AI      │      │
+│  │ + Clean HTML │  │ + Validate   │  │ + Validate   │      │
+│  │ + Validate   │  │   Section    │  │   Word Count │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
 └─────────────────────────────────────────────────────────────┘
           │                  │                  │
           ↓                  ↓                  ↓
@@ -71,9 +75,16 @@
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │ posts_col    │  │ projects_col │  │ jobs_col     │      │
 │  │              │  │              │  │              │      │
-│  │ language:    │  │ (no change)  │  │ + language   │      │
-│  │ "vi" | "en"  │  │              │  │ (optional)   │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│  │ validation:  │  │ (no change)  │  │ (no change)  │      │
+│  │ {            │  │              │  │              │      │
+│  │   word_      │  │              │  │              │      │
+│  │   count: int │  │              │  │              │      │
+│  │   section_   │  │              │  │              │      │
+│  │   count: int │  │              │  │              │      │
+│  │   html_      │  │              │  │              │      │
+│  │   clean: bool │  │              │  │              │      │
+│  │ }            │  │              │  │              │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -81,12 +92,11 @@
 
 | Component | Responsibility | Typical Implementation |
 |-----------|----------------|------------------------|
-| **Post Model** | Store language preference per post | Add `language: str = "vi"` field to `PostCreate` and `PostResponse` |
-| **AI Service** | Generate content in specified language | Add `language` parameter to all generation functions, update system prompts |
-| **Worker Tasks** | Pass language through pipeline | Extract language from post/job data, pass to AI service calls |
-| **Frontend Form** | Allow language selection | Add checkbox/radio after title field, default to Vietnamese |
-| **Posts Router** | Accept and persist language | Update `create_post()` to handle language field |
-| **Job Service** | Include language in job data | Add language to job payload when queuing |
+| **Validation Service** | Content quality validation and cleaning | Add `validation_service.py` with `clean_html()`, `validate_word_count()`, `validate_section_count()` |
+| **AI Service** | Generate content with HTML cleaning and validation | Add HTML cleaning to `generate_section_content()` and `generate_introduction()`; add validation to `generate_outline()` and `generate_full_content()` |
+| **Worker Tasks** | Apply validation and cleaning after generation | Call validation functions after AI generation; store validation results in post document |
+| **Post Model** | Store validation results | Add `validation: dict` field to `PostResponse` |
+| **Frontend** | Display validation results | Show word count, section count, and HTML cleanliness in post detail view |
 
 ## Recommended Project Structure
 
@@ -94,111 +104,106 @@
 backend/
 ├── app/
 │   ├── models/
-│   │   ├── post.py              # Add language field to PostCreate/PostResponse
-│   │   └── project.py            # No changes needed
+│   │   ├── post.py              # Add validation field to PostResponse
+│   │   └── validation.py        # NEW: Validation result model
 │   ├── services/
-│   │   ├── ai_service.py        # Add language parameter to all functions
+│   │   ├── ai_service.py        # Add HTML cleaning and validation
+│   │   ├── validation_service.py  # NEW: Validation and cleaning functions
 │   │   ├── wp_service.py        # No changes needed
-│   │   └── job_service.py       # Add language to job payload
+│   │   └── job_service.py       # No changes needed
 │   ├── routers/
-│   │   └── posts.py             # Update create_post() to handle language
+│   │   └── posts.py             # No changes needed
 │   └── workers/
-│       └── tasks.py             # Pass language to AI service calls
+│       └── tasks.py             # Add validation calls after generation
 frontend/
 └── src/
     └── components/
-        └── Projects/
-            └── ProjectDetail.jsx  # Add language selector to create form
+        └── Posts/
+            ├── PostView.jsx     # Display validation results
+            └── PostList.jsx     # Display validation results
 ```
 
 ### Structure Rationale
 
-- **backend/app/models/post.py:** Language is a post-level attribute, not project-level. Each post can have different language requirements.
-- **backend/app/services/ai_service.py:** All AI generation functions need language awareness to produce appropriate content.
-- **backend/app/workers/tasks.py:** Worker tasks must pass language through the pipeline to ensure consistent generation.
-- **frontend/src/components/Projects/ProjectDetail.jsx:** Create post form is the natural place for language selection.
+- **backend/app/services/validation_service.py:** Centralized location for validation and cleaning functions. Reusable across AI service and worker tasks.
+- **backend/app/models/validation.py:** Validation result model for type safety and consistency.
+- **backend/app/services/ai_service.py:** AI service should clean and validate content before returning. Ensures quality at generation time.
+- **backend/app/workers/tasks.py:** Worker tasks should call validation after generation and store results in post document.
+- **frontend/src/components/Posts/PostView.jsx:** Post detail view is natural place to display validation results.
 
 ## Architectural Patterns
 
-### Pattern 1: Parameter Propagation Through Pipeline
+### Pattern 1: Validation as Non-Blocking Check
 
-**What:** Language parameter flows from user input through all layers of the content generation pipeline.
+**What:** Validation functions return results but don't fail generation. Warnings are logged but content is still saved.
 
-**When to use:** When a configuration parameter affects multiple stages of an async pipeline.
+**When to use:** When validation is advisory rather than mandatory. AI models cannot guarantee exact specifications.
 
 **Trade-offs:**
-- **Pros:** Clear data flow, easy to trace, each stage has all context needed
-- **Cons:** More parameters to pass through, potential for parameter drift
+- **Pros:** Doesn't block content generation, users can publish content that doesn't meet validation, clear feedback on quality
+- **Cons:** Users may ignore warnings, content may not meet specifications
 
 **Example:**
 ```python
-# Frontend: User selects language
-const [language, setLanguage] = useState('vi')  # Default Vietnamese
-
-# Backend: Router accepts language
-class PostCreate(BaseModel):
-    language: str = "vi"  # Default Vietnamese
-
-# Service: AI service uses language
-async def research_topic(topic: str, language: str = "vi", ...) -> tuple[dict, int]:
-    system_prompt = _get_system_prompt(language, "research")
-    # ... rest of function
-
-# Worker: Passes language to AI service
-async def run_research(job_data: dict):
-    language = job_data.get("language", "vi")
-    research_data, tokens = await ai_service.research_topic(
-        topic, additional, provider_id, model_name, language
-    )
+# Validation returns results, doesn't raise exceptions
+validation_result = validate_word_count(content, target_word_count)
+if not validation_result["passed"]:
+    logger.warning(f"Word count validation failed: {validation_result['actual']} vs {validation_result['target']}")
+# Content is still saved, validation result stored in post document
 ```
 
-### Pattern 2: Language-Aware System Prompts
+### Pattern 2: HTML Cleaning Before Validation
 
-**What:** System prompts are dynamically generated based on language parameter.
+**What:** HTML content is cleaned before validation to ensure accurate word and section counts.
 
-**When to use:** When AI instructions need to be localized for different languages.
+**When to use:** When AI-generated content may contain markdown artifacts or malformed HTML.
 
 **Trade-offs:**
-- **Pros:** Consistent language output, no hardcoded language assumptions
-- **Cons:** More complex prompt management, need to maintain multiple prompt templates
+- **Pros:** Accurate validation counts, clean content for WordPress, consistent behavior
+- **Cons:** May remove content that user intended to keep, requires careful whitelist definition
 
 **Example:**
 ```python
-def _get_system_prompt(language: str, task_type: str) -> str:
-    prompts = {
-        "vi": {
-            "research": "Bạn là một chuyên gia nghiên cứu nội dung SEO. Chỉ phản hồi bằng JSON hợp lệ.",
-            "outline": "Bạn là một chuyên gia chiến lược nội dung SEO. Chỉ phản hồi bằng JSON hợp lệ.",
-            "content": "Bạn là một chuyên gia viết nội dung blog. Viết nội dung hấp dẫn, chi tiết, tối ưu hóa SEO."
+# Clean HTML first
+cleaned_content = clean_html_content(content)
+# Then validate
+word_count_result = validate_word_count(cleaned_content, target_word_count)
+section_count_result = validate_section_count(cleaned_content, target_section_count)
+```
+
+### Pattern 3: Validation Results Stored in Document
+
+**What:** Validation results are stored in the post document for historical tracking and display.
+
+**When to use:** When validation results need to be displayed to users or tracked over time.
+
+**Trade-offs:**
+- **Pros:** Historical tracking, easy display in UI, no separate queries needed
+- **Cons:** Document size increases, validation results may become stale if content is edited
+
+**Example:**
+```python
+# Post document structure
+{
+    "_id": ObjectId("..."),
+    "topic": "How to improve website SEO",
+    "content": "<h2>Introduction</h2>...",
+    "validation": {
+        "word_count": {
+            "actual": 1200,
+            "target": 1500,
+            "passed": false,
+            "tolerance": 0.2
         },
-        "en": {
-            "research": "You are an expert SEO content researcher. Respond only in valid JSON.",
-            "outline": "You are an expert SEO content strategist. Respond only in valid JSON.",
-            "content": "You are an expert blog content writer. Write engaging, detailed, SEO-optimized content."
-        }
+        "section_count": {
+            "actual": 4,
+            "target": 5,
+            "passed": true,
+            "tolerance": 1
+        },
+        "html_clean": true
     }
-    return prompts.get(language, {}).get(task_type, prompts["en"][task_type])
-```
-
-### Pattern 3: Default Value at Model Level
-
-**What:** Language field defaults to Vietnamese in the Pydantic model, ensuring all posts have a language value.
-
-**When to use:** When a field should always have a value and there's a sensible default.
-
-**Trade-offs:**
-- **Pros:** No null/undefined language values, consistent behavior
-- **Cons:** Harder to change default later, requires migration if default changes
-
-**Example:**
-```python
-class PostCreate(BaseModel):
-    # ... other fields
-    language: str = "vi"  # Vietnamese is default
-
-class PostResponse(BaseModel):
-    # ... other fields
-    language: str = "vi"  # Vietnamese is default
+}
 ```
 
 ## Data Flow
@@ -206,37 +211,41 @@ class PostResponse(BaseModel):
 ### Request Flow
 
 ```
-[User selects Vietnamese in Create Post form]
+[User creates post with target_word_count=1500, target_section_count=5]
     ↓
-[Frontend sends POST /api/posts with language="vi"]
+[Frontend sends POST /api/posts with targets]
     ↓
-[Backend creates Post document with language="vi"]
+[Backend creates Post document with targets]
     ↓
-[Backend queues research job with language="vi"]
+[Backend queues research job with targets]
     ↓
 [Worker picks up research job]
     ↓
-[Worker calls ai_service.research_topic(language="vi")]
+[Worker calls ai_service.research_topic()]
     ↓
-[AI generates research in Vietnamese]
+[AI generates research]
     ↓
-[Worker queues outline job with language="vi"]
+[Worker queues outline job with targets]
     ↓
-[Worker calls ai_service.generate_outline(language="vi")]
+[Worker calls ai_service.generate_outline()]
     ↓
-[AI generates outline in Vietnamese]
+[AI generates outline]
     ↓
-[Worker queues content job with language="vi"]
+[Worker validates section count]
     ↓
-[Worker calls ai_service.generate_full_content(language="vi")]
+[Worker queues content job with targets]
     ↓
-[AI generates content in Vietnamese]
+[Worker calls ai_service.generate_full_content()]
     ↓
-[Worker queues publish job]
+[AI generates content]
     ↓
-[Worker calls wp_service.create_wp_post()]
+[Worker cleans HTML content]
     ↓
-[Post published to WordPress in Vietnamese]
+[Worker validates word count]
+    ↓
+[Worker stores validation results in Post document]
+    ↓
+[Post updated with validation results]
 ```
 
 ### State Management
@@ -244,67 +253,69 @@ class PostResponse(BaseModel):
 ```
 [Post Document in MongoDB]
     ↓ (read by worker)
-[Job Data with language="vi"]
+[Job Data with targets]
     ↓ (passed to AI service)
 [AI Service Functions]
-    ↓ (use language for system prompts)
-[Generated Content in Vietnamese]
+    ↓ (generate content)
+[Generated Content]
+    ↓ (cleaned and validated)
+[Validation Results]
     ↓ (stored back to Post)
-[Post Document Updated with Vietnamese Content]
+[Post Document Updated with Validation Results]
 ```
 
 ### Key Data Flows
 
-1. **Language Selection Flow:** User selects language in form → Frontend state → API request → Post document → Job data → AI service calls
-2. **Content Generation Flow:** Research (Vietnamese) → Outline (Vietnamese) → Content (Vietnamese) → Thumbnail (language-agnostic) → Publish
-3. **Default Language Flow:** Pydantic model default → Frontend form default → All new posts default to Vietnamese
+1. **Target Flow:** User input → API request → Post document → Job data → AI service calls → Validation
+2. **Content Flow:** AI generation → HTML cleaning → Validation → Storage
+3. **Validation Flow:** Validation functions → Validation results → Post document → Frontend display
 
 ## Scaling Considerations
 
 | Scale | Architecture Adjustments |
 |-------|--------------------------|
-| 0-1k users | Current architecture is sufficient. Language parameter adds minimal overhead. |
-| 1k-100k users | Consider caching language-specific prompts. Add language-specific model selection if needed. |
-| 100k+ users | Consider separate worker pools per language. Add language-specific rate limiting. |
+| 0-1k users | Current architecture is sufficient. Validation adds minimal overhead. |
+| 1k-100k users | Consider caching validation results. Add validation result indexing if filtering by validation status becomes common. |
+| 100k+ users | Consider separate validation service. Add validation result aggregation for quality dashboards. |
 
 ### Scaling Priorities
 
-1. **First bottleneck:** AI API rate limits. Language parameter doesn't change this, but Vietnamese generation may have different token costs.
-2. **Second bottleneck:** MongoDB query performance. Adding language field doesn't significantly impact queries, but could add index if filtering by language becomes common.
+1. **First bottleneck:** AI API rate limits. Validation doesn't change this, but HTML cleaning adds minimal overhead.
+2. **Second bottleneck:** MongoDB document size. Adding validation results increases document size but not significantly.
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Hardcoding Language in System Prompts
+### Anti-Pattern 1: Validation as Blocking Check
 
-**What people do:** Keep English system prompts and rely on AI to infer language from topic.
+**What people do:** Validation failures raise exceptions and block content generation.
 
-**Why it's wrong:** AI may generate mixed language content, inconsistent output, poor Vietnamese quality.
+**Why it's wrong:** AI models cannot guarantee exact specifications. Blocking generation frustrates users and wastes tokens.
 
-**Do this instead:** Explicitly pass language parameter and use language-specific system prompts.
+**Do this instead:** Use validation as advisory checks. Log warnings and store results, but don't block generation.
 
-### Anti-Pattern 2: Storing Language at Project Level
+### Anti-Pattern 2: Validation After Storage
 
-**What people do:** Add language field to Project model and assume all posts in a project use the same language.
+**What people do:** Store content first, then validate separately.
 
-**Why it's wrong:** Users may want mixed-language posts within a single project (e.g., bilingual blog).
+**Why it's wrong:** Validation results may not be associated with content. Content may be published before validation completes.
 
-**Do this instead:** Store language at Post level, allowing per-post language selection.
+**Do this instead:** Validate before storage. Store validation results with content in same document.
 
-### Anti-Pattern 3: Not Passing Language Through Worker Pipeline
+### Anti-Pattern 3: HTML Cleaning After Validation
 
-**What people do:** Store language in Post document but don't pass it to worker jobs, expecting workers to read from Post document.
+**What people do:** Validate word count first, then clean HTML.
 
-**Why it's wrong:** Workers may not have access to Post document at all times, adds unnecessary database reads, breaks job isolation.
+**Why it's wrong:** Word count may be inaccurate if HTML contains markdown artifacts or code blocks.
 
-**Do this instead:** Include language in job payload when queuing, pass explicitly to AI service calls.
+**Do this instead:** Clean HTML first, then validate. Ensures accurate validation counts.
 
-### Anti-Pattern 4: Using English as Default Without User Awareness
+### Anti-Pattern 4: Strict Enforcement Without Tolerance
 
-**What people do:** Default to English but don't show language selector, users assume content will be in Vietnamese.
+**What people do:** Validation requires exact word count and section count.
 
-**Why it's wrong:** Poor UX, users surprised by English content, violates requirement that Vietnamese is default.
+**Why it's wrong:** AI models cannot guarantee exact specifications. Strict enforcement leads to frequent failures.
 
-**Do this instead:** Default to Vietnamese, show language selector clearly, make default visible to users.
+**Do this instead:** Use tolerance-based validation (±20% for word count, ±1 section for section count).
 
 ## Integration Points
 
@@ -312,71 +323,72 @@ class PostResponse(BaseModel):
 
 | Service | Integration Pattern | Notes |
 |---------|---------------------|-------|
-| OpenAI API | Pass language in system prompt | OpenAI models support Vietnamese well, no special handling needed |
-| Gemini API | Pass language in system prompt | Gemini models support Vietnamese, ensure prompts are clear |
-| Anthropic API | Pass language in system prompt | Claude models support Vietnamese, may need more explicit instructions |
-| WordPress REST API | No language parameter needed | WordPress stores content as-is, language is content metadata only |
+| OpenAI API | No changes | AI generation unchanged, validation added after |
+| Gemini API | No changes | AI generation unchanged, validation added after |
+| Anthropic API | No changes | AI generation unchanged, validation added after |
+| WordPress REST API | No changes | Content is cleaned before publishing, but WordPress API unchanged |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| Frontend ↔ Backend API | HTTP POST with language field | Add `language` to request body, include in response |
-| Backend Router ↔ Service Layer | Function parameter | Pass language as explicit parameter to AI service functions |
-| Service Layer ↔ Worker Layer | Job payload | Include language in job data when queuing via Redis |
-| Worker ↔ AI Service | Function parameter | Extract language from job data, pass to AI service calls |
-| Worker ↔ MongoDB | Document field | Read/write language field in Post document |
+| AI Service ↔ Validation Service | Function call | AI service calls validation functions after generation |
+| Worker ↔ Validation Service | Function call | Worker calls validation functions after AI generation |
+| Worker ↔ MongoDB | Document field | Worker stores validation results in post document |
+| Frontend ↔ Backend API | HTTP response | Backend includes validation results in PostResponse |
 
 ## Build Order
 
 Based on dependencies and integration points, recommended build order:
 
-### Phase 1: Backend Model and API (Foundation)
-1. **Update Post Model** (`backend/app/models/post.py`)
-   - Add `language: str = "vi"` to `PostCreate`
-   - Add `language: str = "vi"` to `PostResponse`
-   - Add `language: str = "vi"` to `BulkPostCreate`
+### Phase 1: HTML Cleaning (Foundation)
+1. **Add Validation Service** (`backend/app/services/validation_service.py`)
+   - Implement `clean_html_content()` using BeautifulSoup4 + lxml
+   - Implement `sanitize_html()` with whitelist of allowed tags
+   - Add tests for HTML cleaning
 
-2. **Update Posts Router** (`backend/app/routers/posts.py`)
-   - Update `create_post()` to handle language field
-   - Update `create_bulk_posts()` to handle language field
-   - Update `format_post()` to include language in response
-   - Pass language to job payload in `publish_job()`
+2. **Update AI Service** (`backend/app/services/ai_service.py`)
+   - Add HTML cleaning to `generate_section_content()`
+   - Add HTML cleaning to `generate_introduction()`
+   - Test cleaning with all AI providers
 
-### Phase 2: AI Service Integration (Core Logic)
-3. **Update AI Service** (`backend/app/services/ai_service.py`)
-   - Add `language` parameter to `research_topic()`
-   - Add `language` parameter to `generate_outline()`
-   - Add `language` parameter to `generate_section_content()`
-   - Add `language` parameter to `generate_introduction()`
-   - Add `language` parameter to `generate_full_content()`
-   - Implement `_get_system_prompt(language, task_type)` helper
-   - Update all system prompts to be language-aware
+### Phase 2: Validation Functions (Core Logic)
+3. **Update Validation Service** (`backend/app/services/validation_service.py`)
+   - Implement `validate_word_count()` using textstat
+   - Implement `validate_section_count()` using outline structure
+   - Add tolerance-based validation (±20% word count, ±1 section)
 
-4. **Update Job Service** (`backend/app/services/job_service.py`)
-   - Add language to job payload when queuing
+4. **Update AI Service** (`backend/app/services/ai_service.py`)
+   - Add validation to `generate_outline()`
+   - Add validation to `generate_full_content()`
+   - Return validation results from AI service functions
 
-### Phase 3: Worker Pipeline Integration (Async Processing)
-5. **Update Worker Tasks** (`worker/app/workers/tasks.py`)
-   - Update `run_research()` to pass language to AI service
-   - Update `run_outline()` to pass language to AI service
-   - Update `run_content()` to pass language to AI service
-   - Extract language from job data or post document
+5. **Update Worker Tasks** (`backend/app/workers/tasks.py`)
+   - Call validation functions after AI generation
+   - Store validation results in post document
+   - Log validation warnings
 
-### Phase 4: Frontend UI (User Interface)
-6. **Update Create Post Form** (`frontend/src/components/Projects/ProjectDetail.jsx`)
-   - Add language state to `singleForm` and `bulkForm`
-   - Add language selector (checkbox/radio) after title field
-   - Default to Vietnamese (`"vi"`)
-   - Pass language in API calls
-   - Display language in post list/table
+### Phase 3: Research Data Utilization (Enhancement)
+6. **Update AI Service** (`backend/app/services/ai_service.py`)
+   - Pass `research_data` to `generate_full_content()`
+   - Update prompts to include research context
+   - Test that research data influences content
 
-### Phase 5: Testing and Validation
-7. **End-to-End Testing**
-   - Test Vietnamese content generation
-   - Test English content generation
-   - Verify language persistence in database
-   - Verify language flows through entire pipeline
+### Phase 4: Additional Requests Validation (Nice-to-have)
+7. **Update Worker Tasks** (`backend/app/workers/tasks.py`)
+   - Log when `additional_requests` provided
+   - Add warning if AI output doesn't reflect requests
+   - Document known limitations
+
+### Phase 5: Frontend Display (User Interface)
+8. **Update Post Model** (`backend/app/models/post.py`)
+   - Add `validation: dict` field to `PostResponse`
+   - Define validation result structure
+
+9. **Update Frontend** (`frontend/src/components/Posts/PostView.jsx`)
+   - Display word count validation results
+   - Display section count validation results
+   - Display HTML cleanliness status
 
 ## Data Model Changes
 
@@ -385,67 +397,35 @@ Based on dependencies and integration points, recommended build order:
 ```python
 # backend/app/models/post.py
 
-class PostCreate(BaseModel):
-    project_id: str
-    topic: str
-    additional_requests: Optional[str] = ""
-    ai_provider_id: Optional[str] = None
-    model_name: Optional[str] = None
-    auto_publish: bool = False
-    thumbnail_source: str = "ai"
-    thumbnail_provider_id: Optional[str] = None
-    thumbnail_model_name: Optional[str] = None
-    target_word_count: Optional[int] = None
-    target_section_count: Optional[int] = None
-    language: str = "vi"  # NEW: Vietnamese is default
-
-class BulkPostCreate(BaseModel):
-    project_id: str
-    topics: List[str]
-    additional_requests: Optional[str] = ""
-    ai_provider_id: Optional[str] = None
-    model_name: Optional[str] = None
-    auto_publish: bool = False
-    thumbnail_source: str = "ai"
-    thumbnail_provider_id: Optional[str] = None
-    thumbnail_model_name: Optional[str] = None
-    target_word_count: Optional[int] = None
-    target_section_count: Optional[int] = None
-    language: str = "vi"  # NEW: Vietnamese is default
-
 class PostResponse(BaseModel):
-    id: str
-    project_id: str
-    topic: str
-    additional_requests: str
-    ai_provider_id: Optional[str] = None
-    model_name: Optional[str] = None
-    auto_publish: bool = False
-    thumbnail_source: str = "ai"
-    thumbnail_provider_id: Optional[str] = None
-    thumbnail_model_name: Optional[str] = None
-    target_word_count: Optional[int] = None
-    target_section_count: Optional[int] = None
-    language: str = "vi"  # NEW: Vietnamese is default
-    title: Optional[str] = None
-    meta_description: Optional[str] = None
-    outline: Optional[Dict[str, Any]] = None
-    sections: List[Section] = []
-    content: Optional[str] = None
-    thumbnail_url: Optional[str] = None
-    status: str = "draft"
-    research_data: Optional[Dict[str, Any]] = None
-    research_done: bool = False
-    content_done: bool = False
-    thumbnail_done: bool = False
-    token_usage: TokenUsage = TokenUsage()
-    jobs: List[JobInfo] = []
-    created_at: datetime
-    wp_post_id: Optional[int] = None
-    wp_post_url: Optional[str] = None
-    categories: Optional[List[str]] = None
-    tags: Optional[List[str]] = None
-    origin: str = "tool"
+    # ... existing fields ...
+    validation: Optional[Dict[str, Any]] = None  # NEW: Validation results
+```
+
+### Validation Result Structure
+
+```python
+# backend/app/models/validation.py
+
+from pydantic import BaseModel
+from typing import Optional
+
+class WordCountValidation(BaseModel):
+    actual: int
+    target: int
+    passed: bool
+    tolerance: float = 0.2  # ±20%
+
+class SectionCountValidation(BaseModel):
+    actual: int
+    target: int
+    passed: bool
+    tolerance: int = 1  # ±1 section
+
+class ValidationResult(BaseModel):
+    word_count: Optional[WordCountValidation] = None
+    section_count: Optional[SectionCountValidation] = None
+    html_clean: bool = False
 ```
 
 ### Database Schema Changes
@@ -453,48 +433,44 @@ class PostResponse(BaseModel):
 ```python
 # backend/app/database.py
 
-# No index changes needed for language field
-# Language is stored as a simple string field in Post documents
+# No index changes needed for validation field
+# Validation is stored as a simple dict field in Post documents
 # Example Post document structure:
 {
     "_id": ObjectId("..."),
     "project_id": "...",
     "topic": "How to improve website SEO",
-    "language": "vi",  # NEW: "vi" for Vietnamese, "en" for English
-    "additional_requests": "",
-    "ai_provider_id": "...",
-    "model_name": "gpt-4o",
-    "auto_publish": false,
-    "thumbnail_source": "ai",
-    "target_word_count": 500,
-    "target_section_count": 4,
-    "title": "Cách cải thiện SEO website",
-    "meta_description": "Hướng dẫn chi tiết...",
-    "outline": {...},
-    "sections": [...],
-    "content": "<h2>Giới thiệu</h2>...",
-    "thumbnail_url": "/tmp/wp_images/...",
-    "status": "draft",
-    "research_data": {...},
-    "research_done": true,
-    "content_done": true,
-    "thumbnail_done": true,
-    "token_usage": {...},
-    "jobs": [...],
-    "created_at": datetime(...),
-    "wp_post_id": 123,
-    "wp_post_url": "https://example.com/?p=123"
+    "content": "<h2>Introduction</h2>...",
+    "validation": {  # NEW: Validation results
+        "word_count": {
+            "actual": 1200,
+            "target": 1500,
+            "passed": false,
+            "tolerance": 0.2
+        },
+        "section_count": {
+            "actual": 4,
+            "target": 5,
+            "passed": true,
+            "tolerance": 1
+        },
+        "html_clean": true
+    },
+    # ... other fields ...
 }
 ```
 
 ## Sources
 
-- Existing codebase analysis: `backend/app/models/post.py`, `backend/app/services/ai_service.py`, `worker/app/workers/tasks.py`, `frontend/src/components/Projects/ProjectDetail.jsx`
-- Project requirements: `.planning/PROJECT.md` (v1.2 Vietnamese Language Support milestone)
+- Existing codebase analysis: `backend/app/services/ai_service.py`, `backend/app/workers/tasks.py`, `backend/app/models/post.py`
+- Project requirements: `.planning/PROJECT.md` (v1.3 Content Quality Improvements milestone)
 - FastAPI documentation: https://fastapi.tiangolo.com/
 - Pydantic documentation: https://docs.pydantic.dev/
 - React documentation: https://react.dev/
+- BeautifulSoup4 documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
+- lxml documentation: https://lxml.de/
+- textstat documentation: https://github.com/textstat/textstat
 
 ---
-*Architecture research for: Vietnamese Language Support in WordPress Writer Tool*
-*Researched: 2026-04-15*
+*Architecture research for: WordPress Writer Tool v1.3 Content Quality Improvements*
+*Researched: 2026-04-16*
