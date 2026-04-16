@@ -1,190 +1,229 @@
-# Requirements: v1.2 Vietnamese Language Support
+# Requirements: v1.3 Content Quality Improvements
 
-**Milestone**: v1.2
+**Milestone**: v1.3
 **Status**: Defined
-**Last Updated**: 2026-04-15
+**Last Updated**: 2026-04-16
 
 ## Overview
 
-Add Vietnamese language support to the AI content generation pipeline. Users can choose between Vietnamese and English for each post, with Vietnamese as the default. All AI-generated content (research, outline, content) respects the language choice.
+Fix content generation issues to improve output quality and ensure AI-generated content meets user specifications. This milestone focuses on HTML cleaning, validation (word count and section count), and pipeline integration (research data utilization).
 
 ## In-Scope Requirements
 
-### UI Requirements
+### HTML Cleaning
 
-#### LANG-01: Language Selection UI
+#### HTML-01: Clean HTML Output
 **Priority**: High
-**Description**: Add language selection radio buttons to the Create Post form
+**Description**: Remove unwanted characters (backticks, markdown artifacts) from AI-generated content
 **Acceptance Criteria**:
-- Radio buttons displayed after "Topic" field, before "Additional Requests"
-- Two options: "Tiếng Việt" (Vietnamese) and "English"
-- Vietnamese is selected by default
-- Visual indication of selected language (radio button state)
-**Notes**: Radio buttons (not checkbox) for mutually exclusive choice
+- System removes backticks from AI-generated content
+- System removes markdown code blocks wrapping HTML
+- System removes markdown artifacts from final content
+- Content is ready for WordPress without manual cleanup
+- HTML cleaning applied to all AI-generated content (research, outline, content)
+**Notes**: Use BeautifulSoup4 + lxml for robust HTML sanitization
 
-#### LANG-02: Language Display in Post List
+#### HTML-02: No Markdown Artifacts
+**Priority**: High
+**Description**: Ensure content doesn't contain markdown code blocks or backticks
+**Acceptance Criteria**:
+- Final content doesn't contain markdown code blocks (```html or ```)
+- Final content doesn't contain backticks wrapping HTML
+- Content displays correctly in WordPress editor
+- No manual cleanup needed by users
+**Notes**: AI often wraps HTML in markdown code blocks that need removal
+
+#### HTML-03: HTML Sanitization
 **Priority**: Medium
-**Description**: Display language indicator in post list and detail views
+**Description**: Implement HTML sanitization with allowed tags whitelist
 **Acceptance Criteria**:
-- Language badge shown in post list table
-- Language badge shown in post detail view
-- Badge uses color coding (e.g., green for Vietnamese, blue for English)
-- Badge shows language name or icon
-**Notes**: Helps users identify post language at a glance
+- System sanitizes HTML content before saving
+- Whitelist of allowed HTML tags defined (h1-h6, p, strong, em, ul, ol, li, a, img)
+- Malicious or unwanted tags removed
+- Content structure preserved
+**Notes**: Define whitelist based on WordPress requirements
 
-### Backend Requirements
+### Validation
 
-#### LANG-03: Language Field in Post Model
+#### VAL-01: Word Count Validation
 **Priority**: High
-**Description**: Add `language` field to Post model and database
+**Description**: Validate actual word count against target word count
 **Acceptance Criteria**:
-- `language` field added to `PostCreate` Pydantic model
-- `language` field added to `BulkPostCreate` Pydantic model
-- `language` field stored in MongoDB posts collection
-- Valid values: "vietnamese" or "english"
-- Default value: "vietnamese"
-- Existing posts without language field default to "english" for backward compatibility
-**Notes**: MongoDB is schemaless, no migration needed
+- System calculates actual word count using textstat
+- System compares actual word count to target word count
+- Validation uses ±20% tolerance
+- System warns user when outside tolerance
+- Validation results stored in post document
+**Notes**: Use textstat for accurate word counting
 
-#### LANG-04: Language Parameter in AI Service
+#### VAL-02: Section Count Validation
 **Priority**: High
-**Description**: Pass language parameter to all AI service functions
+**Description**: Validate actual section count against target section count
 **Acceptance Criteria**:
-- `research_topic()` accepts `language` parameter
-- `generate_outline()` accepts `language` parameter
-- `generate_section_content()` accepts `language` parameter
-- `generate_introduction()` accepts `language` parameter
-- Language parameter passed from job payload to AI service functions
-- Language parameter logged at each stage for debugging
-**Notes**: Language must flow through entire pipeline
+- System counts sections in outline structure
+- System compares actual section count to target section count
+- Validation uses ±1 section tolerance
+- System warns user when outside tolerance
+- Validation results stored in post document
+**Notes**: Validate section count against outline structure (not content)
 
-#### LANG-05: Language-Specific System Prompts
-**Priority**: High
-**Description**: Modify system prompts to include language instruction
-**Acceptance Criteria**:
-- System prompts include explicit language instruction
-- Vietnamese prompt: "Write all content in Vietnamese"
-- English prompt: "Write all content in English"
-- Prompts include cultural context for Vietnamese
-- Prompts specify formality level (formal for Vietnamese)
-- All AI providers (OpenAI, Gemini, Anthropic) use language-specific prompts
-**Notes**: Test prompts with each AI provider
-
-### Data Requirements
-
-#### LANG-06: Language Persistence
+#### VAL-03: Validation Results Display
 **Priority**: Medium
-**Description**: Persist language selection across form submissions
+**Description**: Display validation results to users
 **Acceptance Criteria**:
-- Language selection persists when form is submitted with errors
-- Language selection persists when user navigates away and returns
-- Language selection stored in localStorage or form state
-- Language selection resets to default (Vietnamese) on page refresh
-**Notes**: Simple localStorage implementation sufficient
+- Word count validation results shown in post detail view
+- Section count validation results shown in post detail view
+- HTML cleanliness status shown in post detail view
+- Clear visual indication when validation fails
+- Users can see actual vs target values
+**Notes**: Validation is advisory, not blocking
 
-#### LANG-07: Language in Job Payload
+#### VAL-04: Validation Warnings
+**Priority**: Medium
+**Description**: Log warnings when content doesn't meet validation criteria
+**Acceptance Criteria**:
+- System logs warning when word count validation fails
+- System logs warning when section count validation fails
+- System logs warning when HTML cleaning removes content
+- Warnings include actual vs target values
+- Warnings stored in job logs for debugging
+**Notes**: Validation is non-blocking, content is still saved
+
+#### VAL-05: Tolerance-Based Validation
+**Priority**: Medium
+**Description**: Implement tolerance-based validation instead of strict enforcement
+**Acceptance Criteria**:
+- Word count validation uses ±20% tolerance
+- Section count validation uses ±1 section tolerance
+- Validation passes when within tolerance
+- Validation fails when outside tolerance
+- Users can publish content that doesn't meet validation
+**Notes**: AI models cannot guarantee exact specifications
+
+### Pipeline Integration
+
+#### PIPE-01: Research Data Utilization
 **Priority**: High
-**Description**: Include language in job payload for all job types
+**Description**: Pass research data to content generation (not just outline)
 **Acceptance Criteria**:
-- `language` field included in research job payload
-- `language` field included in outline job payload
-- `language` field included in content job payload
-- `language` field included in thumbnail job payload
-- `language` field included in section_images job payload
-- `language` field included in publish job payload
-- Language field validated in job payload
-**Notes**: Ensures language consistency across all stages
+- System passes research_data to generate_full_content()
+- Content generation prompts include research context
+- Research data influences final content generation
+- Content quality improves with research data
+**Notes**: Currently research data only used for outline generation
 
-### Integration Requirements
-
-#### LANG-08: Language Validation
+#### PIPE-02: Research Context in Prompts
 **Priority**: Medium
-**Description**: Validate language parameter in API endpoints
+**Description**: Update prompts to include research context
 **Acceptance Criteria**:
-- API validates language is "vietnamese" or "english"
-- Invalid language returns 400 error with clear message
-- Validation applied to POST /posts endpoint
-- Validation applied to POST /posts/bulk endpoint
-- Validation applied to PUT /posts/{id} endpoint
-**Notes**: Use Pydantic validation
+- Content generation prompts include research summary
+- Prompts reference research findings
+- AI uses research data to inform content
+- Content depth improves with research context
+**Notes**: Test that research data actually influences content
 
-#### LANG-09: Backward Compatibility
+#### PIPE-03: Research Data Flow
 **Priority**: Medium
-**Description**: Handle existing posts without language field gracefully
+**Description**: Ensure research data flows through entire pipeline
 **Acceptance Criteria**:
-- API responses default to "english" for posts without language field
-- Frontend displays "English" for posts without language field
-- No errors when querying posts without language field
-- No errors when updating posts without language field
-**Notes**: MongoDB schemaless, no migration needed
+- Research data stored in post document
+- Research data passed to outline generation
+- Research data passed to content generation
+- Research data logged at each stage for debugging
+- Research data not lost between pipeline stages
+**Notes**: Research data must be consistent across all stages
 
 ## Future Requirements (Deferred)
 
-### LANG-F01: Language-Specific SEO Optimization
-**Priority**: Low
-**Description**: Optimize content for Vietnamese SEO
-**Notes**: Vietnamese SEO differs from English (keywords, meta descriptions, structure). Requires research into Vietnamese SEO best practices.
+### HTML Cleaning (Deferred)
 
-### LANG-F02: Tone/Style Customization per Language
+#### HTML-F01: Content Quality Dashboard
 **Priority**: Low
-**Description**: Allow users to customize tone and style per language
-**Notes**: Vietnamese content may need different tone than English content. Cultural nuances, formality levels in Vietnamese.
+**Description**: Visual feedback on quality metrics across all posts
+**Notes**: Aggregate validation results across posts to show quality trends. Requires frontend UI changes.
 
-### LANG-F03: Language-Specific Content Length Targets
+#### HTML-F02: Quality Score Calculation
 **Priority**: Low
-**Description**: Adjust content length targets based on language
-**Notes**: Vietnamese is more concise than English. May require different word counts for equivalent coverage.
+**Description**: Aggregate validation results into a single quality score
+**Notes**: Combine word count, section count, and HTML cleanliness into a score.
 
-### LANG-F04: Bilingual Content Generation
+#### HTML-F03: Validation Result Storage
 **Priority**: Low
-**Description**: Generate both Vietnamese and English versions simultaneously
-**Notes**: Complex workflow, may confuse users. Consider if users request this feature.
+**Description**: Store validation results in post document for historical tracking
+**Notes**: Track validation results over time for quality analysis.
 
-### LANG-F05: Language Quality Indicators
+### Validation (Deferred)
+
+#### VAL-F01: Auto-Retry on Validation Failure
 **Priority**: Low
-**Description**: Show confidence scores for language quality
-**Notes**: Requires additional AI evaluation. May be useful for quality assurance.
+**Description**: Automatically regenerate content that doesn't meet specifications
+**Notes**: Adds complexity and cost. For MVP, logging warnings is sufficient.
+
+#### VAL-F02: Smart Word Count Distribution
+**Priority**: Low
+**Description**: Distribute word count based on section importance rather than equal division
+**Notes**: Requires AI to understand section importance. Current equal division is simpler.
+
+#### VAL-F03: Vietnamese-Specific Word Counting
+**Priority**: Low
+**Description**: Use underthesea or pyvi for accurate Vietnamese word segmentation
+**Notes**: textstat may not handle Vietnamese word segmentation perfectly.
+
+### Pipeline Integration (Deferred)
+
+#### PIPE-F01: Additional Requests Validation
+**Priority**: Low
+**Description**: Log when additional requests are provided but AI may not have followed them
+**Notes**: Add warning if AI output doesn't reflect requests.
+
+#### PIPE-F02: Real-Time Quality Monitoring
+**Priority**: Low
+**Description**: Show quality metrics as content generates via WebSocket
+**Notes**: Adds complexity to async job processing. Show after generation completes.
 
 ## Out of Scope
 
-### LANG-O01: Per-User Language Preferences
-**Reason**: Over-engineering for MVP, adds database complexity
-**Alternative**: Use global default with per-post override
+### HTML-O01: Strict Word Count Enforcement
+**Reason**: AI models cannot guarantee exact word counts. Enforcement requires truncation or padding, which degrades quality.
+**Alternative**: Use tolerance-based validation (±20%) and warn users when outside tolerance.
 
-### LANG-O02: Per-Project Language Settings
-**Reason**: Unnecessary complexity, users can override per-post
-**Alternative**: Keep language selection at post level only
+### HTML-O02: Strict Section Count Enforcement
+**Reason**: AI models cannot guarantee exact section counts. Enforcement requires artificial section splitting or merging, which degrades quality.
+**Alternative**: Use tolerance-based validation (±1 section) and warn users when outside tolerance.
 
-### LANG-O03: Multi-Language Dropdown (10+ Languages)
-**Reason**: Confusing for Vietnamese-focused tool, dilutes value proposition
-**Alternative**: Binary choice: Vietnamese/English only
+### HTML-O03: Real-Time Quality Monitoring
+**Reason**: Adds complexity to async job processing. Requires WebSocket or polling infrastructure.
+**Alternative**: Show quality metrics after generation completes.
 
-### LANG-O04: Language Switching Mid-Generation
-**Reason**: Breaks pipeline integrity, creates inconsistent content
-**Alternative**: Language must be set before generation starts
+### HTML-O04: Content Regeneration on Validation Failure
+**Reason**: Adds cost and complexity. May not converge on valid content.
+**Alternative**: Log warnings and let users decide whether to regenerate.
 
-### LANG-O05: Language-Specific AI Provider Routing
-**Reason**: Unnecessary complexity, all providers support both languages
-**Alternative**: Use same provider for both languages
+### HTML-O05: Vietnamese-Specific Word Counting
+**Reason**: Requires NLP libraries (underthesea, pyvi) that add dependencies and complexity.
+**Alternative**: Use textstat for approximate word counting. Good enough for validation.
 
 ## Traceability
 
 | Requirement ID | Phase | Status |
 |----------------|-------|--------|
-| LANG-01 | TBD | Pending |
-| LANG-02 | TBD | Pending |
-| LANG-03 | TBD | Pending |
-| LANG-04 | TBD | Pending |
-| LANG-05 | TBD | Pending |
-| LANG-06 | TBD | Pending |
-| LANG-07 | TBD | Pending |
-| LANG-08 | TBD | Pending |
-| LANG-09 | TBD | Pending |
+| HTML-01 | TBD | Pending |
+| HTML-02 | TBD | Pending |
+| HTML-03 | TBD | Pending |
+| VAL-01 | TBD | Pending |
+| VAL-02 | TBD | Pending |
+| VAL-03 | TBD | Pending |
+| VAL-04 | TBD | Pending |
+| VAL-05 | TBD | Pending |
+| PIPE-01 | TBD | Pending |
+| PIPE-02 | TBD | Pending |
+| PIPE-03 | TBD | Pending |
 
 ## Notes
 
-- Vietnamese is a "low-resource" language with unique challenges (tonal structure, cultural context, limited training data)
-- All existing AI providers (OpenAI GPT-4o, Gemini 2.0 Flash, Anthropic Claude Sonnet 4) support Vietnamese natively
-- No new libraries required - implementation is configuration changes only
-- Direct generation in target language (no translation workflow) is simpler and more cost-effective
-- Test with Vietnamese speakers for cultural appropriateness
+- Three new libraries required: lxml 6.0.4 (HTML sanitization), BeautifulSoup4 4.14.3 (HTML parsing), textstat 0.7.13 (word counting)
+- Current implementation has gaps: research data not passed to content generation, no validation for word/section counts, incomplete HTML cleaning
+- Validation is advisory, not blocking. Users can publish content that doesn't meet validation criteria.
+- HTML cleaning must come before validation to ensure accurate counts.
+- Research data utilization enhances content quality by providing context to AI.
+- Vietnamese word counting may need underthesea or pyvi if textstat proves inaccurate.
