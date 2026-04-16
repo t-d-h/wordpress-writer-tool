@@ -4,8 +4,74 @@ using OpenAI, Gemini, or Anthropic depending on the configured provider.
 """
 
 import json
+import re
 from bson import ObjectId
 from app.database import ai_providers_col
+
+ALLOWED_TAGS = {
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "p",
+    "strong",
+    "em",
+    "ul",
+    "ol",
+    "li",
+    "a",
+    "img",
+}
+SAFE_ATTRS = {"a": {"href"}, "img": {"src"}}
+
+
+def clean_html(html: str) -> str:
+    """Remove markdown artifacts and sanitize HTML to allowed tags whitelist."""
+    if not html or not html.strip():
+        return ""
+
+    text = html
+
+    if "```html" in text:
+        parts = text.split("```html")
+        text = "".join(p.split("```")[0] if i > 0 else p for i, p in enumerate(parts))
+    elif "```" in text:
+        parts = text.split("```")
+        text = "".join(p.split("```")[0] if i > 0 else p for i, p in enumerate(parts))
+
+    text = text.replace("`", "")
+
+    if not text.strip():
+        return ""
+
+    from bs4 import BeautifulSoup
+
+    try:
+        soup = BeautifulSoup(text, "lxml")
+    except Exception:
+        soup = BeautifulSoup(text, "html.parser")
+
+    all_tags = list(soup.find_all(True))
+    for tag in all_tags:
+        if tag.name not in ALLOWED_TAGS:
+            tag.unwrap()
+
+    for tag in soup.find_all(True):
+        if tag.name in SAFE_ATTRS:
+            allowed = SAFE_ATTRS[tag.name]
+            tag.attrs = {k: v for k, v in tag.attrs.items() if k in allowed}
+        else:
+            tag.attrs.clear()
+
+    result = text
+    if soup.body:
+        result = "".join(str(child) for child in soup.body.children)
+    else:
+        result = str(soup)
+
+    return result.strip()
 
 
 async def _get_provider(provider_id: str = None):
@@ -355,7 +421,14 @@ Do NOT include the section title itself — just the body content.
 Format in HTML."""
 
     text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
-    return text, total_tokens
+    try:
+        cleaned = clean_html(text)
+        if cleaned != text:
+            print(f"[CLEAN] Stripped markdown artifacts from section content")
+    except Exception as e:
+        print(f"[WARN] HTML cleaning failed, using raw output: {e}")
+        cleaned = text
+    return cleaned, total_tokens
 
 
 async def generate_introduction(
@@ -396,7 +469,14 @@ Write a compelling 150-300 word introduction that:
 Format in HTML."""
 
     text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
-    return text, total_tokens
+    try:
+        cleaned = clean_html(text)
+        if cleaned != text:
+            print(f"[CLEAN] Stripped markdown artifacts from introduction")
+    except Exception as e:
+        print(f"[WARN] HTML cleaning failed, using raw output: {e}")
+        cleaned = text
+    return cleaned, total_tokens
 
 
 async def generate_full_content(
