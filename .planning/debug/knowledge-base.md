@@ -12,3 +12,12 @@ Resolved debug sessions. Used by `gsd-debugger` to surface known-pattern hypothe
 - **Files changed:** frontend/src/components/Projects/ProjectDetail.jsx
 
 ---
+
+## research-topic-args-error — Research job fails with "takes from 1 to 4 positional arguments but 5 were given"
+- **Date:** 2026-04-16
+- **Error patterns:** research_topic, positional arguments, 5, 4, job fails, __pycache__, stale bytecode
+- **Root cause:** Stale Python bytecode cache in worker/app/services/__pycache__/ai_service.cpython-311.pyc caused worker to load old version of ai_service.py without language parameter
+- **Fix:** Cleared all __pycache__ directories in worker and restarted worker container to force recompilation with updated source code
+- **Files changed:** []
+
+---
