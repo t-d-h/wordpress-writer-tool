@@ -207,17 +207,17 @@ Fix content generation issues to improve output quality and ensure AI-generated 
 
 | Requirement ID | Phase | Status |
 |----------------|-------|--------|
-| HTML-01 | TBD | Pending |
-| HTML-02 | TBD | Pending |
-| HTML-03 | TBD | Pending |
-| VAL-01 | TBD | Pending |
-| VAL-02 | TBD | Pending |
-| VAL-03 | TBD | Pending |
-| VAL-04 | TBD | Pending |
-| VAL-05 | TBD | Pending |
-| PIPE-01 | TBD | Pending |
-| PIPE-02 | TBD | Pending |
-| PIPE-03 | TBD | Pending |
+| HTML-01 | Phase 15 | Pending |
+| HTML-02 | Phase 15 | Pending |
+| HTML-03 | Phase 15 | Pending |
+| VAL-01 | Phase 16 | Pending |
+| VAL-02 | Phase 17 | Pending |
+| VAL-03 | Phase 18 | Pending |
+| VAL-04 | Phase 19 | Pending |
+| VAL-05 | Phase 16 | Pending |
+| PIPE-01 | Phase 20 | Pending |
+| PIPE-02 | Phase 21 | Pending |
+| PIPE-03 | Phase 20 | Pending |
 
 ## Notes
 

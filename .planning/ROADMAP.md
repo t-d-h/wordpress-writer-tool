@@ -7,7 +7,8 @@
 
 - ✅ **v1.0 MVP** — Phases 1-3 (shipped 2026-04-14)
 - ✅ **v1.1 All Posts Table View** — Phases 4-11 (shipped 2026-04-15)
-- ⏳ **v1.2 Vietnamese Language Support** — Phases 12-14 (in progress)
+- ✅ **v1.2 Vietnamese Language Support** — Phases 12-14 (shipped 2026-04-16)
+- ⏳ **v1.3 Content Quality Improvements** — Phases 15-21 (in progress)
 
 ## Phases
 
@@ -35,23 +36,24 @@
 </details>
 
 <details>
-<summary>⏳ v1.2 Vietnamese Language Support (Phases 12-14) — IN PROGRESS</summary>
+<summary>✅ v1.2 Vietnamese Language Support (Phases 12-14) — SHIPPED 2026-04-16</summary>
 
-  - [x] Phase 12: Backend Foundation (3/3 plans) — completed 2026-04-15
-    - [x] 12-01-PLAN.md — Test infrastructure setup
-    - [x] 12-02-PLAN.md — Add language field to models
-    - [x] 12-03-PLAN.md — Update API endpoints
-  - [ ] Phase 13: AI Service Integration (3/3 plans) — completed 2026-04-15
-    - [x] 13-01-PLAN.md — Add language parameter to AI service functions
-    - [x] 13-02-PLAN.md — Modify system prompts for language-specific instructions
-    - [x] 13-03-PLAN.md — Update worker tasks to extract and pass language
-  - [ ] Phase 14: Frontend UI (6/6 plans) — in progress
-    - [x] 14-01-PLAN.md — Add language selection to Create Post form
-    - [x] 14-02-PLAN.md — Add language badge to post list table
-    - [x] 14-03-PLAN.md — Add language badge to post detail view
-    - [x] 14-04-PLAN.md — Add localStorage persistence for language selection (gap closure)
-    - [x] 14-05-PLAN.md — Set up frontend testing infrastructure (gap closure)
-    - [x] 14-06-PLAN.md — Add language parameter to worker AI service (gap closure)
+- [x] Phase 12: Backend Foundation (3/3 plans) — completed 2026-04-15
+- [x] Phase 13: AI Service Integration (3/3 plans) — completed 2026-04-15
+- [x] Phase 14: Frontend UI (6/6 plans) — completed 2026-04-16
+
+</details>
+
+<details>
+<summary>⏳ v1.3 Content Quality Improvements (Phases 15-21) — IN PROGRESS</summary>
+
+- [ ] Phase 15: HTML Cleaning Foundation (0/0 plans) — not started
+- [ ] Phase 16: Word Count Validation (0/0 plans) — not started
+- [ ] Phase 17: Section Count Validation (0/0 plans) — not started
+- [ ] Phase 18: Validation Results Display (0/0 plans) — not started
+- [ ] Phase 19: Validation Warnings (0/0 plans) — not started
+- [ ] Phase 20: Research Data Utilization (0/0 plans) — not started
+- [ ] Phase 21: Research Context in Prompts (0/0 plans) — not started
 
 </details>
 
@@ -70,12 +72,20 @@
 | 9. Data Transformation Documentation | v1.1 | 1/1 | Complete | 2026-04-15 |
 | 10. Frontend UI Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
 | 11. Cleanup Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
-  | 12. Backend Foundation | v1.2 | 3/3 | Complete    | 2026-04-15 |
-  | 13. AI Service Integration | v1.2 | 3/3 | Complete | 2026-04-15 |
-   | 14. Frontend UI | v1.2 | 3/6 | In Progress | 2026-04-16 |
+| 12. Backend Foundation | v1.2 | 3/3 | Complete | 2026-04-15 |
+| 13. AI Service Integration | v1.2 | 3/3 | Complete | 2026-04-15 |
+| 14. Frontend UI | v1.2 | 6/6 | Complete | 2026-04-16 |
+| 15. HTML Cleaning Foundation | v1.3 | 0/0 | Not started | - |
+| 16. Word Count Validation | v1.3 | 0/0 | Not started | - |
+| 17. Section Count Validation | v1.3 | 0/0 | Not started | - |
+| 18. Validation Results Display | v1.3 | 0/0 | Not started | - |
+| 19. Validation Warnings | v1.3 | 0/0 | Not started | - |
+| 20. Research Data Utilization | v1.3 | 0/0 | Not started | - |
+| 21. Research Context in Prompts | v1.3 | 0/0 | Not started | - |
 
 ---
 
 **See `.planning/milestones/v1.0-ROADMAP.md` for full v1.0 milestone details.**
 **See `.planning/milestones/v1.1-ROADMAP.md` for full v1.1 milestone details.**
-**See `.planning/ROADMAP.md` for full v1.2 milestone details.**
+**See `.planning/milestones/v1.2-ROADMAP.md` for full v1.2 milestone details.**
+**See `.planning/milestones/v1.3-ROADMAP.md` for full v1.3 milestone details.**
