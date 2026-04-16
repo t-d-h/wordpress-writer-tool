@@ -45,12 +45,13 @@
     - [x] 13-01-PLAN.md — Add language parameter to AI service functions
     - [x] 13-02-PLAN.md — Modify system prompts for language-specific instructions
     - [x] 13-03-PLAN.md — Update worker tasks to extract and pass language
-  - [ ] Phase 14: Frontend UI (5/5 plans) — in progress
+  - [ ] Phase 14: Frontend UI (6/6 plans) — in progress
     - [x] 14-01-PLAN.md — Add language selection to Create Post form
     - [x] 14-02-PLAN.md — Add language badge to post list table
     - [x] 14-03-PLAN.md — Add language badge to post detail view
-    - [ ] 14-04-PLAN.md — Add localStorage persistence for language selection (gap closure)
-    - [ ] 14-05-PLAN.md — Set up frontend testing infrastructure (gap closure)
+    - [x] 14-04-PLAN.md — Add localStorage persistence for language selection (gap closure)
+    - [x] 14-05-PLAN.md — Set up frontend testing infrastructure (gap closure)
+    - [ ] 14-06-PLAN.md — Add language parameter to worker AI service (gap closure)
 
 </details>
 
@@ -71,7 +72,7 @@
 | 11. Cleanup Verification | v1.1 | 1/1 | Complete | 2026-04-15 |
   | 12. Backend Foundation | v1.2 | 3/3 | Complete    | 2026-04-15 |
   | 13. AI Service Integration | v1.2 | 3/3 | Complete | 2026-04-15 |
-  | 14. Frontend UI | v1.2 | 3/5 | In Progress | 2026-04-16 |
+   | 14. Frontend UI | v1.2 | 3/6 | In Progress | 2026-04-16 |
 
 ---
 
