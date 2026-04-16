@@ -46,6 +46,7 @@ class PostUpdate(BaseModel):
     sections: Optional[List[Section]] = None
     thumbnail_url: Optional[str] = None
     language: Optional[str] = Field(None, pattern="^(vietnamese|english)$")
+    research_data: Optional[Dict[str, Any]] = None
 
 
 class JobInfo(BaseModel):

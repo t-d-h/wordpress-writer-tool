@@ -234,8 +234,12 @@ Provide your research as JSON with these keys:
             text = text.split("```json")[1].split("```")[0]
         elif "```" in text:
             text = text.split("```")[1].split("```")[0]
+        # Remove JSON comments (// ...) before parsing
+        import re
+
+        text = re.sub(r"//.*", "", text)
         data = json.loads(text.strip())
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
         data = {"raw_research": text}
     return data, total_tokens
 
@@ -297,6 +301,10 @@ Create an outline as JSON:
             text = text.split("```json")[1].split("```")[0]
         elif "```" in text:
             text = text.split("```")[1].split("```")[0]
+        # Remove JSON comments (// ...) before parsing
+        import re
+
+        text = re.sub(r"//.*", "", text)
         data = json.loads(text.strip())
     except json.JSONDecodeError:
         data = {"raw_outline": text}
