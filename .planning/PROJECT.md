@@ -48,21 +48,22 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ### Active
 
-None — all v1.2 requirements to be defined
+None — all v1.3 requirements to be defined
 
-## Current Milestone: v1.2 Vietnamese Language Support
+## Current Milestone: v1.3 Content Quality Improvements
 
-**Goal:** Add Vietnamese language option for post creation with Vietnamese as the default language.
+**Goal:** Fix content generation issues to improve output quality and ensure AI-generated content meets user specifications.
 
 **Target features:**
-- Add language selection checkbox (Vietnamese/English) in Create post form after the title field
-- Vietnamese is the default language for all new posts globally
-- Language selection is passed through the content generation pipeline
-- AI generates content in the selected language
+- Recheck how Outline uses content from Research
+- Recheck how Content uses content from Outline and Research
+- Verify how Additional Requests (Optional) is used
+- Fix output content that includes "`html or `" characters that shouldn't be there
+- Ensure content follows Target Section Count and Target Word Count (actual vs desired numbers shouldn't be too different)
 
 ## Current State
 
-**Version:** v1.1 (shipped 2026-04-15)
+**Version:** v1.3 (starting 2026-04-16)
 
 **Shipped Features (v1.0 MVP):**
 - Token usage display with breakdown by post type
@@ -81,7 +82,7 @@ None — all v1.2 requirements to be defined
 - Frontend UI verification (Phase 10 complete)
 - Cleanup verification (Phase 11 complete)
 
-**In Progress (v1.2 Vietnamese Language Support):**
+**Shipped Features (v1.2 Vietnamese Language Support):**
 - Backend foundation for language support (Phase 12 complete)
   - Language field added to Post Pydantic models with pattern validation
   - Language field stored in MongoDB
@@ -93,11 +94,19 @@ None — all v1.2 requirements to be defined
   - Language-specific system prompts with Vietnamese cultural context
   - Worker tasks extract and pass language to AI service functions
   - End-to-end language flow from MongoDB to AI providers
+- Frontend UI for language selection (Phase 14 complete)
+  - Language selection checkbox in Create Post form
+  - Language badge in post list table
+  - Language badge in post detail view
+  - localStorage persistence for language selection
+  - Frontend testing infrastructure
+  - Language parameter to worker AI service
 
 **Next Milestone Goals:**
-- Vietnamese language support for post creation
-- Vietnamese as default language option
-- Language selection in Create post form
+- Content quality improvements
+- Fix content generation pipeline issues
+- Ensure content meets user specifications (section count, word count)
+- Remove unwanted characters from output
 
 **Technical Debt:**
 - 10 code review findings documented (2 critical, 5 warnings, 3 info)
@@ -129,6 +138,13 @@ This is a brownfield project with existing codebase mapped in `.planning/codebas
 - Backend API with caching, pagination, and search/sort
 - Frontend table view with search, sort, filter, and pagination
 - Comprehensive verification documentation for all phases
+
+**v1.2 Vietnamese Language Support State:**
+- 3 phases completed, 12 plans executed, 36 tasks delivered
+- Backend foundation for language support
+- AI service integration for language support
+- Frontend UI for language selection
+- End-to-end language flow from MongoDB to AI providers
 
 **Known Issues:**
 - Plain-text credential storage (deferred for security milestone)
@@ -179,5 +195,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-**Last updated:** 2026-04-15 (Phase 13 complete)
-*Last updated: 2026-04-15 starting v1.2 milestone*
+**Last updated:** 2026-04-16 (starting v1.3 milestone)
