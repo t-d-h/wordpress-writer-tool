@@ -47,7 +47,7 @@
 <details>
 <summary>⏳ v1.3 Content Quality Improvements (Phases 15-21) — IN PROGRESS</summary>
 
-- [ ] Phase 15: HTML Cleaning Foundation (0/0 plans) — not started
+- [ ] Phase 15: HTML Cleaning Foundation (2/2 plans) — planned
 - [ ] Phase 16: Word Count Validation (0/0 plans) — not started
 - [ ] Phase 17: Section Count Validation (0/0 plans) — not started
 - [ ] Phase 18: Validation Results Display (0/0 plans) — not started
@@ -75,7 +75,7 @@
 | 12. Backend Foundation | v1.2 | 3/3 | Complete | 2026-04-15 |
 | 13. AI Service Integration | v1.2 | 3/3 | Complete | 2026-04-15 |
 | 14. Frontend UI | v1.2 | 6/6 | Complete | 2026-04-16 |
-| 15. HTML Cleaning Foundation | v1.3 | 0/0 | Not started | - |
+| 15. HTML Cleaning Foundation | v1.3 | 2/2 | Ready to execute | - |
 | 16. Word Count Validation | v1.3 | 0/0 | Not started | - |
 | 17. Section Count Validation | v1.3 | 0/0 | Not started | - |
 | 18. Validation Results Display | v1.3 | 0/0 | Not started | - |
