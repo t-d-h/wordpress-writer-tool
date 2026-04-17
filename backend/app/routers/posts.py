@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Body, Query
 from fastapi.responses import FileResponse
 from bson import ObjectId
-from datetime import datetime, timezone
+from app.utils.time_utils import get_now
 import uuid
 import os
 from pydantic import BaseModel
@@ -12,10 +12,7 @@ from app.models.post import (
     BulkPostCreate,
     PostUpdate,
     PostResponse,
-    WordCountValidationResponse,
 )
-from app.validation.content_validator import ContentValidationService
-from app.validation.word_count import WordCountValidator
 from app.redis_client import publish_job
 
 
@@ -26,21 +23,6 @@ class ThumbnailRequest(BaseModel):
 
 router = APIRouter(prefix="/api/posts", tags=["Posts"])
 
-
-@router.post(
-    "/{post_id}/validate-word-count", response_model=WordCountValidationResponse
-)
-async def validate_word_count(post_id: str):
-    """Validate the word count of a post's content."""
-    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Post not found")
-
-    content = doc.get("content", "")
-    validator = WordCountValidator(min_words=100, max_words=2000)
-    result = validator.validate(content)
-
-    return result
 
 
 def format_post(doc: dict) -> dict:
@@ -55,8 +37,6 @@ def format_post(doc: dict) -> dict:
         thumbnail_source=doc.get("thumbnail_source", "ai"),
         thumbnail_provider_id=doc.get("thumbnail_provider_id"),
         thumbnail_model_name=doc.get("thumbnail_model_name"),
-        target_word_count=doc.get("target_word_count"),
-        target_section_count=doc.get("target_section_count"),
         language=doc.get("language", "english"),
         title=doc.get("title"),
         meta_description=doc.get("meta_description"),
@@ -74,7 +54,6 @@ def format_post(doc: dict) -> dict:
         created_at=doc["created_at"],
         wp_post_id=doc.get("wp_post_id"),
         wp_post_url=doc.get("wp_post_url"),
-        validation_results=doc.get("validation_results"),
     ).model_dump()
 
 
@@ -106,18 +85,6 @@ async def get_post(post_id: str):
     if not doc:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    if doc.get("target_word_count") and doc.get("target_section_count"):
-        validator = ContentValidationService(
-            min_words=doc.get("target_word_count", 0) * 0.8,
-            max_words=doc.get("target_word_count", 0) * 1.2,
-            min_sections=doc.get("target_section_count", 0),
-            max_sections=doc.get("target_section_.count", 0),
-        )
-        validation_results = validator.validate(
-            html_content=doc.get("content", ""),
-            sections=doc.get("sections", []),
-        )
-        doc["validation_results"] = validation_results
 
     return format_post(doc)
 
@@ -139,8 +106,6 @@ async def create_post(data: PostCreate):
         "thumbnail_source": data.thumbnail_source,
         "thumbnail_provider_id": data.thumbnail_provider_id,
         "thumbnail_model_name": data.thumbnail_model_name,
-        "target_word_count": data.target_word_count,
-        "target_section_count": data.target_section_count,
         "language": data.language,
         "title": None,
         "meta_description": None,
@@ -161,7 +126,7 @@ async def create_post(data: PostCreate):
             "total": 0,
         },
         "jobs": [],
-        "created_at": datetime.now(timezone.utc),
+        "created_at": get_now(),
         "wp_post_id": None,
         "wp_post_url": None,
     }
@@ -169,23 +134,6 @@ async def create_post(data: PostCreate):
     post_id = str(result.inserted_id)
     post_doc["_id"] = result.inserted_id
 
-    # Perform validation
-    if data.target_word_count is not None and data.target_section_count is not None:
-        validator = ContentValidationService(
-            min_words=data.target_word_count * 0.8,
-            max_words=data.target_word_count * 1.2,
-            min_sections=data.target_section_count,
-            max_sections=data.target_section_count,
-        )
-        validation_results = validator.validate(
-            html_content=post_doc.get("content", ""),
-            sections=post_doc.get("sections", []),
-        )
-        post_doc["validation_results"] = validation_results
-        await posts_col.update_one(
-            {"_id": result.inserted_id},
-            {"$set": {"validation_results": validation_results}},
-        )
 
     # Create the research job (first step in pipeline)
     job_id = str(uuid.uuid4())
@@ -209,7 +157,7 @@ async def create_post(data: PostCreate):
             "project_id": data.project_id,
             "job_type": "research",
             "status": "pending",
-            "created_at": datetime.now(timezone.utc),
+            "created_at": get_now(),
         }
     )
 
@@ -224,8 +172,6 @@ async def create_post(data: PostCreate):
             "additional_requests": data.additional_requests or "",
             "ai_provider_id": data.ai_provider_id,
             "model_name": data.model_name,
-            "target_section_count": data.target_section_count,
-            "target_word_count": data.target_word_count,
             "language": data.language,
         }
     )
@@ -253,8 +199,6 @@ async def create_bulk_posts(data: BulkPostCreate):
             thumbnail_source=data.thumbnail_source,
             thumbnail_provider_id=data.thumbnail_provider_id,
             thumbnail_model_name=data.thumbnail_model_name,
-            target_word_count=data.target_word_count,
-            target_section_count=data.target_section_count,
             language=data.language,
         )
         # Reuse single post creation logic
@@ -282,26 +226,7 @@ async def update_post(post_id: str, data: PostUpdate):
         raise HTTPException(status_code=404, detail="Post not found")
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
 
-    # Perform validation
-    target_word_count = doc.get("target_word_count")
-    target_section_count = doc.get("target_section_count")
 
-    if target_word_count is not None and target_section_count is not None:
-        validator = ContentValidationService(
-            min_words=target_word_count * 0.8,
-            max_words=target_word_count * 1.2,
-            min_sections=target_section_count,
-            max_sections=target_section_count,
-        )
-        validation_results = validator.validate(
-            html_content=doc.get("content", ""),
-            sections=doc.get("sections", []),
-        )
-        doc["validation_results"] = validation_results
-        await posts_col.update_one(
-            {"_id": ObjectId(post_id)},
-            {"$set": {"validation_results": validation_results}},
-        )
 
     return format_post(doc)
 
@@ -351,7 +276,7 @@ async def publish_post(post_id: str, request: PublishRequest = None):
             "project_id": doc["project_id"],
             "job_type": "publish",
             "status": "pending",
-            "created_at": datetime.now(timezone.utc),
+            "created_at": get_now(),
         }
     )
     await publish_job(
@@ -380,8 +305,8 @@ async def unpublish_post(post_id: str):
         "job_type": "unpublish",
         "status": "completed",
         "error": None,
-        "started_at": datetime.now(timezone.utc),
-        "completed_at": datetime.now(timezone.utc),
+        "started_at": get_now(),
+        "completed_at": get_now(),
     }
     await posts_col.update_one(
         {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
@@ -393,9 +318,9 @@ async def unpublish_post(post_id: str):
             "project_id": doc["project_id"],
             "job_type": "unpublish",
             "status": "completed",
-            "created_at": datetime.now(timezone.utc),
-            "started_at": datetime.now(timezone.utc),
-            "completed_at": datetime.now(timezone.utc),
+            "created_at": get_now(),
+            "started_at": get_now(),
+            "completed_at": get_now(),
         }
     )
 
@@ -422,6 +347,52 @@ async def unpublish_post(post_id: str):
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Post not found")
     return {"message": "Post unpublished", "job_id": job_id}
+
+
+@router.post("/{post_id}/generate-research")
+async def generate_research(post_id: str):
+    """Queue research generation job."""
+    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    job_id = str(uuid.uuid4())
+    job_info = {
+        "job_id": job_id,
+        "job_type": "research",
+        "status": "pending",
+        "error": None,
+        "started_at": None,
+        "completed_at": None,
+    }
+    await posts_col.update_one(
+        {"_id": ObjectId(post_id)},
+        {"$push": {"jobs": job_info}},
+    )
+    await jobs_col.insert_one(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "research",
+            "status": "pending",
+            "created_at": get_now(),
+        }
+    )
+    await publish_job(
+        {
+            "job_id": job_id,
+            "post_id": post_id,
+            "project_id": doc["project_id"],
+            "job_type": "research",
+            "topic": doc["topic"],
+            "additional_requests": doc.get("additional_requests", ""),
+            "ai_provider_id": doc.get("ai_provider_id"),
+            "model_name": doc.get("model_name"),
+            "language": doc.get("language", "vietnamese"),
+        }
+    )
+    return {"message": "Research generation queued", "job_id": job_id}
 
 
 @router.post("/{post_id}/generate-outline")
@@ -451,7 +422,7 @@ async def generate_outline(post_id: str):
             "project_id": doc["project_id"],
             "job_type": "outline",
             "status": "pending",
-            "created_at": datetime.now(timezone.utc),
+            "created_at": get_now(),
         }
     )
     await publish_job(
@@ -494,7 +465,7 @@ async def generate_content(post_id: str):
             "project_id": doc["project_id"],
             "job_type": "content",
             "status": "pending",
-            "created_at": datetime.now(timezone.utc),
+            "created_at": get_now(),
         }
     )
     await publish_job(
@@ -515,8 +486,16 @@ async def generate_thumbnail(post_id: str, request: ThumbnailRequest = None):
     if not doc:
         raise HTTPException(status_code=404, detail="Post not found")
 
+    # Use specific provider/model if requested, then fall back to post's thumbnail provider, then content provider
     provider_id = request.provider_id if request else None
     model_name = request.model_name if request else None
+    
+    # If source is "upload", we should probably warn or skip, but if they explicitly asked for generation, we'll try
+    thumbnail_source = doc.get("thumbnail_source", "ai")
+    if not provider_id and not model_name and thumbnail_source == "upload":
+        # If they just clicked "generate" without options and it's an "upload" post, 
+        # it might be a mistake, but we'll proceed using defaults if configured.
+        pass
 
     job_id = str(uuid.uuid4())
     job_info = {
@@ -538,17 +517,30 @@ async def generate_thumbnail(post_id: str, request: ThumbnailRequest = None):
             "project_id": doc["project_id"],
             "job_type": "thumbnail",
             "status": "pending",
-            "created_at": datetime.now(timezone.utc),
+            "created_at": get_now(),
         }
     )
+    
+    # Fallback chain: request -> post.thumbnail -> post.content
+    final_provider_id = (
+        provider_id or 
+        doc.get("thumbnail_provider_id") or 
+        doc.get("ai_provider_id")
+    )
+    final_model_name = (
+        model_name or 
+        doc.get("thumbnail_model_name") or 
+        doc.get("model_name")
+    )
+
     await publish_job(
         {
             "job_id": job_id,
             "post_id": post_id,
             "project_id": doc["project_id"],
             "job_type": "thumbnail",
-            "ai_provider_id": provider_id or doc.get("ai_provider_id"),
-            "model_name": model_name or doc.get("model_name"),
+            "ai_provider_id": final_provider_id,
+            "model_name": final_model_name,
         }
     )
     return {"message": "Thumbnail generation queued", "job_id": job_id}
@@ -585,8 +577,8 @@ async def upload_thumbnail(post_id: str, file: UploadFile = File(...)):
         "job_type": "thumbnail",
         "status": "completed",
         "error": None,
-        "started_at": datetime.now(timezone.utc),
-        "completed_at": datetime.now(timezone.utc),
+        "started_at": get_now(),
+        "completed_at": get_now(),
     }
 
     await posts_col.update_one(
@@ -608,9 +600,9 @@ async def upload_thumbnail(post_id: str, file: UploadFile = File(...)):
             "project_id": doc["project_id"],
             "job_type": "thumbnail",
             "status": "completed",
-            "created_at": datetime.now(timezone.utc),
-            "started_at": datetime.now(timezone.utc),
-            "completed_at": datetime.now(timezone.utc),
+            "created_at": get_now(),
+            "started_at": get_now(),
+            "completed_at": get_now(),
         }
     )
 

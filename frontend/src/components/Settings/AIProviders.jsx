@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineXMark } from 'react-icons/hi2'
 import { getProviders, createProvider, updateProvider, deleteProvider, verifyProvider, fetchProviderModels } from '../../api/client'
+import { formatDateOnly } from '../../utils/dateUtils'
 
 export default function AIProviders() {
   const [providers, setProviders] = useState([])
@@ -149,7 +150,7 @@ export default function AIProviders() {
                   </td>
                   <td style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>{p.api_key_preview}</td>
                   <td style={{ color: 'var(--text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.model_name || '—'}</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{new Date(p.created_at).toLocaleDateString()}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{formatDateOnly(p.created_at)}</td>
                   <td>
                     <div className="action-buttons">
                       <button className="action-btn" onClick={() => handleEdit(p)} title="Edit"><HiOutlinePencil /></button>

@@ -19,8 +19,7 @@ class PostCreate(BaseModel):
     thumbnail_source: str = "ai"
     thumbnail_provider_id: Optional[str] = None
     thumbnail_model_name: Optional[str] = None
-    target_word_count: Optional[int] = None
-    target_section_count: Optional[int] = None
+
     language: str = Field(default="vietnamese", pattern="^(vietnamese|english)$")
 
 
@@ -34,8 +33,7 @@ class BulkPostCreate(BaseModel):
     thumbnail_source: str = "ai"
     thumbnail_provider_id: Optional[str] = None
     thumbnail_model_name: Optional[str] = None
-    target_word_count: Optional[int] = None
-    target_section_count: Optional[int] = None
+
     language: str = Field(default="vietnamese", pattern="^(vietnamese|english)$")
 
 
@@ -79,8 +77,7 @@ class PostResponse(BaseModel):
     thumbnail_source: str = "ai"
     thumbnail_provider_id: Optional[str] = None
     thumbnail_model_name: Optional[str] = None
-    target_word_count: Optional[int] = None
-    target_section_count: Optional[int] = None
+
     title: Optional[str] = None
     meta_description: Optional[str] = None
     outline: Optional[Dict[str, Any]] = None
@@ -101,14 +98,7 @@ class PostResponse(BaseModel):
     tags: Optional[List[str]] = None
     origin: str = "tool"  # "tool" or "wordpress"
     language: str = "vietnamese"
-    validation_results: Optional[Dict[str, Any]] = None
 
 
-class WordCountValidationResponse(BaseModel):
-    is_valid: bool
-    word_count: int
-    min_words: Optional[int]
-    max_words: Optional[int]
-    meets_min: bool
-    meets_max: bool
-    errors: List[str]
+
+

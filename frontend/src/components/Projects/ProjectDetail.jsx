@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath, HiExclamationTriangle } from 'react-icons/hi2'
+import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath, HiExclamationTriangle, HiMagnifyingGlass } from 'react-icons/hi2'
 import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts, getSitePosts } from '../../api/client'
 import TokenUsageCard from './TokenUsageCard'
+import { formatDateOnly } from '../../utils/dateUtils'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -19,6 +20,7 @@ export default function ProjectDetail() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('date-desc')
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [wpPosts, setWpPosts] = useState([])
   const [wpPostsPage, setWpPostsPage] = useState(1)
   const [wpPostsTotal, setWpPostsTotal] = useState(0)
@@ -36,8 +38,6 @@ export default function ProjectDetail() {
     thumbnail_source: 'upload',
     thumbnail_provider_id: '',
     thumbnail_model_name: '',
-    target_word_count: 500,
-    target_section_count: 4,
     thumbnail_file: null,
     language: 'vietnamese'
   })
@@ -50,8 +50,6 @@ export default function ProjectDetail() {
     thumbnail_source: 'upload',
     thumbnail_provider_id: '',
     thumbnail_model_name: '',
-    target_word_count: 500,
-    target_section_count: 4,
     thumbnail_file: null,
     language: 'vietnamese'
   })
@@ -87,8 +85,6 @@ export default function ProjectDetail() {
           thumbnail_source: 'upload',
           thumbnail_provider_id: defaultModels.image_provider_id || '',
           thumbnail_model_name: defaultModels.image_model_name || '',
-          target_word_count: 500,
-          target_section_count: 4,
           thumbnail_file: null,
           language: savedLanguage
         })
@@ -102,8 +98,6 @@ export default function ProjectDetail() {
           thumbnail_source: 'upload',
           thumbnail_provider_id: defaultModels.image_provider_id || '',
           thumbnail_model_name: defaultModels.image_model_name || '',
-          target_word_count: 500,
-          target_section_count: 4,
           thumbnail_file: null,
           language: savedLanguage
         })
@@ -139,8 +133,6 @@ export default function ProjectDetail() {
         thumbnail_source: 'upload',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
-        target_word_count: 500,
-        target_section_count: 4,
         thumbnail_file: null,
         language: 'vietnamese'
       })
@@ -153,8 +145,6 @@ export default function ProjectDetail() {
         thumbnail_source: 'upload',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
-        target_word_count: 500,
-        target_section_count: 4,
         thumbnail_file: null,
         language: 'vietnamese'
       })
@@ -264,6 +254,11 @@ export default function ProjectDetail() {
     }
   }
 
+  const handleSearch = () => {
+    setSearchQuery(searchTerm)
+    setWpPostsPage(1)
+  }
+
   const handleCreateSingle = async (e) => {
     e.preventDefault()
 
@@ -294,8 +289,6 @@ export default function ProjectDetail() {
         formData.append('thumbnail_source', singleForm.thumbnail_source)
         if (singleForm.thumbnail_provider_id) formData.append('thumbnail_provider_id', singleForm.thumbnail_provider_id)
         if (singleForm.thumbnail_model_name) formData.append('thumbnail_model_name', singleForm.thumbnail_model_name)
-        if (singleForm.target_word_count) formData.append('target_word_count', singleForm.target_word_count)
-        if (singleForm.target_section_count) formData.append('target_section_count', singleForm.target_section_count)
         formData.append('language', singleForm.language)
 
       const response = await createPost(Object.fromEntries(formData))
@@ -310,8 +303,6 @@ export default function ProjectDetail() {
         thumbnail_source: 'upload',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
-        target_word_count: 500,
-        target_section_count: 4,
         thumbnail_file: null,
         language: 'vietnamese'
       })
@@ -356,8 +347,6 @@ export default function ProjectDetail() {
         thumbnail_source: bulkForm.thumbnail_source,
         thumbnail_provider_id: bulkForm.thumbnail_provider_id,
         thumbnail_model_name: bulkForm.thumbnail_model_name,
-        target_word_count: bulkForm.target_word_count,
-        target_section_count: bulkForm.target_section_count,
         language: bulkForm.language,
       })
       setShowCreateModal(false)
@@ -370,8 +359,6 @@ export default function ProjectDetail() {
         thumbnail_source: 'upload',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
-        target_word_count: 500,
-        target_section_count: 4,
         thumbnail_file: null,
         language: 'vietnamese'
       })
@@ -390,6 +377,7 @@ export default function ProjectDetail() {
         outline: () => generateOutline(postId),
         content: () => generateContent(postId),
         thumbnail: () => generateThumbnail(postId),
+        research: () => generateResearch(postId),
       }
       const result = await actions[action]?.()
       if (result !== null) load()
@@ -533,60 +521,58 @@ export default function ProjectDetail() {
                     <th>Outline</th>
                     <th>Content</th>
                     <th>Thumb</th>
-                    <th>Uploaded</th>
+                    <th>Publish</th>
                     <th>Status</th>
-                    <th>Validation</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
-                 <tbody>
-                     {Array.isArray(posts) && posts.map(p => (
-                       <tr key={p.id}>
-                        <td>
-                          <button
-                            className="link-button"
-                            onClick={() => navigate(`/posts/${p.id}`)}
-                            style={{ fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, textAlign: 'left', fontSize: 'inherit' }}
-                          >
-                            {p.title || p.topic}
-                          </button>
-                        </td>
-                        <td><LanguageBadge language={p.language} /></td>
-                        <td><JobStatusBadge jobs={p.jobs} jobType="research" /></td>
-                        <td><JobStatusBadge jobs={p.jobs} jobType="outline" /></td>
-                        <td><JobStatusBadge jobs={p.jobs} jobType="content" /></td>
-                        <td><JobStatusBadge jobs={p.jobs} jobType="thumbnail" /></td>
-                        <td><BoolBadge value={!!p.wp_post_id} /></td>
-                        <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
-                        <td><ValidationStatus post={p} /></td>
-                        <td>
-                          <div className="action-buttons">
-                            <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)}>View</button>
-                            {p.status === 'published' ? (
-                              <button className="action-btn" onClick={() => handleAction('unpublish', p.id)}>Unpublish</button>
-                            ) : (
-                              <button className="action-btn" onClick={() => handleAction('publish', p.id)}>Publish</button>
-                            )}
-                            {p.wp_post_id && project.wp_site_url && (
-                              <a
-                                className="action-btn"
-                                href={`${project.wp_site_url}/?p=${p.wp_post_id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ textDecoration: 'none', display: 'inline-block' }}
-                              >
-                                View on WordPress
-                              </a>
-                            )}
-                            <button className="action-btn danger" onClick={() => handleAction('delete', p.id)}>Delete</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                <tbody>
+                  {Array.isArray(posts) && posts.map(p => (
+                    <tr key={p.id}>
+                      <td>
+                        <button
+                          className="link-button"
+                          onClick={() => navigate(`/posts/${p.id}`)}
+                          style={{ fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', padding: 0, textAlign: 'left', fontSize: 'inherit' }}
+                        >
+                          {p.title || p.topic}
+                        </button>
+                      </td>
+                      <td><LanguageBadge language={p.language} /></td>
+                      <td><JobStatusBadge jobs={p.jobs} jobType="research" isDone={p.research_done} /></td>
+                      <td><JobStatusBadge jobs={p.jobs} jobType="outline" isDone={!!p.outline} /></td>
+                      <td><JobStatusBadge jobs={p.jobs} jobType="content" isDone={p.content_done} /></td>
+                      <td><JobStatusBadge jobs={p.jobs} jobType="thumbnail" isDone={p.thumbnail_done || !!p.thumbnail_url} /></td>
+                      <td><JobStatusBadge jobs={p.jobs} jobType="publish" isDone={p.status === 'published'} /></td>
+                      <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
+                      <td>
+                        <div className="action-buttons">
+                          <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)}>View</button>
+                          {p.status === 'published' ? (
+                            <button className="action-btn" onClick={() => handleAction('unpublish', p.id)}>Unpublish</button>
+                          ) : (
+                            <button className="action-btn" onClick={() => handleAction('publish', p.id)}>Publish</button>
+                          )}
+                          {p.wp_post_id && project.wp_site_url && (
+                            <a
+                              className="action-btn"
+                              href={`${project.wp_site_url}/?p=${p.wp_post_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ textDecoration: 'none', display: 'inline-block' }}
+                            >
+                              WP
+                            </a>
+                          )}
+                          <button className="action-btn danger" onClick={() => handleAction('delete', p.id)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
-          )}
+            )}
         </>
       )}
 
@@ -628,14 +614,34 @@ export default function ProjectDetail() {
                     <option value="title-desc">Title (Z-A)</option>
                     <option value="status">Status</option>
                   </select>
-                  <input
-                    className="form-input"
-                    type="text"
-                    placeholder="Search by title..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ flex: 1, maxWidth: 300, padding: '8px 12px' }}
-                  />
+                  <div style={{ display: 'flex', gap: 0, flex: 1, maxWidth: 400 }}>
+                    <input
+                      className="form-input"
+                      type="text"
+                      placeholder="Search by title..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      style={{ 
+                        flex: 1, 
+                        padding: '8px 12px', 
+                        borderTopRightRadius: 0, 
+                        borderBottomRightRadius: 0,
+                        borderRight: 'none'
+                      }}
+                    />
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={handleSearch}
+                      style={{ 
+                        borderTopLeftRadius: 0, 
+                        borderBottomLeftRadius: 0,
+                        padding: '8px 16px'
+                      }}
+                    >
+                      <HiMagnifyingGlass style={{ width: 18, height: 18 }} />
+                    </button>
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <button className="btn btn-secondary" onClick={() => loadWpPosts()}>
@@ -700,9 +706,7 @@ export default function ProjectDetail() {
                           <td>
                             {post._embedded?.['wp:term']?.[1]?.map(tag => tag.name).join(', ') || '-'}
                           </td>
-                          <td>
-                            {post.date ? new Date(post.date).toLocaleDateString() : '-'}
-                          </td>
+                            <td>{formatDateOnly(post.date)}</td>
                           <td>
                             <span className={`status-badge status-${post.status}`}>
                               {post.status}
@@ -767,34 +771,6 @@ export default function ProjectDetail() {
                   <input className="form-input" placeholder="e.g. How to Improve Your Website SEO" value={singleForm.topic} onChange={e => setSingleForm({ ...singleForm, topic: e.target.value })} required />
                 </div>
 
-                {/* Content Length Options */}
-                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Content Length Options</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    <div className="form-group">
-                      <label className="form-label">Target Word Count</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        value={singleForm.target_word_count}
-                        onChange={e => setSingleForm({ ...singleForm, target_word_count: parseInt(e.target.value) || 500 })}
-                        min={100}
-                        step={100}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Target Section Count</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        value={singleForm.target_section_count}
-                        onChange={e => setSingleForm({ ...singleForm, target_section_count: parseInt(e.target.value) || 4 })}
-                        min={2}
-                        max={20}
-                      />
-                    </div>
-                  </div>
-                </div>
 
                 <div className="form-group">
                   <label className="form-label">Language</label>
@@ -897,34 +873,6 @@ export default function ProjectDetail() {
                   <textarea className="form-textarea" style={{ minHeight: 150 }} placeholder={"Topic 1\nTopic 2\nTopic 3"} value={bulkForm.topics} onChange={e => setBulkForm({ ...bulkForm, topics: e.target.value })} required />
                 </div>
 
-                {/* Content Length Options */}
-                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Content Length Options</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    <div className="form-group">
-                      <label className="form-label">Target Word Count</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        value={bulkForm.target_word_count}
-                        onChange={e => setBulkForm({ ...bulkForm, target_word_count: parseInt(e.target.value) || 500 })}
-                        min={100}
-                        step={100}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Target Section Count</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        value={bulkForm.target_section_count}
-                        onChange={e => setBulkForm({ ...bulkForm, target_section_count: parseInt(e.target.value) || 4 })}
-                        min={2}
-                        max={20}
-                      />
-                    </div>
-                  </div>
-                </div>
 
                 <div className="form-group">
                   <label className="form-label">Language</label>
@@ -1036,9 +984,8 @@ function BoolBadge({ value }) {
   )
 }
 
-function JobStatusBadge({ jobs, jobType }) {
+function JobStatusBadge({ jobs, jobType, isDone }) {
   const job = jobs?.find(j => j.job_type === jobType)
-  if (!job) return <span className="status-badge status-idle">—</span>
   
   const statusConfig = {
     pending: { icon: <HiOutlineClock />, class: 'status-pending', label: 'Pending' },
@@ -1046,17 +993,28 @@ function JobStatusBadge({ jobs, jobType }) {
     completed: { icon: <HiOutlineCheckCircle />, class: 'status-completed', label: 'Completed' },
     failed: { icon: <HiOutlineXCircle />, class: 'status-failed', label: 'Failed' },
     retrying: { icon: <HiArrowPath className="spin" />, class: 'status-retrying', label: 'Retrying' },
+    idle: { icon: <HiOutlineClock />, class: 'status-pending', label: 'Pending' },
   }
   
-  const config = statusConfig[job.status] || { icon: null, class: 'status-idle' }
+  let status = job ? job.status : 'idle'
+  
+  if (isDone !== undefined) {
+    if (isDone) {
+      status = 'completed'
+    } else if (status === 'completed') {
+      status = 'idle'
+    }
+  }
+  
+  const config = statusConfig[status] || { icon: null, class: 'status-idle' }
   
   return (
     <span 
       className={`status-badge ${config.class}`} 
-      title={job.status === 'retrying' ? `Retrying (${job.retry_attempt}/${job.max_retries})` : (job.error || config.label)}
+      title={job?.status === 'retrying' ? `Retrying (${job.retry_attempt}/${job.max_retries})` : (job?.error || config.label)}
     >
       {config.icon}
-      {job.status === 'retrying' && job.retry_attempt && (
+      {status === 'retrying' && job?.retry_attempt && (
         <span style={{ fontSize: '10px', marginLeft: '4px' }}>
           {job.retry_attempt}/{job.max_retries}
         </span>
@@ -1071,7 +1029,8 @@ BoolBadge.propTypes = {
 
 JobStatusBadge.propTypes = {
   jobs: PropTypes.array.isRequired,
-  jobType: PropTypes.string.isRequired
+  jobType: PropTypes.string.isRequired,
+  isDone: PropTypes.bool
 }
 
 function LanguageBadge({ language }) {
@@ -1092,29 +1051,3 @@ LanguageBadge.propTypes = {
   language: PropTypes.string
 }
 
-function ValidationStatus({ post }) {
-  if (!post || !post.validation_results) {
-    return <span>-</span>;
-  }
-  const errors = [];
-  if (post.validation_results.word_count && !post.validation_results.word_count.is_valid) {
-    errors.push(...post.validation_results.word_count.errors);
-  }
-  if (post.validation_results.section_count && !post.validation_results.section_count.is_valid) {
-    errors.push(...post.validation_results.section_count.errors);
-  }
-
-  if (errors.length === 0) {
-    return <span style={{ color: 'var(--success)' }}><HiOutlineCheckCircle /></span>;
-  }
-
-  return (
-    <span title={errors.join('\n')} style={{ color: 'var(--warning)' }}>
-      <HiExclamationTriangle />
-    </span>
-  );
-}
-
-ValidationStatus.propTypes = {
-    post: PropTypes.object.isRequired,
-};

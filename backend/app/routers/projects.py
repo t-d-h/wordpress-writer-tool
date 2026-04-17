@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from bson import ObjectId
-from datetime import datetime, timezone
+from app.utils.time_utils import get_now
 from typing import Optional
 from app.database import projects_col, wp_sites_col, posts_col
 from app.models.project import (
@@ -107,7 +107,7 @@ async def create_project(data: ProjectCreate):
 
     doc = {
         **data.model_dump(),
-        "created_at": datetime.now(timezone.utc),
+        "created_at": get_now(),
     }
     result = await projects_col.insert_one(doc)
     doc["_id"] = result.inserted_id

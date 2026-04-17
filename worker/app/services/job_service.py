@@ -2,8 +2,8 @@
 Job Service — helper to create and queue jobs from the API layer.
 """
 import uuid
-from datetime import datetime, timezone
 from bson import ObjectId
+from app.utils.time_utils import get_now
 from app.database import posts_col, jobs_col
 from app.redis_client import publish_job
 
@@ -34,7 +34,7 @@ async def create_and_queue_job(post_id: str, project_id: str, job_type: str, ext
         "project_id": project_id,
         "job_type": job_type,
         "status": "pending",
-        "created_at": datetime.now(timezone.utc),
+        "created_at": get_now(),
     })
 
     # Publish to Redis

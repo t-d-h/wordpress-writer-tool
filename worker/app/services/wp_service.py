@@ -32,7 +32,7 @@ async def fetch_with_retry(
     method,
     url,
     on_retry: callable = None,
-    max_retries=3,
+    max_retries=1,
     delay=5,
     **kwargs,
 ):

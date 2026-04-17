@@ -110,7 +110,7 @@ def _get_auth_header(username: str, api_key: str) -> dict:
 
 
 async def fetch_with_retry(
-    url: str, headers: dict, params: dict, max_retries: int = 3
+    url: str, headers: dict, params: dict, max_retries: int = 1
 ) -> dict:
     """Fetch with exponential backoff on rate limit errors.
 

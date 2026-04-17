@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles, HiExclamationTriangle } from 'react-icons/hi2'
-import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP, validateWordCount } from '../../api/client'
+import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles, HiExclamationTriangle, HiArrowPath } from 'react-icons/hi2'
+import { getPost, publishPost, unpublishPost, generateResearch, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP } from '../../api/client'
+import { formatDateTime } from '../../utils/dateUtils'
 
 export default function PostView() {
   const { id } = useParams()
@@ -26,7 +27,6 @@ export default function PostView() {
   })
   const [selectedFile, setSelectedFile] = useState(null)
   const [filePreview, setFilePreview] = useState(null)
-  const [wordCountValidation, setWordCountValidation] = useState(null)
 
   useEffect(() => { load() }, [id])
 
@@ -74,6 +74,7 @@ export default function PostView() {
       const actions = {
         publish: () => publishPost(id, true),
         unpublish: () => unpublishPost(id),
+        research: () => generateResearch(id),
         outline: () => generateOutline(id),
         content: () => generateContent(id),
         thumbnail: () => generateThumbnail(id),
@@ -149,15 +150,6 @@ export default function PostView() {
     }
   }
 
-  const handleValidateWordCount = async () => {
-    try {
-      const res = await validateWordCount(id)
-      setWordCountValidation(res.data)
-    } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
-    }
-  }
-
   if (loading) return <div className="loading-page"><div className="loading-spinner" /></div>
   if (!post) return <div className="empty-state"><div className="empty-state-title">Post not found</div></div>
 
@@ -166,7 +158,7 @@ export default function PostView() {
     { key: 'outline', label: 'Outline', done: !!post.outline },
     { key: 'content', label: 'Content', done: post.content_done },
     { key: 'thumbnail', label: 'Thumbnail', done: post.thumbnail_done || !!post.thumbnail_url },
-    { key: 'publish', label: 'Upload to WordPress', done: post.status === 'published' },
+    { key: 'publish', label: 'Publish', done: post.status === 'published' },
   ]
 
   const getStepStatus = (key) => {
@@ -187,22 +179,6 @@ export default function PostView() {
 
   const tu = post.token_usage || {}
 
-  const getValidationErrors = () => {
-    if (!post || !post.validation_results) {
-      return [];
-    }
-    const errors = [];
-    if (post.validation_results.word_count && !post.validation_results.word_count.is_valid) {
-      errors.push(...post.validation_results.word_count.errors);
-    }
-    if (post.validation_results.section_count && !post.validation_results.section_count.is_valid) {
-      errors.push(...post.validation_results.section_count.errors);
-    }
-    return errors;
-  };
-
-  const validationErrors = getValidationErrors();
-
   return (
     <div className="page-enter">
       <button className="btn btn-secondary" onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
@@ -212,12 +188,34 @@ export default function PostView() {
       <div className="page-header">
         <h1 className="page-title">
           {post.title || post.topic}
-          {validationErrors.length > 0 && (
-            <span title={validationErrors.join('\n')} style={{ marginLeft: '12px', color: 'var(--warning)' }}>
-              <HiExclamationTriangle />
-            </span>
-          )}
         </h1>
+        <div className="retry-buttons" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
+          {getStepStatus('research') === 'failed' && (
+            <button className="btn btn-danger btn-sm" onClick={() => handleAction('research')}>
+              <HiArrowPath /> Retry Research
+            </button>
+          )}
+          {getStepStatus('outline') === 'failed' && (
+            <button className="btn btn-danger btn-sm" onClick={() => handleAction('outline')}>
+              <HiArrowPath /> Retry Outline
+            </button>
+          )}
+          {getStepStatus('content') === 'failed' && (
+            <button className="btn btn-danger btn-sm" onClick={() => handleAction('content')}>
+              <HiArrowPath /> Retry Content
+            </button>
+          )}
+          {getStepStatus('thumbnail') === 'failed' && (
+            <button className="btn btn-danger btn-sm" onClick={() => handleAction('thumbnail')}>
+              <HiArrowPath /> Retry Thumbnail
+            </button>
+          )}
+          {getStepStatus('publish') === 'failed' && (
+            <button className="btn btn-danger btn-sm" onClick={() => handleAction('publish')}>
+              <HiArrowPath /> Retry Publish
+            </button>
+          )}
+        </div>
         <div className="page-header-actions">
           <LanguageBadge language={post.language} />
           <span className={`status-badge status-${post.status}`}>{post.status.replace('_', ' ')}</span>
@@ -235,6 +233,7 @@ export default function PostView() {
           )}
         </div>
       </div>
+
 
       <div className="token-usage" style={{ marginBottom: 24 }}>
         <div className="token-item">
@@ -259,7 +258,6 @@ export default function PostView() {
         </div>
       </div>
 
-      <ValidationResults results={post.validation_results} />
 
       <div className="card" style={{ marginBottom: 24 }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Pipeline Progress</h3>
@@ -292,16 +290,6 @@ export default function PostView() {
             )
           })}
         </div>
-      </div>
-
-      <div className="card" style={{ marginBottom: 24 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Word Count Validation</h3>
-        <button className="btn btn-secondary" onClick={handleValidateWordCount}>Validate</button>
-        {wordCountValidation && (
-          <div style={{ marginTop: 16 }}>
-            <ValidationResults results={{ word_count: wordCountValidation }} />
-          </div>
-        )}
       </div>
 
       {expandedStage && (
@@ -481,7 +469,7 @@ export default function PostView() {
                )}
            {expandedStage === 'publish' && (
             <>
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Upload to WordPress</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Publish</h3>
               {post.status === 'published' ? (
                 <div style={{ padding: 16, background: 'rgba(39, 174, 96, 0.1)', color: 'var(--success)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(39, 174, 96, 0.2)' }}>
                   This post has been successfully published to WordPress.
@@ -542,7 +530,7 @@ export default function PostView() {
                     <td style={{ fontWeight: 600, textTransform: 'capitalize' }}>{j.job_type.replace('_', ' ')}</td>
                     <td><span className={`status-badge status-${j.status}`}>{j.status}</span></td>
                     <td style={{ color: 'var(--danger)', fontSize: 12 }}>{j.error || '—'}</td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{j.created_at ? new Date(j.created_at).toLocaleString() : '—'}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{formatDateTime(j.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -572,63 +560,3 @@ LanguageBadge.propTypes = {
   language: PropTypes.string
 }
 
-function ValidationResults({ results }) {
-  if (!results) {
-    return null;
-  }
-
-  const { word_count, section_count } = results;
-
-  const isValid = word_count?.is_valid && section_count?.is_valid;
-
-  return (
-    <div className={`card ${isValid ? '' : 'card-warning'}`} style={{ marginBottom: 24 }}>
-      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>
-        Content Validation
-      </h3>
-      <div className="validation-summary" style={{ marginBottom: 12 }}>
-        {isValid ? (
-          <div className="validation-status valid">
-            <HiOutlineCheckCircle /> All checks passed
-          </div>
-        ) : (
-          <div className="validation-status invalid">
-            <HiExclamationTriangle /> Validation failed
-          </div>
-        )}
-      </div>
-      <div className="validation-results">
-        {word_count && (
-          <div className={`validation-item ${word_count.is_valid ? 'valid' : 'invalid'}`}>
-            <div className="validation-label">Word Count</div>
-            <div className="validation-value">{word_count.word_count}</div>
-            {!word_count.is_valid && (
-              <div className="validation-errors">
-                {word_count.errors.map((error, i) => (
-                  <div key={i}>{error}</div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        {section_count && (
-          <div className={`validation-item ${section_count.is_valid ? 'valid' : 'invalid'}`}>
-            <div className="validation-label">Section Count</div>
-            <div className="validation-value">{section_count.section_count}</div>
-            {!section_count.is_valid && (
-              <div className="validation-errors">
-                {section_count.errors.map((error, i) => (
-                  <div key={i}>{error}</div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-ValidationResults.propTypes = {
-  results: PropTypes.object,
-};

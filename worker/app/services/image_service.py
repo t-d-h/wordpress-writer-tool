@@ -126,7 +126,7 @@ async def generate_image(
     provider_id: str = None,
     model_name: str = None,
     save_dir: str = "/tmp/wp_images",
-    max_retries: int = 2,
+    max_retries: int = 1,
     delay: int = 30,
     on_retry: callable = None,
 ) -> str:
@@ -197,4 +197,4 @@ The image should be:
 - Suitable for a blog post
 - Informative or illustrative"""
 
-    return await generate_image(prompt, provider_id, model_name)
+    return await generate_image(prompt, provider_id, model_name, on_retry=on_retry)

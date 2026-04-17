@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
-from datetime import datetime, timezone
+from app.utils.time_utils import get_now
 from app.database import wp_sites_col, projects_col
 from app.models.wp_site import WPSiteCreate, WPSiteUpdate, WPSiteResponse
 
@@ -57,7 +57,7 @@ async def create_site(data: WPSiteCreate):
         raise HTTPException(status_code=400, detail=result["error"])
     doc = {
         **data.model_dump(),
-        "created_at": datetime.now(timezone.utc),
+        "created_at": get_now(),
     }
     result = await wp_sites_col.insert_one(doc)
     doc["_id"] = result.inserted_id

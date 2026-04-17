@@ -5,8 +5,8 @@ Each task updates MongoDB and Redis with status/results.
 
 import asyncio
 import traceback
-from datetime import datetime, timezone
 from bson import ObjectId
+from app.utils.time_utils import get_now
 from app.database import posts_col, jobs_col
 from app.redis_client import set_job_status
 from app.services import ai_service, image_service, wp_service
@@ -25,7 +25,7 @@ async def _update_job_status(
     max_retries: int = None,
 ):
     """Update job status in both MongoDB and Redis."""
-    now = datetime.now(timezone.utc)
+    now = get_now()
 
     # Update in jobs collection
     update = {"status": status}
@@ -80,6 +80,16 @@ async def queue_next_job(
     post_id: str, project_id: str, next_job_type: str, extra_data: dict = None
 ) -> str:
     """Queue the next job in the pipeline after current job completes successfully."""
+    # Check if a pending or running job of this type already exists for this post
+    existing = await jobs_col.find_one({
+        "post_id": post_id,
+        "job_type": next_job_type,
+        "status": {"$in": ["pending", "running"]}
+    })
+    if existing:
+        logger.info(f"[PIPELINE] Job of type {next_job_type} already exists ({existing['status']}) for post {post_id}. Skipping queue.")
+        return existing["job_id"]
+
     logger.info(f"[PIPELINE] Queuing {next_job_type} job for post {post_id}")
     job_id = await create_and_queue_job(post_id, project_id, next_job_type, extra_data)
     logger.info(f"[PIPELINE] Queued {next_job_type} job {job_id} for post {post_id}")
@@ -95,6 +105,24 @@ async def run_research(job_data: dict):
         logger.info(f"[RESEARCH] Starting research for post {post_id}")
 
         await _update_job_status(job_id, post_id, "running")
+
+        # Check for completed stage or other running jobs
+        post = await posts_col.find_one({"_id": ObjectId(post_id)})
+        if post and post.get("research_done"):
+            logger.info(f"[RESEARCH] Research already completed for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
+
+        existing_running = await jobs_col.find_one({
+            "post_id": post_id,
+            "job_type": "research",
+            "status": "running",
+            "job_id": {"$ne": job_id}
+        })
+        if existing_running:
+            logger.info(f"[RESEARCH] Another research job is already running for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed") # Mark as completed to satisfy pipeline
+            return
 
         topic = job_data["topic"]
         additional = job_data.get("additional_requests", "")
@@ -143,6 +171,7 @@ async def run_research(job_data: dict):
 
         # Update total tokens
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
+
         tu = post.get("token_usage", {})
         total = sum(v for k, v in tu.items() if k != "total" and isinstance(v, int))
         await posts_col.update_one(
@@ -156,7 +185,6 @@ async def run_research(job_data: dict):
         project_id = job_data.get("project_id")
         if project_id:
             await queue_next_job(post_id, project_id, "outline")
-            logger.info(f"[PIPELINE] Queued outline job for post {post_id}")
 
     except Exception as e:
         logger.error(f"[RESEARCH] Research failed for post {post_id}: {e}")
@@ -177,6 +205,22 @@ async def run_outline(job_data: dict):
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
         if not post:
             raise Exception("Post not found")
+
+        if post.get("outline"):
+            logger.info(f"[OUTLINE] Outline already generated for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
+            
+        existing_running = await jobs_col.find_one({
+            "post_id": post_id,
+            "job_type": "outline",
+            "status": "running",
+            "job_id": {"$ne": job_id}
+        })
+        if existing_running:
+            logger.info(f"[OUTLINE] Another outline job is already running for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
 
         topic = post["topic"]
         additional = post.get("additional_requests", "")
@@ -230,6 +274,7 @@ async def run_outline(job_data: dict):
 
         # Update total tokens
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
+
         tu = post.get("token_usage", {})
         total = sum(v for k, v in tu.items() if k != "total" and isinstance(v, int))
         await posts_col.update_one(
@@ -243,7 +288,6 @@ async def run_outline(job_data: dict):
         project_id = post.get("project_id")
         if project_id:
             await queue_next_job(post_id, project_id, "content")
-            logger.info(f"[PIPELINE] Queued content job for post {post_id}")
 
     except Exception as e:
         logger.error(f"[OUTLINE] Outline failed for post {post_id}: {e}")
@@ -271,8 +315,6 @@ async def run_content(job_data: dict):
         research_data = post.get("research_data", {})
         provider_id = post.get("ai_provider_id")
         model_name = post.get("model_name")
-        target_word_count = post.get("target_word_count")
-        target_section_count = post.get("target_section_count")
         language = post.get("language", "vietnamese")
 
         logger.info(f"[CONTENT] Topic: {topic}")
@@ -281,8 +323,6 @@ async def run_content(job_data: dict):
         )
         logger.info(f"[CONTENT] Calling AI provider: {provider_id}")
         logger.info(f"[CONTENT] Calling AI model: {model_name}")
-        logger.info(f"[CONTENT] Target word count: {target_word_count}")
-        logger.info(f"[CONTENT] Target section count: {target_section_count}")
         logger.info(f"[CONTENT] Language: {language}")
 
         async def handle_retry(attempt, max_retries):
@@ -297,6 +337,22 @@ async def run_content(job_data: dict):
         if not outline:
             raise Exception("No outline found. Generate outline first.")
 
+        if post.get("content_done"):
+            logger.info(f"[CONTENT] Content already generated for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
+
+        existing_running = await jobs_col.find_one({
+            "post_id": post_id,
+            "job_type": "content",
+            "status": "running",
+            "job_id": {"$ne": job_id}
+        })
+        if existing_running:
+            logger.info(f"[CONTENT] Another content job is already running for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
+
         (
             full_html,
             sections,
@@ -304,10 +360,10 @@ async def run_content(job_data: dict):
         ) = await ai_service.generate_full_content(
             topic,
             outline,
+            research_data,
             additional,
             provider_id,
             model_name,
-            target_word_count,
             language,
             on_retry=handle_retry,
         )
@@ -343,15 +399,15 @@ async def run_content(job_data: dict):
         # Queue next job in pipeline
         project_id = post.get("project_id")
         thumbnail_source = post.get("thumbnail_source", "ai")
+        logger.info(f"[PIPELINE] Post {post_id} thumbnail_source: {thumbnail_source}")
+        
         if project_id:
             if thumbnail_source == "ai":
                 await queue_next_job(post_id, project_id, "thumbnail")
-                logger.info(f"[PIPELINE] Queued thumbnail job for post {post_id}")
             else:
                 # Skip thumbnail generation for "upload later" or other sources
                 logger.info(f"[PIPELINE] Skipping thumbnail generation for post {post_id} (source: {thumbnail_source})")
                 await queue_next_job(post_id, project_id, "publish")
-                logger.info(f"[PIPELINE] Queued publish job for post {post_id}")
 
     except Exception as e:
         logger.error(f"[CONTENT] Content failed for post {post_id}: {e}")
@@ -373,6 +429,22 @@ async def run_thumbnail(job_data: dict):
         if not post:
             raise Exception("Post not found")
 
+        if post.get("thumbnail_done"):
+            logger.info(f"[THUMBNAIL] Thumbnail already generated for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
+
+        existing_running = await jobs_col.find_one({
+            "post_id": post_id,
+            "job_type": "thumbnail",
+            "status": "running",
+            "job_id": {"$ne": job_id}
+        })
+        if existing_running:
+            logger.info(f"[THUMBNAIL] Another thumbnail job is already running for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
+
         topic = post["topic"]
         title = post.get("title", topic)
         # Use provider/model from job_data first, then fall back to post document
@@ -381,6 +453,7 @@ async def run_thumbnail(job_data: dict):
         )
         model_name = job_data.get("model_name") or post.get("thumbnail_model_name")
         thumbnail_source = post.get("thumbnail_source", "ai")
+        logger.info(f"[THUMBNAIL] Source for post {post_id}: {thumbnail_source}")
 
         if thumbnail_source != "ai":
             logger.warning(f"[THUMBNAIL] Skipping AI generation as source is {thumbnail_source}")
@@ -389,6 +462,7 @@ async def run_thumbnail(job_data: dict):
             # Queue next job in pipeline
             project_id = post.get("project_id")
             if project_id:
+                logger.info(f"[PIPELINE] Queuing next job (publish) after skipped thumbnail for post {post_id}")
                 await queue_next_job(post_id, project_id, "publish")
             return
 
@@ -431,7 +505,6 @@ async def run_thumbnail(job_data: dict):
         project_id = post.get("project_id")
         if project_id:
             await queue_next_job(post_id, project_id, "publish")
-            logger.info(f"[PIPELINE] Queued publish job for post {post_id}")
 
     except Exception as e:
         logger.error(f"[THUMBNAIL] Thumbnail failed for post {post_id}: {e}")
@@ -453,6 +526,22 @@ async def run_publish(job_data: dict):
         post = await posts_col.find_one({"_id": ObjectId(post_id)})
         if not post:
             raise Exception("Post not found")
+
+        if post.get("status") == "published":
+            logger.info(f"[PUBLISH] Post {post_id} already published. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
+
+        existing_running = await jobs_col.find_one({
+            "post_id": post_id,
+            "job_type": "publish",
+            "status": "running",
+            "job_id": {"$ne": job_id}
+        })
+        if existing_running:
+            logger.info(f"[PUBLISH] Another publish job is already running for post {post_id}. Skipping.")
+            await _update_job_status(job_id, post_id, "completed")
+            return
 
         content = post.get("content", "")
         logger.info(f"[PUBLISH] Post has {len(content)} characters")

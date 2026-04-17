@@ -5,6 +5,8 @@ using OpenAI, Gemini, or Anthropic depending on the configured provider.
 
 import asyncio
 import json
+import re
+import httpx
 from bson import ObjectId
 from app.database import ai_providers_col
 from openai import RateLimitError
@@ -12,10 +14,60 @@ from anthropic import RateLimitError as AnthropicRateLimitError
 try:
     from google.api_core.exceptions import ResourceExhausted
 except ImportError:
-    # Fallback if google-api-core is not installed
     class ResourceExhausted(Exception):
         pass
 
+ALLOWED_TAGS = {
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "p", "strong", "em", "ul", "ol", "li", "a", "img",
+}
+SAFE_ATTRS = {"a": {"href"}, "img": {"src"}}
+
+def clean_html(html: str) -> str:
+    """Remove markdown artifacts and sanitize HTML to allowed tags whitelist."""
+    if not html or not html.strip():
+        return ""
+
+    text = html
+
+    if "```html" in text:
+        parts = text.split("```html")
+        text = "".join(p.split("```")[0] if i > 0 else p for i, p in enumerate(parts))
+    elif "```" in text:
+        parts = text.split("```")
+        text = "".join(p.split("```")[0] if i > 0 else p for i, p in enumerate(parts))
+
+    text = text.replace("`", "")
+
+    if not text.strip():
+        return ""
+
+    from bs4 import BeautifulSoup
+
+    try:
+        soup = BeautifulSoup(text, "lxml")
+    except Exception:
+        soup = BeautifulSoup(text, "html.parser")
+
+    all_tags = list(soup.find_all(True))
+    for tag in all_tags:
+        if tag.name not in ALLOWED_TAGS:
+            tag.unwrap()
+
+    for tag in soup.find_all(True):
+        if tag.name in SAFE_ATTRS:
+            allowed = SAFE_ATTRS[tag.name]
+            tag.attrs = {k: v for k, v in tag.attrs.items() if k in allowed}
+        else:
+            tag.attrs.clear()
+
+    result = text
+    if soup.body:
+        result = "".join(str(child) for child in soup.body.children)
+    else:
+        result = str(soup)
+
+    return result.strip()
 
 async def _get_provider(provider_id: str = None):
     """Get an AI provider by ID, or the first available if no ID provided."""
@@ -28,7 +80,6 @@ async def _get_provider(provider_id: str = None):
     if not doc:
         raise Exception("No AI provider configured. Please add one in Settings.")
     return doc
-
 
 async def _call_openai(
     api_key: str,
@@ -53,7 +104,6 @@ async def _call_openai(
     total_tokens = response.usage.total_tokens if response.usage else 0
     return response.choices[0].message.content, total_tokens
 
-
 async def _call_gemini(
     api_key: str, prompt: str, system_prompt: str = ""
 ) -> tuple[str, int]:
@@ -73,7 +123,6 @@ async def _call_gemini(
         )
     return response.text, tokens
 
-
 async def _call_anthropic(
     api_key: str, prompt: str, system_prompt: str = ""
 ) -> tuple[str, int]:
@@ -92,89 +141,12 @@ async def _call_anthropic(
     total_tokens = response.usage.input_tokens + response.usage.output_tokens
     return response.content[0].text, total_tokens
 
-
-async def verify_api_key(provider_type: str, api_key: str, api_url: str = "") -> dict:
-    """Verify an API key by making a minimal test call.
-    Returns {"ok": True} or {"ok": False, "error": "reason"}.
-    """
-    test_prompt = "Reply with exactly: OK"
-    try:
-        if provider_type == "openai":
-            text, _ = await _call_openai(api_key, test_prompt)
-        elif provider_type == "gemini":
-            text, _ = await _call_gemini(api_key, test_prompt)
-        elif provider_type == "anthropic":
-            text, _ = await _call_anthropic(api_key, test_prompt)
-        elif provider_type == "openai_compatible":
-            text, _ = await _call_openai(api_key, test_prompt, base_url=api_url)
-        else:
-            return {"ok": False, "error": f"Unknown provider type: {provider_type}"}
-
-        if not text or not text.strip():
-            return {"ok": False, "error": "Received empty response from AI provider."}
-        return {"ok": True}
-
-    except Exception as e:
-        error_msg = str(e).lower()
-
-        if provider_type == "openai":
-            if "incorrect_api_key" in error_msg or "invalid_api_key" in error_msg:
-                return {
-                    "ok": False,
-                    "error": "Invalid OpenAI API key. Check your key and try again.",
-                }
-            elif "insufficient_quota" in error_msg:
-                return {
-                    "ok": False,
-                    "error": "OpenAI API key is valid but account has insufficient quota.",
-                }
-            elif "rate_limit" in error_msg:
-                return {
-                    "ok": False,
-                    "error": "OpenAI rate limit reached. Try again in a moment.",
-                }
-        elif provider_type == "gemini":
-            if "api_key_not_valid" in error_msg or "api key not valid" in error_msg:
-                return {
-                    "ok": False,
-                    "error": "Invalid Gemini API key. Check your key and try again.",
-                }
-            elif "quota" in error_msg:
-                return {
-                    "ok": False,
-                    "error": "Gemini API key is valid but account has exceeded quota.",
-                }
-        elif provider_type == "anthropic":
-            if "invalid_api_key" in error_msg or "authentication_error" in error_msg:
-                return {
-                    "ok": False,
-                    "error": "Invalid Anthropic API key. Check your key and try again.",
-                }
-            elif "overloaded" in error_msg:
-                return {
-                    "ok": False,
-                    "error": "Anthropic API is currently overloaded. Try again in a moment.",
-                }
-        elif provider_type == "openai_compatible":
-            if (
-                "invalid_api_key" in error_msg
-                or "incorrect_api_key" in error_msg
-                or "authentication_error" in error_msg
-            ):
-                return {
-                    "ok": False,
-                    "error": "Invalid API key for the configured endpoint.",
-                }
-
-        return {"ok": False, "error": f"Verification failed: {str(e)}"}
-
-
 async def _call_ai(
     prompt: str,
     system_prompt: str = "",
     provider_id: str = None,
     model_name: str = None,
-    max_retries: int = 3,
+    max_retries: int = 1,
     delay: int = 60,
     on_retry: callable = None,
 ) -> tuple[str, int]:
@@ -217,11 +189,9 @@ async def _call_ai(
                     f"AI provider call failed after {max_retries} retries: {e}"
                 ) from e
         except Exception as e:
-            # Catch any other unexpected errors
             raise Exception(
                 f"An unexpected error occurred while calling the AI provider: {e}"
             ) from e
-
 
 async def research_topic(
     topic: str,
@@ -232,14 +202,13 @@ async def research_topic(
     on_retry: callable = None,
 ) -> tuple[dict, int]:
     """Research a topic: audience, keywords, key points to mention."""
-    # Language-specific system prompt
     if language == "vietnamese":
         system_prompt = (
             "You are an expert SEO content researcher for Vietnamese content. "
             "Write all content in Vietnamese. Use formal, professional Vietnamese "
             "with appropriate cultural context. Respond only in valid JSON."
         )
-    else:  # english
+    else:
         system_prompt = (
             "You are an expert SEO content researcher. "
             "Write all content in English. Respond only in valid JSON."
@@ -258,21 +227,17 @@ Provide your research as JSON with these keys:
     "competitors_angle": "what competitors typically cover on this topic"
 }}"""
 
-    text, total_tokens = await _call_ai(
-        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
-    )
-    # Parse JSON from response
+    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
     try:
-        # Try to extract JSON from markdown code block if present
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
         elif "```" in text:
             text = text.split("```")[1].split("```")[0]
+        text = re.sub(r"//.*", "", text)
         data = json.loads(text.strip())
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, IndexError):
         data = {"raw_research": text}
     return data, total_tokens
-
 
 async def generate_outline(
     topic: str,
@@ -285,14 +250,13 @@ async def generate_outline(
     on_retry: callable = None,
 ) -> tuple[dict, int]:
     """Generate a post outline: SEO title, meta description, intro, sections."""
-    # Language-specific system prompt
     if language == "vietnamese":
         system_prompt = (
             "You are an expert SEO content strategist for Vietnamese content. "
             "Write all content in Vietnamese. Use formal, professional Vietnamese "
             "with appropriate cultural context. Respond only in valid JSON."
         )
-    else:  # english
+    else:
         system_prompt = (
             "You are an expert SEO content strategist. "
             "Write all content in English. Respond only in valid JSON."
@@ -305,7 +269,11 @@ async def generate_outline(
     prompt = f"""Create a detailed blog post outline based on:
 
 Topic: {topic}
-Research data: {json.dumps(research_data)}
+Use the following research data to inform the outline:
+- Target Audience: {research_data.get("target_audience", "not specified")}
+- Keywords: {", ".join(research_data.get("keywords", []))}
+- Key Points: {", ".join(research_data.get("key_points", []))}
+
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
 Create an outline as JSON:
@@ -326,25 +294,24 @@ Create an outline as JSON:
     ]
 }}"""
 
-    text, total_tokens = await _call_ai(
-        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
-    )
+    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
     try:
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
         elif "```" in text:
             text = text.split("```")[1].split("```")[0]
+        text = re.sub(r"//.*", "", text)
         data = json.loads(text.strip())
     except json.JSONDecodeError:
         data = {"raw_outline": text}
     return data, total_tokens
-
 
 async def generate_section_content(
     topic: str,
     section_title: str,
     key_points: list,
     outline: dict,
+    research_data: dict,
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
@@ -353,14 +320,13 @@ async def generate_section_content(
     on_retry: callable = None,
 ) -> tuple[str, int]:
     """Generate content for a single section."""
-    # Language-specific system prompt
     if language == "vietnamese":
         system_prompt = (
             "You are an expert blog content writer for Vietnamese content. "
             "Write engaging, detailed, SEO-optimized content in Vietnamese. "
             "Use formal, professional Vietnamese with appropriate cultural context."
         )
-    else:  # english
+    else:
         system_prompt = (
             "You are an expert blog content writer. "
             "Write engaging, detailed, SEO-optimized content in English."
@@ -376,6 +342,11 @@ Blog post topic: {topic}
 Blog post title: {outline.get("title", topic)}
 Section title: {section_title}
 Key points to cover: {json.dumps(key_points)}
+
+Use the following research data to inform the content:
+- Target Audience: {research_data.get("target_audience", "not specified")}
+- Keywords: {", ".join(research_data.get("keywords", []))}
+
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
 {word_count_hint} of detailed, engaging content for this section.
@@ -384,15 +355,17 @@ Include relevant examples and practical advice.
 Do NOT include the section title itself — just the body content.
 Format in HTML."""
 
-    text, total_tokens = await _call_ai(
-        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
-    )
-    return text, total_tokens
-
+    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    try:
+        cleaned = clean_html(text)
+    except Exception:
+        cleaned = text
+    return cleaned, total_tokens
 
 async def generate_introduction(
     topic: str,
     outline: dict,
+    research_data: dict,
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
@@ -401,14 +374,13 @@ async def generate_introduction(
 ) -> tuple[str, int]:
     """Generate the introduction based on hook/problem/promise."""
     intro = outline.get("introduction", {})
-    # Language-specific system prompt
     if language == "vietnamese":
         system_prompt = (
             "You are an expert blog content writer for Vietnamese content. "
             "Write engaging introductions in Vietnamese. "
             "Use formal, professional Vietnamese with appropriate cultural context."
         )
-    else:  # english
+    else:
         system_prompt = (
             "You are an expert blog content writer. "
             "Write engaging introductions in English."
@@ -417,6 +389,7 @@ async def generate_introduction(
 
 Topic: {topic}
 Title: {outline.get("title", topic)}
+Research data: {json.dumps(research_data)}
 Hook idea: {intro.get("hook", "")}
 Problem to present: {intro.get("problem", "")}
 Promise to make: {intro.get("promise", "")}
@@ -428,15 +401,17 @@ Write a compelling 150-300 word introduction that:
 3. Promises what the reader will learn
 Format in HTML."""
 
-    text, total_tokens = await _call_ai(
-        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
-    )
-    return text, total_tokens
-
+    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    try:
+        cleaned = clean_html(text)
+    except Exception:
+        cleaned = text
+    return cleaned, total_tokens
 
 async def generate_full_content(
     topic: str,
     outline: dict,
+    research_data: dict,
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
@@ -444,53 +419,50 @@ async def generate_full_content(
     language: str = "vietnamese",
     on_retry: callable = None,
 ) -> tuple[str, list, int]:
-    """Generate the full post content from an outline. Returns (full_html, sections_list, total_tokens)."""
-    total_tokens = 0
-
-    # Generate introduction
-    intro_html, intro_tokens = await generate_introduction(
-        topic,
-        outline,
-        additional_requests,
-        provider_id,
-        model_name,
-        language,
-        on_retry=on_retry,
-    )
-    total_tokens += intro_tokens
-
-    sections = []
-    full_html = intro_html
-
+    """Generate the full post content from an outline using parallel tasks."""
     outline_sections = outline.get("sections", [])
+    
     # Calculate target words per section if target_word_count is provided
     words_per_section = None
     if target_word_count and len(outline_sections) > 0:
-        words_per_section = target_word_count // len(outline_sections)
+        try:
+            target_word_count_int = int(target_word_count)
+            if target_word_count_int > 0:
+                words_per_section = target_word_count_int // len(outline_sections)
+        except (ValueError, TypeError):
+            words_per_section = None
 
+    # Prepare all tasks
+    tasks = [
+        generate_introduction(topic, outline, research_data, additional_requests, provider_id, model_name, language, on_retry)
+    ]
     for sec in outline_sections:
-        sec_title = sec.get("title", "")
-        key_points = sec.get("key_points", [])
-        sec_content, sec_tokens = await generate_section_content(
-            topic,
-            sec_title,
-            key_points,
-            outline,
-            additional_requests,
-            provider_id,
-            model_name,
-            words_per_section,
-            language,
-            on_retry=on_retry,
+        tasks.append(
+            generate_section_content(
+                topic, sec.get("title", ""), sec.get("key_points", []),
+                outline, research_data, additional_requests,
+                provider_id, model_name, words_per_section, language, on_retry
+            )
         )
+
+    # Run all tasks in parallel
+    results = await asyncio.gather(*tasks)
+    
+    # Process results
+    intro_html, intro_tokens = results[0]
+    total_tokens = intro_tokens
+    
+    sections = []
+    full_html = intro_html
+    
+    for i, (sec_html, sec_tokens) in enumerate(results[1:]):
+        sec_title = outline_sections[i].get("title", "")
         total_tokens += sec_tokens
-        sections.append(
-            {
-                "title": sec_title,
-                "content": sec_content,
-                "image_url": None,
-            }
-        )
-        full_html += f"\n<h2>{sec_title}</h2>\n{sec_content}"
+        sections.append({
+            "title": sec_title,
+            "content": sec_html,
+            "image_url": None,
+        })
+        full_html += f"\n<h2>{sec_title}</h2>\n{sec_html}"
 
     return full_html, sections, total_tokens

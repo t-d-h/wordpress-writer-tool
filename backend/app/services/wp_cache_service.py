@@ -3,7 +3,7 @@ WordPress Cache Service — cache WordPress posts in MongoDB with TTL-based expi
 """
 
 import asyncio
-from datetime import datetime, timezone
+from app.utils.time_utils import get_now
 from app.database import wp_posts_cache_col
 from app.services.wp_service import get_wp_posts
 
@@ -69,7 +69,7 @@ class WPCacheService:
             "_id": cache_key,
             "posts": posts,
             "total": total,
-            "cached_at": datetime.now(timezone.utc),
+            "cached_at": get_now(),
             "ttl": 10800,  # 3 hours in seconds
         }
         await self.collection.replace_one({"_id": cache_key}, cache_doc, upsert=True)

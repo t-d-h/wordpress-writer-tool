@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
-from datetime import datetime, timezone
+from app.utils.time_utils import get_now
 from pydantic import BaseModel
 from app.database import default_models_col, ai_providers_col
 from app.models.default_models import (
@@ -21,7 +21,7 @@ def format_default_models(doc: dict) -> dict:
         image_model_name=doc.get("image_model_name"),
         video_provider_id=doc.get("video_provider_id"),
         video_model_name=doc.get("video_model_name"),
-        updated_at=doc.get("updated_at", datetime.now(timezone.utc)),
+        updated_at=doc.get("updated_at", get_now()),
     ).model_dump()
 
 
@@ -65,7 +65,7 @@ async def update_default_models(data: DefaultModelsUpdate):
                     status_code=400, detail=f"Provider not found: {update_data[field]}"
                 )
 
-    update_data["updated_at"] = datetime.now(timezone.utc)
+    update_data["updated_at"] = get_now()
 
     existing = await default_models_col.find_one()
     if existing:

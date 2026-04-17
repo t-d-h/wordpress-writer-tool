@@ -66,6 +66,7 @@ export const deletePost = (id) => api.delete(`/posts/${id}`);
 export const publishPost = (id, forcePublish = false) =>
   api.post(`/posts/${id}/publish`, { force_publish: forcePublish });
 export const unpublishPost = (id) => api.post(`/posts/${id}/unpublish`);
+export const generateResearch = (id) => api.post(`/posts/${id}/generate-research`);
 export const generateOutline = (id) => api.post(`/posts/${id}/generate-outline`);
 export const generateContent = (id) => api.post(`/posts/${id}/generate-content`);
 export const generateThumbnail = (id) => api.post(`/posts/${id}/generate-thumbnail`);

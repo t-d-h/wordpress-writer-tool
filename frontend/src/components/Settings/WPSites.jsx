@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineXMark } from 'react-icons/hi2'
 import { getSites, createSite, updateSite, deleteSite, verifySite } from '../../api/client'
+import { formatDateOnly } from '../../utils/dateUtils'
 
 export default function WPSites() {
   const [sites, setSites] = useState([])
@@ -123,7 +124,7 @@ export default function WPSites() {
                   <td>{s.username}</td>
                   <td>{s.min_word_count}</td>
                   <td style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>{s.api_key_preview}</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{new Date(s.created_at).toLocaleDateString()}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{formatDateOnly(s.created_at)}</td>
                   <td>
                     <div className="action-buttons">
                       <button className="action-btn" onClick={() => handleEdit(s)} title="Edit"><HiOutlinePencil /></button>

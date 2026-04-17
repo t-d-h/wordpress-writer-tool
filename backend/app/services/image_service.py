@@ -128,7 +128,7 @@ async def generate_image(
     provider_id: str = None,
     model_name: str = None,
     save_dir: str = "/tmp/wp_images",
-    max_retries: int = 3,
+    max_retries: int = 1,
     delay: int = 60,
 ) -> str:
     """Generate an image using the specified provider and save it locally. Returns the file path."""

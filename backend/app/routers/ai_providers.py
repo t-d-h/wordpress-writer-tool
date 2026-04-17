@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
-from datetime import datetime, timezone
+from app.utils.time_utils import get_now
 from pydantic import BaseModel
 from app.database import ai_providers_col
 from app.models.ai_provider import (
@@ -68,7 +68,7 @@ async def create_provider(data: AIProviderCreate):
         raise HTTPException(status_code=400, detail=result["error"])
     doc = {
         **data.model_dump(),
-        "created_at": datetime.now(timezone.utc),
+        "created_at": get_now(),
     }
     result = await ai_providers_col.insert_one(doc)
     doc["_id"] = result.inserted_id

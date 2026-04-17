@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineGlobeAlt, HiOutlinePencil } from 'react-icons/hi2'
 import { getProjects, createProject, deleteProject, updateProject, getSites } from '../../api/client'
+import { formatDateOnly } from '../../utils/dateUtils'
 
 export default function ProjectList() {
   const navigate = useNavigate()
@@ -138,7 +139,7 @@ export default function ProjectList() {
                   <HiOutlineGlobeAlt /> {p.wp_site_name}
                   {p.wp_site_url && <span style={{ color: 'var(--text-muted)', fontSize: '0.9em', marginLeft: 4 }}>({p.wp_site_url})</span>}
                 </span>
-                <span>{new Date(p.created_at).toLocaleDateString()}</span>
+                <span>{formatDateOnly(p.created_at)}</span>
               </div>
             </div>
           ))}

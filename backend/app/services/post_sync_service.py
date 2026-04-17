@@ -2,7 +2,7 @@
 Post Sync Service — sync WordPress posts to local database and detect orphaned posts.
 """
 
-from datetime import datetime
+from app.utils.time_utils import get_now
 from bson import ObjectId
 from app.database import posts_col
 from app.services.wp_service import get_wp_posts
@@ -48,8 +48,8 @@ async def create_or_update_post(
         "status": wp_post["status"],
         "categories": categories,
         "tags": tags,
-        "created_at": datetime.now(),
-        "updated_at": datetime.now(),
+        "created_at": get_now(),
+        "updated_at": get_now(),
     }
 
     if existing:
