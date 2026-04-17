@@ -8,7 +8,7 @@
 - ✅ **v1.0 MVP** — Phases 1-3 (shipped 2026-04-14)
 - ✅ **v1.1 All Posts Table View** — Phases 4-11 (shipped 2026-04-15)
 - ✅ **v1.2 Vietnamese Language Support** — Phases 12-14 (shipped 2026-04-16)
-- ⏳ **v1.3 Content Quality Improvements** — Phases 15-21 (in progress)
+- ⏳ **v1.3 Content Quality Improvements** — Phases 15-21 (completed)
 
 ## Phases
 
@@ -44,18 +44,7 @@
 
 </details>
 
-<details>
-<summary>⏳ v1.3 Content Quality Improvements (Phases 15-21) — IN PROGRESS</summary>
-
-- [x] Phase 15: HTML Cleaning Foundation (2/2 plans) — completed 2026-04-16
-- [ ] Phase 16: Word Count Validation (0/1 plans) — not started
-- [ ] Phase 17: Section Count Validation (0/0 plans) — not started
-- [ ] Phase 18: Validation Results Display (0/0 plans) — not started
-- [ ] Phase 19: Validation Warnings (0/0 plans) — not started
-- [ ] Phase 20: Research Data Utilization (0/0 plans) — not started
-- [ ] Phase 21: Research Context in Prompts (0/0 plans) — not started
-
-</details>
+- ✅ **v1.3 Content Quality Improvements** — See [v1.3-ROADMAP.md](./milestones/v1.3-ROADMAP.md) (shipped 2026-04-17)
 
 ## Progress
 
@@ -76,12 +65,12 @@
 | 13. AI Service Integration | v1.2 | 3/3 | Complete | 2026-04-15 |
 | 14. Frontend UI | v1.2 | 6/6 | Complete | 2026-04-16 |
 | 15. HTML Cleaning Foundation | v1.3 | 2/2 | Complete | 2026-04-16 |
-| 16. Word Count Validation | v1.3 | 0/0 | Not started | - |
-| 17. Section Count Validation | v1.3 | 0/0 | Not started | - |
-| 18. Validation Results Display | v1.3 | 0/0 | Not started | - |
-| 19. Validation Warnings | v1.3 | 0/0 | Not started | - |
-| 20. Research Data Utilization | v1.3 | 0/0 | Not started | - |
-| 21. Research Context in Prompts | v1.3 | 0/0 | Not started | - |
+| 16. Word Count Validation | v1.3 | 1/1 | Complete | 2026-04-17 |
+| 17. Section Count Validation | v1.3 | 1/1 | Complete | 2026-04-17 |
+| 18. Validation Results Display | v1.3 | 1/1 | Complete | 2026-04-17 |
+| 19. Validation Warnings | v1.3 | 1/1 | Complete | 2026-04-17 |
+| 20. Research Data Utilization | v1.3 | 1/1 | Complete | 2026-04-17 |
+| 21. Research Context in Prompts | v1.3 | 1/1 | Complete | 2026-04-17 |
 
 ---
 

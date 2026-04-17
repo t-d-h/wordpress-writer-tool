@@ -8,6 +8,17 @@ A full-stack AI content generation tool for WordPress sites. Users configure AI 
 
 Validate WordPress site connectivity and credentials before saving, so users know immediately if their site is configured correctly — not after wasting time creating content that can't be published.
 
+## Current State
+
+**Version:** v1.3 (shipped 2026-04-17)
+
+**Next Milestone Goals:**
+
+- To be defined.
+
+<details>
+<summary>v1.3 Development History</summary>
+
 ## Requirements
 
 ### Validated
@@ -196,3 +207,5 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 
 **Last updated:** 2026-04-16 (starting v1.3 milestone)
+
+</details>
