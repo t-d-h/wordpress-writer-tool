@@ -24,6 +24,7 @@ def format_project(
         wp_site_name=wp_site_name,
         wp_site_url=wp_site_url,
         created_at=doc["created_at"],
+        language=doc.get("language", "en"),
     ).model_dump()
 
 

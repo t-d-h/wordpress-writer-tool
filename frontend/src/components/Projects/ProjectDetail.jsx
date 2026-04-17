@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath } from 'react-icons/hi2'
+import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath, HiExclamationTriangle } from 'react-icons/hi2'
 import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts, getSitePosts } from '../../api/client'
 import TokenUsageCard from './TokenUsageCard'
 
@@ -471,6 +471,7 @@ export default function ProjectDetail() {
       <div className="page-header">
         <h1 className="page-title">{project.title}</h1>
         <p className="page-description">{project.description || 'No description'} · {project.wp_site_name}</p>
+        <LanguageBadge language={project.language} />
       </div>
 
       <div className="tabs">
@@ -530,6 +531,7 @@ export default function ProjectDetail() {
                     <th>Thumb</th>
                     <th>Uploaded</th>
                     <th>Status</th>
+                    <th>Validation</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -552,6 +554,7 @@ export default function ProjectDetail() {
                         <td><JobStatusBadge jobs={p.jobs} jobType="thumbnail" /></td>
                         <td><BoolBadge value={!!p.wp_post_id} /></td>
                         <td><span className={`status-badge status-${p.status}`}>{p.status.replace('_', ' ')}</span></td>
+                        <td><ValidationStatus post={p} /></td>
                         <td>
                           <div className="action-buttons">
                             <button className="action-btn" onClick={() => navigate(`/posts/${p.id}`)}>View</button>
@@ -1056,3 +1059,30 @@ function LanguageBadge({ language }) {
 LanguageBadge.propTypes = {
   language: PropTypes.string
 }
+
+function ValidationStatus({ post }) {
+  if (!post || !post.validation_results) {
+    return <span>-</span>;
+  }
+  const errors = [];
+  if (post.validation_results.word_count && !post.validation_results.word_count.is_valid) {
+    errors.push(...post.validation_results.word_count.errors);
+  }
+  if (post.validation_results.section_count && !post.validation_results.section_count.is_valid) {
+    errors.push(...post.validation_results.section_count.errors);
+  }
+
+  if (errors.length === 0) {
+    return <span style={{ color: 'var(--success)' }}><HiOutlineCheckCircle /></span>;
+  }
+
+  return (
+    <span title={errors.join('\n')} style={{ color: 'var(--warning)' }}>
+      <HiExclamationTriangle />
+    </span>
+  );
+}
+
+ValidationStatus.propTypes = {
+    post: PropTypes.object.isRequired,
+};

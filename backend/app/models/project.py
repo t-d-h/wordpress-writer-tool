@@ -7,12 +7,14 @@ class ProjectCreate(BaseModel):
     title: str
     description: Optional[str] = ""
     wp_site_id: str
+    language: Optional[str] = "en"
 
 
 class ProjectUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     wp_site_id: Optional[str] = None
+    language: Optional[str] = None
 
 
 class ProjectResponse(BaseModel):
@@ -23,6 +25,7 @@ class ProjectResponse(BaseModel):
     wp_site_name: Optional[str] = None
     wp_site_url: Optional[str] = None
     created_at: datetime
+    language: Optional[str] = "en"
 
 
 class TokenUsageResponse(BaseModel):

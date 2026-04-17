@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.main import app
@@ -34,9 +34,9 @@ async def mongodb_test_db():
 
 
 @pytest.fixture(scope="function")
-async def test_client():
+def test_client():
     """FastAPI test client using httpx.AsyncClient."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    with TestClient(app=app, base_url="http://test") as client:
         yield client
 
 

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from app.database import posts_col, projects_col, jobs_col
 from app.models.post import PostCreate, BulkPostCreate, PostUpdate, PostResponse
+from app.validation.content_validator import ContentValidationService
 from app.redis_client import publish_job
 
 
@@ -50,6 +51,7 @@ def format_post(doc: dict) -> dict:
         created_at=doc["created_at"],
         wp_post_id=doc.get("wp_post_id"),
         wp_post_url=doc.get("wp_post_url"),
+        validation_results=doc.get("validation_results"),
     ).model_dump()
 
 
@@ -77,6 +79,20 @@ async def get_post(post_id: str):
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Post not found")
+
+    if doc.get("target_word_count") and doc.get("target_section_count"):
+        validator = ContentValidationService(
+            min_words=doc.get("target_word_count", 0) * 0.8,
+            max_words=doc.get("target_word_count", 0) * 1.2,
+            min_sections=doc.get("target_section_count", 0),
+            max_sections=doc.get("target_section_count", 0),
+        )
+        validation_results = validator.validate(
+            html_content=doc.get("content", ""),
+            sections=doc.get("sections", []),
+        )
+        doc["validation_results"] = validation_results
+
     return format_post(doc)
 
 
@@ -126,6 +142,24 @@ async def create_post(data: PostCreate):
     result = await posts_col.insert_one(post_doc)
     post_id = str(result.inserted_id)
     post_doc["_id"] = result.inserted_id
+
+    # Perform validation
+    if data.target_word_count is not None and data.target_section_count is not None:
+        validator = ContentValidationService(
+            min_words=data.target_word_count * 0.8,
+            max_words=data.target_word_count * 1.2,
+            min_sections=data.target_section_count,
+            max_sections=data.target_section_count,
+        )
+        validation_results = validator.validate(
+            html_content=post_doc.get("content", ""),
+            sections=post_doc.get("sections", []),
+        )
+        post_doc["validation_results"] = validation_results
+        await posts_col.update_one(
+            {"_id": result.inserted_id},
+            {"$set": {"validation_results": validation_results}},
+        )
 
     # Create the research job (first step in pipeline)
     job_id = str(uuid.uuid4())
@@ -221,6 +255,28 @@ async def update_post(post_id: str, data: PostUpdate):
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Post not found")
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+
+    # Perform validation
+    target_word_count = doc.get("target_word_count")
+    target_section_count = doc.get("target_section_count")
+
+    if target_word_count is not None and target_section_count is not None:
+        validator = ContentValidationService(
+            min_words=target_word_count * 0.8,
+            max_words=target_word_count * 1.2,
+            min_sections=target_section_count,
+            max_sections=target_section_count,
+        )
+        validation_results = validator.validate(
+            html_content=doc.get("content", ""),
+            sections=doc.get("sections", []),
+        )
+        doc["validation_results"] = validation_results
+        await posts_col.update_one(
+            {"_id": ObjectId(post_id)},
+            {"$set": {"validation_results": validation_results}},
+        )
+
     return format_post(doc)
 
 

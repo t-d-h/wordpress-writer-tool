@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles } from 'react-icons/hi2'
+import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles, HiExclamationTriangle } from 'react-icons/hi2'
 import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP } from '../../api/client'
 
 export default function PostView() {
@@ -174,6 +174,22 @@ export default function PostView() {
 
   const tu = post.token_usage || {}
 
+  const getValidationErrors = () => {
+    if (!post || !post.validation_results) {
+      return [];
+    }
+    const errors = [];
+    if (post.validation_results.word_count && !post.validation_results.word_count.is_valid) {
+      errors.push(...post.validation_results.word_count.errors);
+    }
+    if (post.validation_results.section_count && !post.validation_results.section_count.is_valid) {
+      errors.push(...post.validation_results.section_count.errors);
+    }
+    return errors;
+  };
+
+  const validationErrors = getValidationErrors();
+
   return (
     <div className="page-enter">
       <button className="btn btn-secondary" onClick={() => navigate(-1)} style={{ marginBottom: 20 }}>
@@ -181,7 +197,14 @@ export default function PostView() {
       </button>
 
       <div className="page-header">
-        <h1 className="page-title">{post.title || post.topic}</h1>
+        <h1 className="page-title">
+          {post.title || post.topic}
+          {validationErrors.length > 0 && (
+            <span title={validationErrors.join('\n')} style={{ marginLeft: '12px', color: 'var(--warning)' }}>
+              <HiExclamationTriangle />
+            </span>
+          )}
+        </h1>
         <div className="page-header-actions">
           <LanguageBadge language={post.language} />
           <span className={`status-badge status-${post.status}`}>{post.status.replace('_', ' ')}</span>
@@ -222,6 +245,8 @@ export default function PostView() {
           <div className="token-value">{(tu.total || 0).toLocaleString()}</div>
         </div>
       </div>
+
+      <ValidationResults results={post.validation_results} />
 
       <div className="card" style={{ marginBottom: 24 }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Pipeline Progress</h3>
@@ -519,3 +544,64 @@ function LanguageBadge({ language }) {
 LanguageBadge.propTypes = {
   language: PropTypes.string
 }
+
+function ValidationResults({ results }) {
+  if (!results) {
+    return null;
+  }
+
+  const { word_count, section_count } = results;
+
+  const isValid = word_count?.is_valid && section_count?.is_valid;
+
+  return (
+    <div className={`card ${isValid ? '' : 'card-warning'}`} style={{ marginBottom: 24 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>
+        Content Validation
+      </h3>
+      <div className="validation-summary" style={{ marginBottom: 12 }}>
+        {isValid ? (
+          <div className="validation-status valid">
+            <HiOutlineCheckCircle /> All checks passed
+          </div>
+        ) : (
+          <div className="validation-status invalid">
+            <HiExclamationTriangle /> Validation failed
+          </div>
+        )}
+      </div>
+      <div className="validation-results">
+        {word_count && (
+          <div className={`validation-item ${word_count.is_valid ? 'valid' : 'invalid'}`}>
+            <div className="validation-label">Word Count</div>
+            <div className="validation-value">{word_count.word_count}</div>
+            {!word_count.is_valid && (
+              <div className="validation-errors">
+                {word_count.errors.map((error, i) => (
+                  <div key={i}>{error}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {section_count && (
+          <div className={`validation-item ${section_count.is_valid ? 'valid' : 'invalid'}`}>
+            <div className="validation-label">Section Count</div>
+            <div className="validation-value">{section_count.section_count}</div>
+            {!section_count.is_valid && (
+              <div className="validation-errors">
+                {section_count.errors.map((error, i) => (
+                  <div key={i}>{error}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ValidationResults.propTypes = {
+  results: PropTypes.object,
+};

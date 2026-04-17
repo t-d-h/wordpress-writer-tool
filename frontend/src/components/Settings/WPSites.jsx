@@ -7,7 +7,7 @@ export default function WPSites() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ name: '', url: '', username: '', api_key: '' })
+  const [form, setForm] = useState({ name: '', url: '', username: '', api_key: '', min_word_count: 250 })
   const [verifying, setVerifying] = useState(false)
   const [verifyResult, setVerifyResult] = useState(null)
 
@@ -36,7 +36,7 @@ export default function WPSites() {
       }
       setShowModal(false)
       setEditingId(null)
-      setForm({ name: '', url: '', username: '', api_key: '' })
+      setForm({ name: '', url: '', username: '', api_key: '', min_word_count: 250 })
       load()
     } catch (e) {
       alert('Error: ' + (e.response?.data?.detail || e.message))
@@ -45,7 +45,7 @@ export default function WPSites() {
 
   const handleEdit = (s) => {
     setEditingId(s.id)
-    setForm({ name: s.name, url: s.url, username: s.username, api_key: '' })
+    setForm({ name: s.name, url: s.url, username: s.username, api_key: '', min_word_count: s.min_word_count || 250 })
     setShowModal(true)
   }
 
@@ -85,7 +85,7 @@ export default function WPSites() {
 
       <div className="toolbar">
         <div />
-        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ name: '', url: '', username: '', api_key: '' }); setShowModal(true) }}>
+        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ name: '', url: '', username: '', api_key: '', min_word_count: 250 }); setShowModal(true) }}>
           <HiOutlinePlus /> Add Site
         </button>
       </div>
@@ -109,9 +109,10 @@ export default function WPSites() {
                 <th>Name</th>
                 <th>URL</th>
                 <th>Username</th>
+                <th>Min Words</th>
                 <th>API Key</th>
-                <th>Created</th>
-                <th>Actions</th>
+<th>Created</th>
+<th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -120,6 +121,7 @@ export default function WPSites() {
                   <td style={{ fontWeight: 600 }}>{s.name}</td>
                   <td><a href={s.url} target="_blank" rel="noopener" style={{ color: 'var(--accent-secondary)' }}>{s.url}</a></td>
                   <td>{s.username}</td>
+                  <td>{s.min_word_count}</td>
                   <td style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>{s.api_key_preview}</td>
                   <td style={{ color: 'var(--text-muted)' }}>{new Date(s.created_at).toLocaleDateString()}</td>
                   <td>
@@ -163,6 +165,10 @@ export default function WPSites() {
                     {verifyResult.message}
                   </div>
                 )}
+              </div>
+              <div className="form-group">
+                <label className="form-label">Minimum Word Count</label>
+                <input className="form-input" type="number" placeholder="250" value={form.min_word_count} onChange={e => setForm({ ...form, min_word_count: parseInt(e.target.value, 10) })} required />
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>

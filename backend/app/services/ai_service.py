@@ -305,8 +305,23 @@ Provide your research as JSON with these keys:
 
         text = re.sub(r"//.*", "", text)
         data = json.loads(text.strip())
-    except json.JSONDecodeError as e:
-        data = {"raw_research": text}
+    except (json.JSONDecodeError, IndexError) as e:
+        print(f"[WARN] Failed to parse research JSON, falling back to regex: {e}")
+        data = {}
+        # Fallback to regex extraction if JSON parsing fails
+        try:
+            data["target_audience"] = re.search(
+                r'"target_audience":\s*"(.*?)"\s*,', text, re.DOTALL
+            ).group(1)
+            keywords_match = re.search(r'"keywords":\s*(\[.*?\])', text, re.DOTALL)
+            if keywords_match:
+                data["keywords"] = json.loads(keywords_match.group(1))
+            key_points_match = re.search(r'"key_points":\s*(\[.*?\])', text, re.DOTALL)
+            if key_points_match:
+                data["key_points"] = json.loads(key_points_match.group(1))
+        except (AttributeError, json.JSONDecodeError):
+            data["raw_research"] = text  # Store raw text if all else fails
+
     return data, total_tokens
 
 
@@ -340,7 +355,12 @@ async def generate_outline(
     prompt = f"""Create a detailed blog post outline based on:
 
 Topic: {topic}
-Research data: {json.dumps(research_data)}
+
+Use the following research data to inform the outline:
+- Target Audience: {research_data.get("target_audience", "not specified")}
+- Keywords: {", ".join(research_data.get("keywords", []))}
+- Key Points: {", ".join(research_data.get("key_points", []))}
+
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
 Create an outline as JSON:
@@ -382,6 +402,7 @@ async def generate_section_content(
     section_title: str,
     key_points: list,
     outline: dict,
+    research_data: dict,
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
@@ -412,6 +433,11 @@ Blog post topic: {topic}
 Blog post title: {outline.get("title", topic)}
 Section title: {section_title}
 Key points to cover: {json.dumps(key_points)}
+
+Use the following research data to inform the content:
+- Target Audience: {research_data.get("target_audience", "not specified")}
+- Keywords: {", ".join(research_data.get("keywords", []))}
+
 {f"Additional requests: {additional_requests}" if additional_requests else ""}
 
 {word_count_hint} of detailed, engaging content for this section.
@@ -434,6 +460,7 @@ Format in HTML."""
 async def generate_introduction(
     topic: str,
     outline: dict,
+    research_data: dict,
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
@@ -457,6 +484,7 @@ async def generate_introduction(
 
 Topic: {topic}
 Title: {outline.get("title", topic)}
+Research data: {json.dumps(research_data)}
 Hook idea: {intro.get("hook", "")}
 Problem to present: {intro.get("problem", "")}
 Promise to make: {intro.get("promise", "")}
@@ -482,6 +510,7 @@ Format in HTML."""
 async def generate_full_content(
     topic: str,
     outline: dict,
+    research_data: dict,
     additional_requests: str = "",
     provider_id: str = None,
     model_name: str = None,
@@ -493,7 +522,13 @@ async def generate_full_content(
 
     # Generate introduction
     intro_html, intro_tokens = await generate_introduction(
-        topic, outline, additional_requests, provider_id, model_name, language
+        topic,
+        outline,
+        research_data,
+        additional_requests,
+        provider_id,
+        model_name,
+        language,
     )
     total_tokens += intro_tokens
 
@@ -514,6 +549,7 @@ async def generate_full_content(
             sec_title,
             key_points,
             outline,
+            research_data,
             additional_requests,
             provider_id,
             model_name,

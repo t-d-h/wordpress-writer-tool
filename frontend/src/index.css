@@ -1212,3 +1212,64 @@ tbody tr:last-child td {
 }
 
 /* === End of Post Card (removed in Phase 7) === */
+
+.validation-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.validation-item {
+  padding: 16px;
+  background: var(--bg-glass);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.validation-item.valid {
+  border-color: var(--success);
+}
+
+.validation-item.invalid {
+  border-color: var(--danger);
+}
+
+.validation-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.validation-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.validation-errors {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 8px;
+}
+
+.card-warning {
+  border-color: var(--warning);
+}
+
+.validation-summary {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.validation-status.valid {
+  color: var(--success);
+}
+
+.validation-status.invalid {
+  color: var(--warning);
+}

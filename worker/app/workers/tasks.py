@@ -223,6 +223,8 @@ async def run_content(job_data: dict):
         topic = post["topic"]
         additional = post.get("additional_requests", "")
         outline = post.get("outline", {})
+        research_data = post.get("research_data", {})
+        research_data = post.get("research_data", {})
         provider_id = post.get("ai_provider_id")
         model_name = post.get("model_name")
         target_word_count = post.get("target_word_count")
@@ -249,6 +251,8 @@ async def run_content(job_data: dict):
         ) = await ai_service.generate_full_content(
             topic,
             outline,
+            research_data,
+            research_data,
             additional,
             provider_id,
             model_name,

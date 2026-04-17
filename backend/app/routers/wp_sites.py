@@ -17,6 +17,7 @@ def format_site(doc: dict) -> dict:
         if len(doc["api_key"]) >= 4
         else "***",
         created_at=doc["created_at"],
+        min_word_count=doc.get("min_word_count", 250),
     ).model_dump()
 
 

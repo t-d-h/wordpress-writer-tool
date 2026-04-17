@@ -99,3 +99,4 @@ class PostResponse(BaseModel):
     tags: Optional[List[str]] = None
     origin: str = "tool"  # "tool" or "wordpress"
     language: str = "vietnamese"
+    validation_results: Optional[Dict[str, Any]] = None
