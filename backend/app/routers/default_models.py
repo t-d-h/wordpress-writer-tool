@@ -21,6 +21,8 @@ def format_default_models(doc: dict) -> dict:
         image_model_name=doc.get("image_model_name"),
         video_provider_id=doc.get("video_provider_id"),
         video_model_name=doc.get("video_model_name"),
+        writing_input_price_per_m_tokens=doc.get("writing_input_price_per_m_tokens", 0.0),
+        writing_output_price_per_m_tokens=doc.get("writing_output_price_per_m_tokens", 0.0),
         updated_at=doc.get("updated_at", get_now()),
     ).model_dump()
 
@@ -38,6 +40,8 @@ async def get_default_models():
             "image_model_name": None,
             "video_provider_id": None,
             "video_model_name": None,
+            "writing_input_price_per_m_tokens": 0.0,
+            "writing_output_price_per_m_tokens": 0.0,
             "updated_at": None,
         }
     return format_default_models(doc)

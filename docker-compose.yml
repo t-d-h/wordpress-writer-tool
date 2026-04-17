@@ -38,8 +38,9 @@ services:
     environment:
       - TZ=Asia/Bangkok
     network_mode: "host"
-    container_name: wp-writer-worker
     command: python -m app.main
+    deploy:
+      replicas: 3
     volumes:
       - ./worker/app:/app/app
       - wp_images:/tmp/wp_images

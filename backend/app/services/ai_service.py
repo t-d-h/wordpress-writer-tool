@@ -87,7 +87,7 @@ async def _call_openai(
     system_prompt: str = "",
     base_url: str = None,
     model_name: str = "gpt-4o",
-) -> tuple[str, int]:
+) -> tuple[str, int, int]:
     """Call OpenAI or OpenAI-compatible API."""
     from openai import AsyncOpenAI
 
@@ -101,12 +101,13 @@ async def _call_openai(
         messages=messages,
         temperature=0.7,
     )
-    total_tokens = response.usage.total_tokens if response.usage else 0
-    return response.choices[0].message.content, total_tokens
+    prompt_tokens = response.usage.prompt_tokens if response.usage else 0
+    completion_tokens = response.usage.completion_tokens if response.usage else 0
+    return response.choices[0].message.content, prompt_tokens, completion_tokens
 
 async def _call_gemini(
     api_key: str, prompt: str, system_prompt: str = ""
-) -> tuple[str, int]:
+) -> tuple[str, int, int]:
     """Call Gemini API."""
     from google import genai
 
@@ -116,16 +117,16 @@ async def _call_gemini(
         model="gemini-2.0-flash",
         contents=full_prompt,
     )
-    tokens = 0
+    input_tokens = 0
+    output_tokens = 0
     if response.usage_metadata:
-        tokens = (response.usage_metadata.prompt_token_count or 0) + (
-            response.usage_metadata.candidates_token_count or 0
-        )
-    return response.text, tokens
+        input_tokens = response.usage_metadata.prompt_token_count or 0
+        output_tokens = response.usage_metadata.candidates_token_count or 0
+    return response.text, input_tokens, output_tokens
 
 async def _call_anthropic(
     api_key: str, prompt: str, system_prompt: str = ""
-) -> tuple[str, int]:
+) -> tuple[str, int, int]:
     """Call Anthropic API."""
     from anthropic import AsyncAnthropic
 
@@ -138,8 +139,9 @@ async def _call_anthropic(
     if system_prompt:
         kwargs["system"] = system_prompt
     response = await client.messages.create(**kwargs)
-    total_tokens = response.usage.input_tokens + response.usage.output_tokens
-    return response.content[0].text, total_tokens
+    input_tokens = response.usage.input_tokens
+    output_tokens = response.usage.output_tokens
+    return response.content[0].text, input_tokens, output_tokens
 
 async def _call_ai(
     prompt: str,
@@ -149,7 +151,7 @@ async def _call_ai(
     max_retries: int = 1,
     delay: int = 60,
     on_retry: callable = None,
-) -> tuple[str, int]:
+) -> tuple[str, int, int]:
     """Route to the appropriate AI provider with retry logic."""
     provider = await _get_provider(provider_id)
     provider_type = provider["provider_type"]
@@ -200,7 +202,7 @@ async def research_topic(
     model_name: str = None,
     language: str = "vietnamese",
     on_retry: callable = None,
-) -> tuple[dict, int]:
+) -> tuple[dict, int, int]:
     """Research a topic: audience, keywords, key points to mention."""
     if language == "vietnamese":
         system_prompt = (
@@ -227,7 +229,7 @@ Provide your research as JSON with these keys:
     "competitors_angle": "what competitors typically cover on this topic"
 }}"""
 
-    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    text, input_tokens, output_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
     try:
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
@@ -237,7 +239,7 @@ Provide your research as JSON with these keys:
         data = json.loads(text.strip())
     except (json.JSONDecodeError, IndexError):
         data = {"raw_research": text}
-    return data, total_tokens
+    return data, input_tokens, output_tokens
 
 async def generate_outline(
     topic: str,
@@ -248,7 +250,7 @@ async def generate_outline(
     target_section_count: int = None,
     language: str = "vietnamese",
     on_retry: callable = None,
-) -> tuple[dict, int]:
+) -> tuple[dict, int, int]:
     """Generate a post outline: SEO title, meta description, intro, sections."""
     if language == "vietnamese":
         system_prompt = (
@@ -294,7 +296,7 @@ Create an outline as JSON:
     ]
 }}"""
 
-    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    text, input_tokens, output_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
     try:
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
@@ -304,7 +306,7 @@ Create an outline as JSON:
         data = json.loads(text.strip())
     except json.JSONDecodeError:
         data = {"raw_outline": text}
-    return data, total_tokens
+    return data, input_tokens, output_tokens
 
 async def generate_section_content(
     topic: str,
@@ -318,7 +320,7 @@ async def generate_section_content(
     target_word_count: int = None,
     language: str = "vietnamese",
     on_retry: callable = None,
-) -> tuple[str, int]:
+) -> tuple[str, int, int]:
     """Generate content for a single section."""
     if language == "vietnamese":
         system_prompt = (
@@ -355,12 +357,12 @@ Include relevant examples and practical advice.
 Do NOT include the section title itself — just the body content.
 Format in HTML."""
 
-    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    text, input_tokens, output_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
     try:
         cleaned = clean_html(text)
     except Exception:
         cleaned = text
-    return cleaned, total_tokens
+    return cleaned, input_tokens, output_tokens
 
 async def generate_introduction(
     topic: str,
@@ -371,7 +373,7 @@ async def generate_introduction(
     model_name: str = None,
     language: str = "vietnamese",
     on_retry: callable = None,
-) -> tuple[str, int]:
+) -> tuple[str, int, int]:
     """Generate the introduction based on hook/problem/promise."""
     intro = outline.get("introduction", {})
     if language == "vietnamese":
@@ -401,12 +403,12 @@ Write a compelling 150-300 word introduction that:
 3. Promises what the reader will learn
 Format in HTML."""
 
-    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    text, input_tokens, output_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
     try:
         cleaned = clean_html(text)
     except Exception:
         cleaned = text
-    return cleaned, total_tokens
+    return cleaned, input_tokens, output_tokens
 
 async def generate_full_content(
     topic: str,
@@ -418,7 +420,7 @@ async def generate_full_content(
     target_word_count: int = None,
     language: str = "vietnamese",
     on_retry: callable = None,
-) -> tuple[str, list, int]:
+) -> tuple[str, list, int, int]:
     """Generate the full post content from an outline using parallel tasks."""
     outline_sections = outline.get("sections", [])
     
@@ -449,15 +451,17 @@ async def generate_full_content(
     results = await asyncio.gather(*tasks)
     
     # Process results
-    intro_html, intro_tokens = results[0]
-    total_tokens = intro_tokens
+    intro_html, i_in, i_out = results[0]
+    input_tokens = i_in
+    output_tokens = i_out
     
     sections = []
     full_html = intro_html
     
-    for i, (sec_html, sec_tokens) in enumerate(results[1:]):
+    for i, (sec_html, s_in, s_out) in enumerate(results[1:]):
         sec_title = outline_sections[i].get("title", "")
-        total_tokens += sec_tokens
+        input_tokens += s_in
+        output_tokens += s_out
         sections.append({
             "title": sec_title,
             "content": sec_html,
@@ -465,4 +469,4 @@ async def generate_full_content(
         })
         full_html += f"\n<h2>{sec_title}</h2>\n{sec_html}"
 
-    return full_html, sections, total_tokens
+    return full_html, sections, input_tokens, output_tokens

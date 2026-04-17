@@ -84,7 +84,7 @@ async def queue_next_job(
     existing = await jobs_col.find_one({
         "post_id": post_id,
         "job_type": next_job_type,
-        "status": {"$in": ["pending", "running"]}
+        "status": {"$in": ["pending", "running", "claimed"]}
     })
     if existing:
         logger.info(f"[PIPELINE] Job of type {next_job_type} already exists ({existing['status']}) for post {post_id}. Skipping queue.")
@@ -116,7 +116,7 @@ async def run_research(job_data: dict):
         existing_running = await jobs_col.find_one({
             "post_id": post_id,
             "job_type": "research",
-            "status": "running",
+            "status": {"$in": ["running", "claimed"]},
             "job_id": {"$ne": job_id}
         })
         if existing_running:
@@ -145,7 +145,7 @@ async def run_research(job_data: dict):
                 max_retries=max_retries,
             )
 
-        research_data, total_tokens = await ai_service.research_topic(
+        research_data, r_in, r_out = await ai_service.research_topic(
             topic,
             additional,
             provider_id,
@@ -154,7 +154,7 @@ async def run_research(job_data: dict):
             on_retry=handle_retry,
         )
 
-        logger.info(f"[RESEARCH] AI call completed, {total_tokens} tokens used")
+        logger.info(f"[RESEARCH] AI call completed, {r_in + r_out} tokens used ({r_in} in, {r_out} out)")
         logger.info(f"[RESEARCH] Generated {len(research_data)} research points")
 
         logger.info(f"[RESEARCH] Updating database with research data")
@@ -164,7 +164,9 @@ async def run_research(job_data: dict):
                 "$set": {
                     "research_data": research_data,
                     "research_done": True,
-                    "token_usage.research": total_tokens,
+                    "token_usage.research": r_in + r_out,
+                    "token_usage.input_tokens": r_in,
+                    "token_usage.output_tokens": r_out,
                 }
             },
         )
@@ -214,7 +216,7 @@ async def run_outline(job_data: dict):
         existing_running = await jobs_col.find_one({
             "post_id": post_id,
             "job_type": "outline",
-            "status": "running",
+            "status": {"$in": ["running", "claimed"]},
             "job_id": {"$ne": job_id}
         })
         if existing_running:
@@ -244,7 +246,7 @@ async def run_outline(job_data: dict):
                 max_retries=max_retries,
             )
 
-        outline, tokens = await ai_service.generate_outline(
+        outline, o_in, o_out = await ai_service.generate_outline(
             topic,
             research_data,
             additional,
@@ -254,7 +256,7 @@ async def run_outline(job_data: dict):
             on_retry=handle_retry,
         )
 
-        logger.info(f"[OUTLINE] AI call completed, {tokens} tokens used")
+        logger.info(f"[OUTLINE] AI call completed, {o_in + o_out} tokens used ({o_in} in, {o_out} out)")
         logger.info(
             f"[OUTLINE] Generated outline with {len(outline.get('sections', []))} sections"
         )
@@ -267,7 +269,9 @@ async def run_outline(job_data: dict):
                     "outline": outline,
                     "title": outline.get("title", topic),
                     "meta_description": outline.get("meta_description", ""),
-                    "token_usage.outline": tokens,
+                    "token_usage.outline": o_in + o_out,
+                    "token_usage.input_tokens": post.get("token_usage", {}).get("input_tokens", 0) + o_in,
+                    "token_usage.output_tokens": post.get("token_usage", {}).get("output_tokens", 0) + o_out,
                 }
             },
         )
@@ -345,7 +349,7 @@ async def run_content(job_data: dict):
         existing_running = await jobs_col.find_one({
             "post_id": post_id,
             "job_type": "content",
-            "status": "running",
+            "status": {"$in": ["running", "claimed"]},
             "job_id": {"$ne": job_id}
         })
         if existing_running:
@@ -356,7 +360,8 @@ async def run_content(job_data: dict):
         (
             full_html,
             sections,
-            total_tokens,
+            c_in,
+            c_out,
         ) = await ai_service.generate_full_content(
             topic,
             outline,
@@ -368,7 +373,7 @@ async def run_content(job_data: dict):
             on_retry=handle_retry,
         )
 
-        logger.info(f"[CONTENT] AI call completed, {total_tokens} tokens used")
+        logger.info(f"[CONTENT] AI call completed, {c_in + c_out} tokens used ({c_in} in, {c_out} out)")
         logger.info(f"[CONTENT] Generated {len(full_html)} characters of content")
         logger.info(f"[CONTENT] Generated {len(sections)} sections")
 
@@ -380,7 +385,9 @@ async def run_content(job_data: dict):
                     "content": full_html,
                     "sections": sections,
                     "content_done": True,
-                    "token_usage.content": total_tokens,
+                    "token_usage.content": c_in + c_out,
+                    "token_usage.input_tokens": post.get("token_usage", {}).get("input_tokens", 0) + c_in,
+                    "token_usage.output_tokens": post.get("token_usage", {}).get("output_tokens", 0) + c_out,
                 }
             },
         )
@@ -437,7 +444,7 @@ async def run_thumbnail(job_data: dict):
         existing_running = await jobs_col.find_one({
             "post_id": post_id,
             "job_type": "thumbnail",
-            "status": "running",
+            "status": {"$in": ["running", "claimed"]},
             "job_id": {"$ne": job_id}
         })
         if existing_running:
@@ -535,7 +542,7 @@ async def run_publish(job_data: dict):
         existing_running = await jobs_col.find_one({
             "post_id": post_id,
             "job_type": "publish",
-            "status": "running",
+            "status": {"$in": ["running", "claimed"]},
             "job_id": {"$ne": job_id}
         })
         if existing_running:

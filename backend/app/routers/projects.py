@@ -77,12 +77,14 @@ async def get_project_stats(project_id: str):
                 "content": {"$sum": "$token_usage.content"},
                 "thumbnail": {"$sum": "$token_usage.thumbnail"},
                 "total": {"$sum": "$token_usage.total"},
+                "input_tokens": {"$sum": "$token_usage.input_tokens"},
+                "output_tokens": {"$sum": "$token_usage.output_tokens"},
             }
         },
     ]
     token_result = await posts_col.aggregate(token_pipeline).to_list(length=1)
     token_usage = TokenUsageResponse(
-        research=0, outline=0, content=0, thumbnail=0, total=0
+        research=0, outline=0, content=0, thumbnail=0, total=0, input_tokens=0, output_tokens=0
     )
     if token_result:
         token_usage = TokenUsageResponse(
@@ -91,6 +93,8 @@ async def get_project_stats(project_id: str):
             content=token_result[0].get("content", 0),
             thumbnail=token_result[0].get("thumbnail", 0),
             total=token_result[0].get("total", 0),
+            input_tokens=token_result[0].get("input_tokens", 0),
+            output_tokens=token_result[0].get("output_tokens", 0),
         )
 
     # Add token usage to stats response

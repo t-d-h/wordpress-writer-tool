@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles, HiExclamationTriangle, HiArrowPath } from 'react-icons/hi2'
+import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles, HiExclamationTriangle, HiArrowPath, HiOutlineArrowTopRightOnSquare } from 'react-icons/hi2'
 import { getPost, publishPost, unpublishPost, generateResearch, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP } from '../../api/client'
 import { formatDateTime } from '../../utils/dateUtils'
 
@@ -189,6 +189,19 @@ export default function PostView() {
         <h1 className="page-title">
           {post.title || post.topic}
         </h1>
+        {post.content_done && post.status === 'published' && post.wp_post_url && (
+          <div style={{ marginBottom: 20 }}>
+            <a 
+              href={post.wp_post_url} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="btn btn-success"
+              style={{ fontSize: 13, padding: '8px 16px' }}
+            >
+              <HiOutlineArrowTopRightOnSquare /> View on WordPress
+            </a>
+          </div>
+        )}
         <div className="retry-buttons" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
           {getStepStatus('research') === 'failed' && (
             <button className="btn btn-danger btn-sm" onClick={() => handleAction('research')}>

@@ -187,6 +187,38 @@ export default function DefaultModels() {
             )}
           </div>
         )}
+
+        {/* Pricing Fields (only for writing) */}
+        {sectionKey === 'writing' && (
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px dashed var(--border)' }}>
+            <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Pricing (per 1,000,000 tokens)</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="form-group">
+                <label className="form-label">Input Price ($)</label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  className="form-input"
+                  value={defaults.writing_input_price_per_m_tokens}
+                  onChange={e => setDefaults({ ...defaults, writing_input_price_per_m_tokens: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Output Price ($)</label>
+                <input
+                  type="number"
+                  step="0.0001"
+                  className="form-input"
+                  value={defaults.writing_output_price_per_m_tokens}
+                  onChange={e => setDefaults({ ...defaults, writing_output_price_per_m_tokens: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+            <small style={{ color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+              Used to calculate total project costs in the dashboard.
+            </small>
+          </div>
+        )}
       </div>
     )
   }

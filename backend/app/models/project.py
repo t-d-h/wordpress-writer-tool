@@ -34,3 +34,5 @@ class TokenUsageResponse(BaseModel):
     content: int = 0
     thumbnail: int = 0
     total: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0

@@ -476,6 +476,7 @@ export default function ProjectDetail() {
         <>
           <TokenUsageCard
             tokenUsage={tokenUsage}
+            defaultModels={defaultModels}
             loading={loadingTokenUsage}
             error={tokenUsageError}
           />

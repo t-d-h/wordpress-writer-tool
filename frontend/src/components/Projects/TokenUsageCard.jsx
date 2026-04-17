@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types'
 
-export default function TokenUsageCard({ tokenUsage, loading, error }) {
+export default function TokenUsageCard({ tokenUsage, defaultModels, loading, error }) {
   const formatNumber = (num) => {
     if (num === null || num === undefined) return '0'
     return num.toLocaleString()
@@ -37,6 +37,13 @@ export default function TokenUsageCard({ tokenUsage, loading, error }) {
     { key: 'thumbnail', label: 'Thumbnail' },
   ]
 
+  const inputTokens = tokenUsage.input_tokens || 0;
+  const outputTokens = tokenUsage.output_tokens || 0;
+  const inputPrice = defaultModels?.writing_input_price_per_m_tokens || 0;
+  const outputPrice = defaultModels?.writing_output_price_per_m_tokens || 0;
+
+  const totalCost = (inputTokens / 1000000) * inputPrice + (outputTokens / 1000000) * outputPrice;
+
   return (
     <div className="token-usage-card">
       <div className="token-usage-header">
@@ -44,6 +51,11 @@ export default function TokenUsageCard({ tokenUsage, loading, error }) {
       </div>
 
       <div className="token-usage-total">
+        <div className="token-usage-total-label">Total Cost</div>
+        <div className="token-usage-total-value">${totalCost.toFixed(4)}</div>
+      </div>
+
+      <div className="token-usage-total" style={{ borderTop: 'none', paddingTop: 0 }}>
         <div className="token-usage-total-label">Total Tokens</div>
         <div className="token-usage-total-value">{formatNumber(tokenUsage.total)}</div>
       </div>
@@ -55,6 +67,18 @@ export default function TokenUsageCard({ tokenUsage, loading, error }) {
             <span className="token-usage-row-value">{formatNumber(tokenUsage[item.key])}</span>
           </div>
         ))}
+        {inputTokens > 0 && (
+          <div className="token-usage-row">
+            <span className="token-usage-row-label">Input Tokens</span>
+            <span className="token-usage-row-value">{formatNumber(inputTokens)}</span>
+          </div>
+        )}
+        {outputTokens > 0 && (
+          <div className="token-usage-row">
+            <span className="token-usage-row-label">Output Tokens</span>
+            <span className="token-usage-row-value">{formatNumber(outputTokens)}</span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -67,6 +91,12 @@ TokenUsageCard.propTypes = {
     content: PropTypes.number,
     thumbnail: PropTypes.number,
     total: PropTypes.number,
+    input_tokens: PropTypes.number,
+    output_tokens: PropTypes.number,
+  }),
+  defaultModels: PropTypes.shape({
+    writing_input_price_per_m_tokens: PropTypes.number,
+    writing_output_price_per_m_tokens: PropTypes.number,
   }),
   loading: PropTypes.bool,
   error: PropTypes.string,
@@ -74,6 +104,7 @@ TokenUsageCard.propTypes = {
 
 TokenUsageCard.defaultProps = {
   tokenUsage: null,
+  defaultModels: null,
   loading: false,
   error: null,
 }

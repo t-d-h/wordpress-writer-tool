@@ -10,6 +10,8 @@ class DefaultModelsCreate(BaseModel):
     image_model_name: Optional[str] = None
     video_provider_id: Optional[str] = None
     video_model_name: Optional[str] = None
+    writing_input_price_per_m_tokens: float = 0.0
+    writing_output_price_per_m_tokens: float = 0.0
 
 
 class DefaultModelsUpdate(BaseModel):
@@ -19,6 +21,8 @@ class DefaultModelsUpdate(BaseModel):
     image_model_name: Optional[str] = None
     video_provider_id: Optional[str] = None
     video_model_name: Optional[str] = None
+    writing_input_price_per_m_tokens: Optional[float] = None
+    writing_output_price_per_m_tokens: Optional[float] = None
 
 
 class DefaultModelsResponse(BaseModel):
@@ -29,4 +33,6 @@ class DefaultModelsResponse(BaseModel):
     image_model_name: Optional[str] = None
     video_provider_id: Optional[str] = None
     video_model_name: Optional[str] = None
+    writing_input_price_per_m_tokens: float = 0.0
+    writing_output_price_per_m_tokens: float = 0.0
     updated_at: datetime
