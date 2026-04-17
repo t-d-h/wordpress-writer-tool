@@ -18,11 +18,15 @@ class WordCountService:
         if not html_content or not html_content.strip():
             return 0
 
-        # Strip HTML tags using regex for lightweight processing
         text_only = re.sub(r"<[^>]+>", " ", html_content)
-
-        # Extract words using regex for word characters
-        words = re.findall(r"\w+", text_only)
+        text_only = re.sub(
+            r"<(script|style)[^>]*>.*?</\\1>", " ", text_only, flags=re.DOTALL
+        )
+        text_only = re.sub(
+            r"<(script|style)[^>]*>.*?</\1>", " ", text_only, flags=re.DOTALL
+        )
+        text_only = re.sub(r"&\w+;", " ", text_only)
+        words = [word for word in text_only.split() if word]
 
         return len(words)
 
