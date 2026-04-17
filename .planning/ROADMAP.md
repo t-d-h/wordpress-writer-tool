@@ -48,7 +48,7 @@
 <summary>⏳ v1.3 Content Quality Improvements (Phases 15-21) — IN PROGRESS</summary>
 
 - [x] Phase 15: HTML Cleaning Foundation (2/2 plans) — completed 2026-04-16
-- [ ] Phase 16: Word Count Validation (0/0 plans) — not started
+- [ ] Phase 16: Word Count Validation (0/1 plans) — not started
 - [ ] Phase 17: Section Count Validation (0/0 plans) — not started
 - [ ] Phase 18: Validation Results Display (0/0 plans) — not started
 - [ ] Phase 19: Validation Warnings (0/0 plans) — not started
