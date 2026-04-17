@@ -1,0 +1,6 @@
+1. Backend `wp_service.py`: add `get_wp_categories(project_id)` calling `/wp-json/wp/v2/categories`.
+2. Backend `wp_service.py` `get_wp_posts`: add `categories: str = None` param to `get_wp_posts` and append to `params`.
+3. Backend `wp_cache_service.py`: Update cache keys to include `categories`.
+4. Backend `wp_sites.py`: Add endpoint for categories. Update `get_site_posts` route.
+5. Frontend `client.js`: Update `getSitePosts` API, add `getSiteCategories`.
+6. Frontend `ProjectDetail.jsx`: State `categoryFilter`, `categories`. Load categories on component mount or when site id is available. Render `<select>` for categories next to status filter.

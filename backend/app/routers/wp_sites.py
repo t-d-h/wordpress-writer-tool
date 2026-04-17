@@ -48,6 +48,20 @@ async def get_site(site_id: str):
     return format_site(doc)
 
 
+@router.get("/{site_id}/info")
+async def get_site_info(site_id: str):
+    from app.services.wp_service import get_wp_site_info
+
+    doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Site not found")
+    
+    result = await get_wp_site_info(site_id)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
 @router.post("", status_code=201)
 async def create_site(data: WPSiteCreate):
     from app.services.wp_service import verify_wp_site
@@ -109,6 +123,7 @@ async def get_site_posts(
     search: str = None,
     orderby: str = "date",
     order: str = "desc",
+    categories: str = None,
 ):
     """Fetch posts from a WordPress site with search, sort, and pagination."""
     from app.services.wp_service import get_wp_posts
@@ -147,14 +162,14 @@ async def get_site_posts(
     if search:
         print(f"[CACHE] Search query - bypassing cache, hitting WordPress API")
         result = await get_wp_posts(
-            str(project["_id"]), per_page, page, status, search, orderby, order
+            str(project["_id"]), per_page, page, status, search, orderby, order, categories
         )
         return result
 
     # Hybrid pagination: cache first, WordPress API fallback
     cache_service = WPCacheService()
     cache_key = cache_service.get_cache_key(
-        str(project["_id"]), per_page, page, status, orderby, order
+        str(project["_id"]), per_page, page, status, orderby, order, categories
     )
 
     try:
@@ -178,7 +193,7 @@ async def get_site_posts(
 
     # Fetch from WordPress API
     result = await get_wp_posts(
-        str(project["_id"]), per_page, page, status, search, orderby, order
+        str(project["_id"]), per_page, page, status, search, orderby, order, categories
     )
 
     # Update cache
@@ -199,6 +214,7 @@ async def refresh_site_posts_cache(
     status: str = None,
     orderby: str = "date",
     order: str = "desc",
+    categories: str = None,
 ):
     """Manually refresh cached WordPress posts for a site."""
     from app.services.wp_cache_service import WPCacheService
@@ -216,7 +232,20 @@ async def refresh_site_posts_cache(
     # Refresh cache
     cache_service = WPCacheService()
     result = await cache_service.refresh_cache(
-        str(project["_id"]), per_page, page, status, orderby, order
+        str(project["_id"]), per_page, page, status, orderby, order, search=None, categories=categories
     )
 
+    return result
+
+@router.get("/{site_id}/categories")
+async def get_site_categories(site_id: str):
+    from app.services.wp_service import get_wp_categories
+
+    doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Site not found")
+    
+    result = await get_wp_categories(site_id)
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
     return result

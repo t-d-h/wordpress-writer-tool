@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath, HiExclamationTriangle, HiMagnifyingGlass } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts, getSitePosts } from '../../api/client'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts, getSitePosts, getSiteCategories } from '../../api/client'
 import TokenUsageCard from './TokenUsageCard'
 import { formatDateOnly } from '../../utils/dateUtils'
+import WpSiteInfoCard from './WpSiteInfoCard'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -18,6 +19,8 @@ export default function ProjectDetail() {
   const [tokenUsageError, setTokenUsageError] = useState(null)
   const [activeTab, setActiveTab] = useState('content')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [categories, setCategories] = useState([])
   const [sortBy, setSortBy] = useState('date-desc')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -167,8 +170,9 @@ export default function ProjectDetail() {
   useEffect(() => {
     if (activeTab === 'all-posts' && project && project.wp_site_id) {
       loadWpPosts()
+      loadWpCategories()
     }
-  }, [activeTab, id, project?.wp_site_id, statusFilter, sortBy, searchQuery, wpPostsPage])
+  }, [activeTab, id, project?.wp_site_id, statusFilter, categoryFilter, sortBy, searchQuery, wpPostsPage])
 
   const load = async () => {
     try {
@@ -229,6 +233,16 @@ export default function ProjectDetail() {
     }
   }
 
+  const loadWpCategories = async () => {
+    if (!project || !project.wp_site_id || categories.length > 0) return
+    try {
+      const { data } = await getSiteCategories(project.wp_site_id)
+      setCategories(data || [])
+    } catch(e) {
+      console.error('Failed to load categories', e)
+    }
+  }
+
   const loadWpPosts = async () => {
     if (!project || !project.wp_site_id) return
 
@@ -242,7 +256,8 @@ export default function ProjectDetail() {
         statusFilter === 'all' ? null : statusFilter,
         searchQuery || null,
         sortBy.split('-')[0],
-        sortBy.split('-')[1]
+        sortBy.split('-')[1],
+        categoryFilter || null
       )
       setWpPosts(data.posts || [])
       setWpPostsTotal(data.total || 0)
@@ -468,18 +483,15 @@ export default function ProjectDetail() {
 
       <div className="tabs">
         <button className={`tab ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>General</button>
-        <button className={`tab ${activeTab === 'content' ? 'active' : ''}`} onClick={() => setActiveTab('content')}>Content</button>
-        <button className={`tab ${activeTab === 'all-posts' ? 'active' : ''}`} onClick={() => setActiveTab('all-posts')}>All Posts</button>
+        <button className={`tab ${activeTab === 'content' ? 'active' : ''}`} onClick={() => setActiveTab('content')}>AI Content</button>
+        <button className={`tab ${activeTab === 'all-posts' ? 'active' : ''}`} onClick={() => setActiveTab('all-posts')}>All WordPress posts</button>
       </div>
 
       {activeTab === 'general' && (
         <>
-          <TokenUsageCard
-            tokenUsage={tokenUsage}
-            defaultModels={defaultModels}
-            loading={loadingTokenUsage}
-            error={tokenUsageError}
-          />
+          {project.wp_site_id && (
+            <WpSiteInfoCard siteId={project.wp_site_id} />
+          )}
           <div className="stats-grid">
             {statCards.map(c => (
               <div key={c.key} className={`stat-card ${c.key}`}>
@@ -488,6 +500,12 @@ export default function ProjectDetail() {
               </div>
             ))}
           </div>
+          <TokenUsageCard
+            tokenUsage={tokenUsage}
+            defaultModels={defaultModels}
+            loading={loadingTokenUsage}
+            error={tokenUsageError}
+          />
         </>
       )}
 
@@ -602,6 +620,20 @@ export default function ProjectDetail() {
                     <option value="draft">Draft</option>
                     <option value="pending">Pending</option>
                     <option value="failed">Failed</option>
+                  </select>
+                  <select
+                    className="form-input"
+                    style={{ width: 'auto', padding: '8px 12px' }}
+                    value={categoryFilter}
+                    onChange={(e) => {
+                      setCategoryFilter(e.target.value)
+                      setWpPostsPage(1)
+                    }}
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name} ({cat.count})</option>
+                    ))}
                   </select>
                   <select
                     className="form-input"

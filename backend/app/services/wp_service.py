@@ -345,6 +345,7 @@ async def get_wp_posts(
     search: str = None,
     orderby: str = "date",
     order: str = "desc",
+    categories: str = None,
 ) -> dict:
     """Fetch posts from WordPress REST API with filtering and search.
 
@@ -373,6 +374,8 @@ async def get_wp_posts(
         params["orderby"] = orderby
     if order:
         params["order"] = order
+    if categories:
+        params["categories"] = categories
 
     result = await fetch_with_retry(url, headers, params)
 
@@ -402,3 +405,77 @@ async def get_wp_posts(
         transformed_posts = result.get("posts", [])
 
     return {"posts": transformed_posts, "total": result.get("total", 0)}
+
+
+async def get_wp_site_info(site_id: str) -> dict:
+    """Fetch WordPress site info and statistics."""
+    wp_site = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not wp_site:
+        raise Exception("WordPress site not found")
+
+    headers = _get_auth_header(wp_site["username"], wp_site["api_key"])
+    base_url = wp_site["url"].rstrip("/")
+
+    # 1. Get site general info
+    info_url = f"{base_url}/wp-json/"
+    
+    # 2. Get posts count
+    posts_url = f"{base_url}/wp-json/wp/v2/posts"
+    params_base = {"per_page": 1, "_fields": "id"}
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            reqs = [
+                client.get(info_url, headers=headers),
+                client.get(posts_url, headers=headers, params={**params_base, "status": "any"}),
+                client.get(posts_url, headers=headers, params={**params_base, "status": "publish"}),
+                client.get(posts_url, headers=headers, params={**params_base, "status": "draft"}),
+            ]
+            
+            responses = await asyncio.gather(*reqs, return_exceptions=True)
+            
+            info_resp = responses[0] if not isinstance(responses[0], Exception) else None
+            total_resp = responses[1] if not isinstance(responses[1], Exception) else None
+            publish_resp = responses[2] if not isinstance(responses[2], Exception) else None
+            draft_resp = responses[3] if not isinstance(responses[3], Exception) else None
+
+            # Parse results
+            info = info_resp.json() if info_resp and info_resp.status_code == 200 else {}
+            
+            return {
+                "name": info.get("name", "Unknown"),
+                "description": info.get("description", ""),
+                "url": info.get("url", base_url),
+                "timezone_string": info.get("timezone_string", ""),
+                "posts": {
+                    "total": int(total_resp.headers.get("X-WP-Total", 0)) if total_resp and total_resp.status_code == 200 else 0,
+                    "published": int(publish_resp.headers.get("X-WP-Total", 0)) if publish_resp and publish_resp.status_code == 200 else 0,
+                    "draft": int(draft_resp.headers.get("X-WP-Total", 0)) if draft_resp and draft_resp.status_code == 200 else 0,
+                }
+            }
+    except Exception as e:
+        print(f"[WP_SITE_INFO_ERROR] {str(e)}")
+        return {"error": "Failed to fetch site information"}
+
+
+async def get_wp_categories(site_id: str) -> list:
+    """Fetch all categories from a WordPress site."""
+    wp_site = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not wp_site:
+        raise Exception("WordPress site not found")
+
+    headers = _get_auth_header(wp_site["username"], wp_site["api_key"])
+    url = f"{wp_site['url'].rstrip('/')}/wp-json/wp/v2/categories"
+    
+    # Fetch all categories (might need pagination if >100, but using per_page=100 for now)
+    params = {"per_page": 100}
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        categories = response.json()
+        
+        # Format categories to return just id and name
+        return [{"id": cat["id"], "name": cat["name"], "count": cat.get("count", 0)} for cat in categories]
+
+

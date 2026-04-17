@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles } from 'react-icons/hi2'
+import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles, HiOutlineChatBubbleLeftRight } from 'react-icons/hi2'
 import { getProjects } from '../api/client'
 
 export default function Sidebar() {
@@ -45,7 +45,7 @@ export default function Sidebar() {
       <div className="sidebar-header">
         <div className="sidebar-logo">W</div>
         <div>
-          <div className="sidebar-title">WP Writer</div>
+          <div className="sidebar-title">WP Management tool</div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>AI-Powered</div>
         </div>
         <button
@@ -131,6 +131,27 @@ export default function Sidebar() {
           )}
         </div>
       </nav>
+
+      <div className="sidebar-footer" style={{ padding: '16px', borderTop: '1px solid var(--border-color)' }}>
+        <a
+          href="https://t.me/hoantdh"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="nav-item"
+          style={{
+            background: 'var(--bg-glass)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            color: 'var(--accent-primary)',
+            fontWeight: '600'
+          }}
+        >
+          <HiOutlineChatBubbleLeftRight className="nav-icon" />
+          <span>Nhắn tin cho Chồng iu</span>
+        </a>
+      </div>
     </aside>
   )
 }

@@ -23,6 +23,7 @@ class WPCacheService:
         status: str,
         orderby: str,
         order: str,
+        categories: str = None,
     ) -> str:
         """Generate unique cache key for a specific query.
 
@@ -33,11 +34,12 @@ class WPCacheService:
             status: Post status filter
             orderby: Order by field
             order: Order direction
+            categories: Category filter
 
         Returns:
             str: Unique cache key
         """
-        return f"wp_posts:{project_id}:{per_page}:{page}:{status}:{orderby}:{order}"
+        return f"wp_posts:{project_id}:{per_page}:{page}:{status}:{orderby}:{order}:{categories}"
 
     async def get_cached_posts(self, cache_key: str) -> dict:
         """Retrieve cached posts from MongoDB.
@@ -114,6 +116,7 @@ class WPCacheService:
         orderby: str,
         order: str,
         search: str = None,
+        categories: str = None,
     ) -> dict:
         """Refresh cache from WordPress API with progress tracking.
 
@@ -125,18 +128,19 @@ class WPCacheService:
             orderby: Order by field
             order: Order direction
             search: Search query (optional)
+            categories: Category filter
 
         Returns:
             dict: Progress information with status, posts_refreshed, total_posts, message
         """
         cache_key = self.get_cache_key(
-            project_id, per_page, page, status, orderby, order
+            project_id, per_page, page, status, orderby, order, categories
         )
 
         try:
             # Fetch posts from WordPress API with retry logic
             wp_data = await get_wp_posts(
-                project_id, per_page, page, status, search, orderby, order
+                project_id, per_page, page, status, search, orderby, order, categories
             )
             posts = wp_data.get("posts", [])
             total = wp_data.get("total", 0)

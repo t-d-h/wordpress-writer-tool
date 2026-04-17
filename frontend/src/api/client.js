@@ -28,10 +28,13 @@ export const deleteSite = (id) => api.delete(`/wp-sites/${id}`);
 export const verifySite = (data) => api.post('/wp-sites/verify', data);
 
 // WordPress Site Posts
-export const getSitePosts = (siteId, perPage = 100, page = 1, status = null, search = null, orderby = 'date', order = 'desc') => {
+export const getSiteInfo = (siteId) => api.get(`/wp-sites/${siteId}/info`);
+export const getSiteCategories = (siteId) => api.get(`/wp-sites/${siteId}/categories`);
+export const getSitePosts = (siteId, perPage = 100, page = 1, status = null, search = null, orderby = 'date', order = 'desc', categories = null) => {
   const params = { per_page: perPage, page: page, orderby: orderby, order: order };
   if (status) params.status = status;
   if (search) params.search = search;
+  if (categories) params.categories = categories;
   return api.get(`/wp-sites/${siteId}/posts`, { params });
 };
 
