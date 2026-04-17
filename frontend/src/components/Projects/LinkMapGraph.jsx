@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import PropTypes from 'prop-types'
 
 /**
@@ -15,16 +15,73 @@ export default function LinkMapGraph({ nodes, edges }) {
   const positionsRef = useRef({}) // Store { id: {x, y, vx, vy} }
   const viewStateRef = useRef({ zoom: 1, panX: 0, panY: 0 })
   const lastDownRef = useRef({ x: 0, y: 0, time: 0 })
+  const [filter, setFilter] = useState('all') // 'all', 'none', 'internal', 'external'
+
+  // Filter nodes and edges based on selection
+  const filteredData = useMemo(() => {
+    if (!nodes || nodes.length === 0) return { nodes: [], edges: [] }
+
+    // Count outgoing links for each post
+    const outgoing = {}
+    nodes.forEach(n => {
+      if (n.type === 'post') outgoing[n.id] = { internal: 0, external: 0, total: 0 }
+    })
+    
+    edges.forEach(e => {
+      if (outgoing[e.source]) {
+        outgoing[e.source].total++
+        if (e.type === 'internal') outgoing[e.source].internal++
+        else outgoing[e.source].external++
+      }
+    })
+
+    if (filter === 'none') {
+      // Posts with zero outgoing links
+      const targetNodes = nodes.filter(n => n.type === 'post' && (outgoing[n.id]?.total || 0) === 0)
+      return { nodes: targetNodes, edges: [] }
+    }
+    
+    if (filter === 'internal') {
+      // Posts with at least one internal outgoing link, + their targets
+      const internalNodeIds = new Set()
+      edges.forEach(e => {
+        if (e.type === 'internal') {
+          internalNodeIds.add(e.source)
+          internalNodeIds.add(e.target)
+        }
+      })
+      const filteredNodes = nodes.filter(n => internalNodeIds.has(n.id))
+      const filteredEdges = edges.filter(e => e.type === 'internal')
+      return { nodes: filteredNodes, edges: filteredEdges }
+    }
+    
+    if (filter === 'external') {
+      // Posts with at least one external outgoing link, + their targets
+      const externalNodeIds = new Set()
+      edges.forEach(e => {
+        if (e.type === 'external') {
+          externalNodeIds.add(e.source)
+          externalNodeIds.add(e.target)
+        }
+      })
+      const filteredNodes = nodes.filter(n => externalNodeIds.has(n.id))
+      const filteredEdges = edges.filter(e => e.type === 'external')
+      return { nodes: filteredNodes, edges: filteredEdges }
+    }
+
+    return { nodes, edges }
+  }, [nodes, edges, filter])
 
   // Initialize simulation data
   const initSimulation = useCallback(() => {
-    if (!nodes || nodes.length === 0) return null
+    const { nodes: filteredNodes, edges: filteredEdges } = filteredData
+    if (!filteredNodes || filteredNodes.length === 0) return null
     if (dimensions.width <= 0 || dimensions.height <= 0) return null
 
     const w = dimensions.width
     const h = dimensions.height
 
-    const simNodes = nodes.map((node, i) => {
+    const simNodes = filteredNodes.map((node, i) => {
       const isPost = node.type === 'post'
       const prevPos = positionsRef.current[node.id]
       
@@ -55,7 +112,7 @@ export default function LinkMapGraph({ nodes, edges }) {
     const nodeMap = {}
     simNodes.forEach(n => { nodeMap[n.id] = n })
 
-    const simEdges = edges
+    const simEdges = filteredEdges
       .filter(e => nodeMap[e.source] && nodeMap[e.target])
       .map(e => ({
         source: nodeMap[e.source],
@@ -78,7 +135,7 @@ export default function LinkMapGraph({ nodes, edges }) {
       panStartY: 0,
       coolingFactor: 1.0,
     }
-  }, [nodes, edges, dimensions])
+  }, [filteredData, dimensions])
 
   // Force simulation step
   const simulate = useCallback((sim) => {
@@ -298,7 +355,7 @@ export default function LinkMapGraph({ nodes, edges }) {
       for (const entry of entries) {
         const { width, height } = entry.contentRect
         if (width > 0 && height > 0) {
-          setDimensions({ width: Math.floor(width), height: Math.max(500, Math.floor(height)) })
+          setDimensions({ width: Math.floor(width), height: Math.max(350, Math.floor(height)) })
         }
       }
     })
@@ -415,15 +472,19 @@ export default function LinkMapGraph({ nodes, edges }) {
         const node = findNode(x, y)
         if (node) {
           const rect = canvas.getBoundingClientRect()
-          setTooltip({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top - 10,
-            title: node.title,
-            url: node.url,
-            type: node.type,
-          })
-          canvas.style.cursor = 'pointer'
-        } else {
+          // Only update tooltip state if it's a different node or wasn't showing
+          if (!tooltip || tooltip.id !== node.id) {
+            setTooltip({
+              id: node.id,
+              x: e.clientX - rect.left,
+              y: e.clientY - rect.top - 10,
+              title: node.title,
+              url: node.url,
+              type: node.type,
+            })
+            canvas.style.cursor = 'pointer'
+          }
+        } else if (tooltip) {
           setTooltip(null)
           canvas.style.cursor = 'default'
         }
@@ -476,30 +537,29 @@ export default function LinkMapGraph({ nodes, edges }) {
       viewStateRef.current.zoom = sim.zoom
     }
 
-    const onDblClick = (e) => {
+
+
+    const onMouseLeave = () => {
       const sim = simRef.current
       if (!sim) return
-      const { x, y } = getMousePos(e)
-      const node = findNode(x, y)
-      if (node && node.url) {
-        window.open(node.url, '_blank')
-      }
+      sim.dragging = null
+      sim.isPanning = false
+      canvas.style.cursor = 'default'
+      setTooltip(null)
     }
 
     canvas.addEventListener('mousedown', onMouseDown)
     canvas.addEventListener('mousemove', onMouseMove)
     canvas.addEventListener('mouseup', onMouseUp)
-    canvas.addEventListener('mouseleave', onMouseUp)
+    canvas.addEventListener('mouseleave', onMouseLeave)
     canvas.addEventListener('wheel', onWheel, { passive: false })
-    canvas.addEventListener('dblclick', onDblClick)
 
     return () => {
       canvas.removeEventListener('mousedown', onMouseDown)
       canvas.removeEventListener('mousemove', onMouseMove)
       canvas.removeEventListener('mouseup', onMouseUp)
-      canvas.removeEventListener('mouseleave', onMouseUp)
+      canvas.removeEventListener('mouseleave', onMouseLeave)
       canvas.removeEventListener('wheel', onWheel)
-      canvas.removeEventListener('dblclick', onDblClick)
     }
   }, [])
 
@@ -516,24 +576,45 @@ export default function LinkMapGraph({ nodes, edges }) {
   return (
     <div className="link-map-container">
       <div className="link-map-legend">
-        <div className="link-map-legend-item">
-          <span className="link-map-legend-dot" style={{ background: 'var(--accent-primary)' }} />
-          <span>Post (internal)</span>
+        <div className="link-map-filters">
+          <button 
+            className={`link-map-filter-btn ${filter === 'all' ? 'active' : ''}`}
+            onClick={() => setFilter('all')}
+          >All</button>
+          <button 
+            className={`link-map-filter-btn ${filter === 'none' ? 'active' : ''}`}
+            onClick={() => setFilter('none')}
+            title="Show posts with no outgoing links"
+          >Isolated</button>
+          <button 
+            className={`link-map-filter-btn ${filter === 'internal' ? 'active' : ''}`}
+            onClick={() => setFilter('internal')}
+          >With Internal Links</button>
+          <button 
+            className={`link-map-filter-btn ${filter === 'external' ? 'active' : ''}`}
+            onClick={() => setFilter('external')}
+          >With External Links</button>
         </div>
-        <div className="link-map-legend-item">
-          <span className="link-map-legend-dot" style={{ background: 'var(--accent-secondary)', borderRadius: '50%' }} />
-          <span>External site</span>
-        </div>
-        <div className="link-map-legend-item">
-          <span className="link-map-legend-line" style={{ borderBottom: '2px solid var(--accent-primary)' }} />
-          <span>Internal link</span>
-        </div>
-        <div className="link-map-legend-item">
-          <span className="link-map-legend-line" style={{ borderBottom: '2px dashed var(--accent-secondary)' }} />
-          <span>External link</span>
+        <div className="link-map-legend-items">
+          <div className="link-map-legend-item">
+            <span className="link-map-legend-dot" style={{ background: 'var(--accent-primary)' }} />
+            <span>Post (internal)</span>
+          </div>
+          <div className="link-map-legend-item">
+            <span className="link-map-legend-dot" style={{ background: 'var(--accent-secondary)', borderRadius: '50%' }} />
+            <span>External site</span>
+          </div>
+          <div className="link-map-legend-item">
+            <span className="link-map-legend-line" style={{ borderBottom: '2px solid var(--accent-primary)' }} />
+            <span>Internal link</span>
+          </div>
+          <div className="link-map-legend-item">
+            <span className="link-map-legend-line" style={{ borderBottom: '2px dashed var(--accent-secondary)' }} />
+            <span>External link</span>
+          </div>
         </div>
         <div className="link-map-legend-hint">
-          Drag nodes · Click or Double-click to open URL · Scroll to zoom
+          Drag nodes · Click to open URL · Scroll to zoom
         </div>
       </div>
       <div className="link-map-canvas-wrapper" ref={containerRef}>
