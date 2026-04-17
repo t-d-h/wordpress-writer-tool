@@ -20,6 +20,9 @@ export default function ProjectDetail() {
   const [sortBy, setSortBy] = useState('date-desc')
   const [searchQuery, setSearchQuery] = useState('')
   const [wpPosts, setWpPosts] = useState([])
+  const [wpPostsPage, setWpPostsPage] = useState(1)
+  const [wpPostsTotal, setWpPostsTotal] = useState(0)
+  const [wpPostsLimit, setWpPostsLimit] = useState(100)
   const [loadingWpPosts, setLoadingWpPosts] = useState(false)
   const [wpPostsError, setWpPostsError] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -30,7 +33,7 @@ export default function ProjectDetail() {
     ai_provider_id: '',
     model_name: '',
     auto_publish: false,
-    thumbnail_source: 'ai',
+    thumbnail_source: 'upload',
     thumbnail_provider_id: '',
     thumbnail_model_name: '',
     target_word_count: 500,
@@ -44,7 +47,7 @@ export default function ProjectDetail() {
     ai_provider_id: '',
     model_name: '',
     auto_publish: false,
-    thumbnail_source: 'ai',
+    thumbnail_source: 'upload',
     thumbnail_provider_id: '',
     thumbnail_model_name: '',
     target_word_count: 500,
@@ -81,7 +84,7 @@ export default function ProjectDetail() {
           ai_provider_id: defaultModels.writing_provider_id || '',
           model_name: defaultModels.writing_model_name || '',
           auto_publish: false,
-          thumbnail_source: 'ai',
+          thumbnail_source: 'upload',
           thumbnail_provider_id: defaultModels.image_provider_id || '',
           thumbnail_model_name: defaultModels.image_model_name || '',
           target_word_count: 500,
@@ -96,7 +99,7 @@ export default function ProjectDetail() {
           ai_provider_id: defaultModels.writing_provider_id || '',
           model_name: defaultModels.writing_model_name || '',
           auto_publish: false,
-          thumbnail_source: 'ai',
+          thumbnail_source: 'upload',
           thumbnail_provider_id: defaultModels.image_provider_id || '',
           thumbnail_model_name: defaultModels.image_model_name || '',
           target_word_count: 500,
@@ -133,7 +136,7 @@ export default function ProjectDetail() {
         ai_provider_id: '',
         model_name: '',
         auto_publish: false,
-        thumbnail_source: 'ai',
+        thumbnail_source: 'upload',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
         target_word_count: 500,
@@ -147,7 +150,7 @@ export default function ProjectDetail() {
         ai_provider_id: '',
         model_name: '',
         auto_publish: false,
-        thumbnail_source: 'ai',
+        thumbnail_source: 'upload',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
         target_word_count: 500,
@@ -175,7 +178,7 @@ export default function ProjectDetail() {
     if (activeTab === 'all-posts' && project && project.wp_site_id) {
       loadWpPosts()
     }
-  }, [activeTab, id, project?.wp_site_id, statusFilter, sortBy, searchQuery])
+  }, [activeTab, id, project?.wp_site_id, statusFilter, sortBy, searchQuery, wpPostsPage])
 
   const load = async () => {
     try {
@@ -244,14 +247,15 @@ export default function ProjectDetail() {
     try {
       const { data } = await getSitePosts(
         project.wp_site_id,
-        100,
-        1,
+        wpPostsLimit,
+        wpPostsPage,
         statusFilter === 'all' ? null : statusFilter,
         searchQuery || null,
         sortBy.split('-')[0],
         sortBy.split('-')[1]
       )
       setWpPosts(data.posts || [])
+      setWpPostsTotal(data.total || 0)
     } catch (e) {
       console.error('Failed to load WordPress posts:', e)
       setWpPostsError('Failed to load posts from WordPress')
@@ -303,7 +307,7 @@ export default function ProjectDetail() {
         ai_provider_id: '',
         model_name: '',
         auto_publish: false,
-        thumbnail_source: 'ai',
+        thumbnail_source: 'upload',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
         target_word_count: 500,
@@ -363,7 +367,7 @@ export default function ProjectDetail() {
         ai_provider_id: '',
         model_name: '',
         auto_publish: false,
-        thumbnail_source: 'ai',
+        thumbnail_source: 'upload',
         thumbnail_provider_id: '',
         thumbnail_model_name: '',
         target_word_count: 500,
@@ -716,6 +720,25 @@ export default function ProjectDetail() {
                       ))}
                     </tbody>
                   </table>
+                  <div className="pagination-controls" style={{ marginTop: 20, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => setWpPostsPage(p => Math.max(1, p - 1))}
+                      disabled={wpPostsPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <span>
+                      Page {wpPostsPage} of {Math.ceil(wpPostsTotal / wpPostsLimit)}
+                    </span>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => setWpPostsPage(p => p + 1)}
+                      disabled={wpPostsPage * wpPostsLimit >= wpPostsTotal}
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               )}
             </>
@@ -739,6 +762,72 @@ export default function ProjectDetail() {
 
             {createMode === 'single' ? (
               <form onSubmit={handleCreateSingle}>
+                <div className="form-group">
+                  <label className="form-label">Topic</label>
+                  <input className="form-input" placeholder="e.g. How to Improve Your Website SEO" value={singleForm.topic} onChange={e => setSingleForm({ ...singleForm, topic: e.target.value })} required />
+                </div>
+
+                {/* Content Length Options */}
+                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Content Length Options</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div className="form-group">
+                      <label className="form-label">Target Word Count</label>
+                      <input
+                        className="form-input"
+                        type="number"
+                        value={singleForm.target_word_count}
+                        onChange={e => setSingleForm({ ...singleForm, target_word_count: parseInt(e.target.value) || 500 })}
+                        min={100}
+                        step={100}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Target Section Count</label>
+                      <input
+                        className="form-input"
+                        type="number"
+                        value={singleForm.target_section_count}
+                        onChange={e => setSingleForm({ ...singleForm, target_section_count: parseInt(e.target.value) || 4 })}
+                        min={2}
+                        max={20}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Language</label>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="language"
+                        value="vietnamese"
+                        checked={singleForm.language === 'vietnamese'}
+                        onChange={e => setSingleForm({ ...singleForm, language: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Tiếng Việt</span>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="radio"
+                        name="language"
+                        value="english"
+                        checked={singleForm.language === 'english'}
+                        onChange={e => setSingleForm({ ...singleForm, language: e.target.value })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>English</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Additional Requests (Optional)</label>
+                  <textarea className="form-textarea" placeholder="Any specific requirements..." value={singleForm.additional_requests} onChange={e => setSingleForm({ ...singleForm, additional_requests: e.target.value })} />
+                </div>
+
                 {/* Publishing Options */}
                 <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
                   <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Publishing Options</h3>
@@ -796,6 +885,17 @@ export default function ProjectDetail() {
                     )}
                   </div>
                 </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">Create & Start Research</button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleCreateBulk}>
+                <div className="form-group">
+                  <label className="form-label">Topics (one per line)</label>
+                  <textarea className="form-textarea" style={{ minHeight: 150 }} placeholder={"Topic 1\nTopic 2\nTopic 3"} value={bulkForm.topics} onChange={e => setBulkForm({ ...bulkForm, topics: e.target.value })} required />
+                </div>
 
                 {/* Content Length Options */}
                 <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
@@ -806,8 +906,8 @@ export default function ProjectDetail() {
                       <input
                         className="form-input"
                         type="number"
-                        value={singleForm.target_word_count}
-                        onChange={e => setSingleForm({ ...singleForm, target_word_count: parseInt(e.target.value) || 500 })}
+                        value={bulkForm.target_word_count}
+                        onChange={e => setBulkForm({ ...bulkForm, target_word_count: parseInt(e.target.value) || 500 })}
                         min={100}
                         step={100}
                       />
@@ -817,8 +917,8 @@ export default function ProjectDetail() {
                       <input
                         className="form-input"
                         type="number"
-                        value={singleForm.target_section_count}
-                        onChange={e => setSingleForm({ ...singleForm, target_section_count: parseInt(e.target.value) || 4 })}
+                        value={bulkForm.target_section_count}
+                        onChange={e => setBulkForm({ ...bulkForm, target_section_count: parseInt(e.target.value) || 4 })}
                         min={2}
                         max={20}
                       />
@@ -826,11 +926,6 @@ export default function ProjectDetail() {
                   </div>
                 </div>
 
-
-                <div className="form-group">
-                  <label className="form-label">Topic</label>
-                  <input className="form-input" placeholder="e.g. How to Improve Your Website SEO" value={singleForm.topic} onChange={e => setSingleForm({ ...singleForm, topic: e.target.value })} required />
-                </div>
                 <div className="form-group">
                   <label className="form-label">Language</label>
                   <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
@@ -839,8 +934,8 @@ export default function ProjectDetail() {
                         type="radio"
                         name="language"
                         value="vietnamese"
-                        checked={singleForm.language === 'vietnamese'}
-                        onChange={e => setSingleForm({ ...singleForm, language: e.target.value })}
+                        checked={bulkForm.language === 'vietnamese'}
+                        onChange={e => setBulkForm({ ...bulkForm, language: e.target.value })}
                         style={{ cursor: 'pointer' }}
                       />
                       <span>Tiếng Việt</span>
@@ -850,8 +945,8 @@ export default function ProjectDetail() {
                         type="radio"
                         name="language"
                         value="english"
-                        checked={singleForm.language === 'english'}
-                        onChange={e => setSingleForm({ ...singleForm, language: e.target.value })}
+                        checked={bulkForm.language === 'english'}
+                        onChange={e => setBulkForm({ ...bulkForm, language: e.target.value })}
                         style={{ cursor: 'pointer' }}
                       />
                       <span>English</span>
@@ -860,15 +955,9 @@ export default function ProjectDetail() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Additional Requests (Optional)</label>
-                  <textarea className="form-textarea" placeholder="Any specific requirements..." value={singleForm.additional_requests} onChange={e => setSingleForm({ ...singleForm, additional_requests: e.target.value })} />
+                  <textarea className="form-textarea" placeholder="Applied to all posts..." value={bulkForm.additional_requests} onChange={e => setBulkForm({ ...bulkForm, additional_requests: e.target.value })} />
                 </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">Create & Start Research</button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleCreateBulk}>
+
                 {/* Publishing Options */}
                 <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
                   <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Publishing Options</h3>
@@ -926,72 +1015,6 @@ export default function ProjectDetail() {
                     )}
                   </div>
                 </div>
-
-                {/* Content Length Options */}
-                <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: 'var(--text-muted)' }}>Content Length Options</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    <div className="form-group">
-                      <label className="form-label">Target Word Count</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        value={bulkForm.target_word_count}
-                        onChange={e => setBulkForm({ ...bulkForm, target_word_count: parseInt(e.target.value) || 500 })}
-                        min={100}
-                        step={100}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Target Section Count</label>
-                      <input
-                        className="form-input"
-                        type="number"
-                        value={bulkForm.target_section_count}
-                        onChange={e => setBulkForm({ ...bulkForm, target_section_count: parseInt(e.target.value) || 4 })}
-                        min={2}
-                        max={20}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-
-                <div className="form-group">
-                  <label className="form-label">Topics (one per line)</label>
-                  <textarea className="form-textarea" style={{ minHeight: 150 }} placeholder={"Topic 1\nTopic 2\nTopic 3"} value={bulkForm.topics} onChange={e => setBulkForm({ ...bulkForm, topics: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Language</label>
-                  <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        name="language"
-                        value="vietnamese"
-                        checked={bulkForm.language === 'vietnamese'}
-                        onChange={e => setBulkForm({ ...bulkForm, language: e.target.value })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <span>Tiếng Việt</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        name="language"
-                        value="english"
-                        checked={bulkForm.language === 'english'}
-                        onChange={e => setBulkForm({ ...bulkForm, language: e.target.value })}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      <span>English</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Additional Requests (Optional)</label>
-                  <textarea className="form-textarea" placeholder="Applied to all posts..." value={bulkForm.additional_requests} onChange={e => setBulkForm({ ...bulkForm, additional_requests: e.target.value })} />
-                </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
                   <button type="submit" className="btn btn-primary">Create All & Start Research</button>
@@ -1018,17 +1041,26 @@ function JobStatusBadge({ jobs, jobType }) {
   if (!job) return <span className="status-badge status-idle">—</span>
   
   const statusConfig = {
-    pending: { icon: <HiOutlineClock />, class: 'status-pending' },
-    running: { icon: <HiArrowPath className="spin" />, class: 'status-running' },
-    completed: { icon: <HiOutlineCheckCircle />, class: 'status-completed' },
-    failed: { icon: <HiOutlineXCircle />, class: 'status-failed' },
+    pending: { icon: <HiOutlineClock />, class: 'status-pending', label: 'Pending' },
+    running: { icon: <HiArrowPath className="spin" />, class: 'status-running', label: 'Running' },
+    completed: { icon: <HiOutlineCheckCircle />, class: 'status-completed', label: 'Completed' },
+    failed: { icon: <HiOutlineXCircle />, class: 'status-failed', label: 'Failed' },
+    retrying: { icon: <HiArrowPath className="spin" />, class: 'status-retrying', label: 'Retrying' },
   }
   
   const config = statusConfig[job.status] || { icon: null, class: 'status-idle' }
   
   return (
-    <span className={`status-badge ${config.class}`}>
+    <span 
+      className={`status-badge ${config.class}`} 
+      title={job.status === 'retrying' ? `Retrying (${job.retry_attempt}/${job.max_retries})` : (job.error || config.label)}
+    >
       {config.icon}
+      {job.status === 'retrying' && job.retry_attempt && (
+        <span style={{ fontSize: '10px', marginLeft: '4px' }}>
+          {job.retry_attempt}/{job.max_retries}
+        </span>
+      )}
     </span>
   )
 }

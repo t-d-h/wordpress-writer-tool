@@ -16,7 +16,14 @@ from app.logging_config import setup_logging
 logger = setup_logging()
 
 
-async def _update_job_status(job_id: str, post_id: str, status: str, error: str = None):
+async def _update_job_status(
+    job_id: str,
+    post_id: str,
+    status: str,
+    error: str = None,
+    retry_attempt: int = None,
+    max_retries: int = None,
+):
     """Update job status in both MongoDB and Redis."""
     now = datetime.now(timezone.utc)
 
@@ -28,36 +35,45 @@ async def _update_job_status(job_id: str, post_id: str, status: str, error: str 
         update["completed_at"] = now
     if error:
         update["error"] = error
+    if retry_attempt is not None:
+        update["retry_attempt"] = retry_attempt
+    if max_retries is not None:
+        update["max_retries"] = max_retries
 
     await jobs_col.update_one({"job_id": job_id}, {"$set": update})
 
     # Update embedded job in posts collection
+    job_update_fields = {
+        "jobs.$.status": status,
+        **({"jobs.$.error": error} if error else {}),
+        **({"jobs.$.started_at": now} if status == "running" else {}),
+        **(
+            {"jobs.$.completed_at": now} if status in ("completed", "failed") else {}
+        ),
+        **(
+            {"jobs.$.retry_attempt": retry_attempt} if retry_attempt is not None else {}
+        ),
+        **({"jobs.$.max_retries": max_retries} if max_retries is not None else {}),
+    }
+
     await posts_col.update_one(
         {"_id": ObjectId(post_id), "jobs.job_id": job_id},
-        {
-            "$set": {
-                "jobs.$.status": status,
-                **({"jobs.$.error": error} if error else {}),
-                **({"jobs.$.started_at": now} if status == "running" else {}),
-                **(
-                    {"jobs.$.completed_at": now}
-                    if status in ("completed", "failed")
-                    else {}
-                ),
-            }
-        },
+        {"$set": job_update_fields},
     )
 
     # Cache in Redis
-    await set_job_status(
-        job_id,
-        {
-            "job_id": job_id,
-            "post_id": post_id,
-            "status": status,
-            "error": error,
-        },
-    )
+    redis_data = {
+        "job_id": job_id,
+        "post_id": post_id,
+        "status": status,
+        "error": error,
+    }
+    if retry_attempt is not None:
+        redis_data["retry_attempt"] = retry_attempt
+    if max_retries is not None:
+        redis_data["max_retries"] = max_retries
+
+    await set_job_status(job_id, redis_data)
 
 
 async def queue_next_job(
@@ -92,8 +108,22 @@ async def run_research(job_data: dict):
         logger.info(f"[RESEARCH] Calling AI model: {model_name}")
         logger.info(f"[RESEARCH] Language: {language}")
 
+        async def handle_retry(attempt, max_retries):
+            await _update_job_status(
+                job_id,
+                post_id,
+                "retrying",
+                retry_attempt=attempt,
+                max_retries=max_retries,
+            )
+
         research_data, total_tokens = await ai_service.research_topic(
-            topic, additional, provider_id, model_name, language
+            topic,
+            additional,
+            provider_id,
+            model_name,
+            language,
+            on_retry=handle_retry,
         )
 
         logger.info(f"[RESEARCH] AI call completed, {total_tokens} tokens used")
@@ -161,8 +191,23 @@ async def run_outline(job_data: dict):
         logger.info(f"[OUTLINE] Calling AI model: {model_name}")
         logger.info(f"[OUTLINE] Language: {language}")
 
+        async def handle_retry(attempt, max_retries):
+            await _update_job_status(
+                job_id,
+                post_id,
+                "retrying",
+                retry_attempt=attempt,
+                max_retries=max_retries,
+            )
+
         outline, tokens = await ai_service.generate_outline(
-            topic, research_data, additional, provider_id, model_name, language
+            topic,
+            research_data,
+            additional,
+            provider_id,
+            model_name,
+            language,
+            on_retry=handle_retry,
         )
 
         logger.info(f"[OUTLINE] AI call completed, {tokens} tokens used")
@@ -224,7 +269,6 @@ async def run_content(job_data: dict):
         additional = post.get("additional_requests", "")
         outline = post.get("outline", {})
         research_data = post.get("research_data", {})
-        research_data = post.get("research_data", {})
         provider_id = post.get("ai_provider_id")
         model_name = post.get("model_name")
         target_word_count = post.get("target_word_count")
@@ -241,6 +285,15 @@ async def run_content(job_data: dict):
         logger.info(f"[CONTENT] Target section count: {target_section_count}")
         logger.info(f"[CONTENT] Language: {language}")
 
+        async def handle_retry(attempt, max_retries):
+            await _update_job_status(
+                job_id,
+                post_id,
+                "retrying",
+                retry_attempt=attempt,
+                max_retries=max_retries,
+            )
+
         if not outline:
             raise Exception("No outline found. Generate outline first.")
 
@@ -251,13 +304,12 @@ async def run_content(job_data: dict):
         ) = await ai_service.generate_full_content(
             topic,
             outline,
-            research_data,
-            research_data,
             additional,
             provider_id,
             model_name,
             target_word_count,
             language,
+            on_retry=handle_retry,
         )
 
         logger.info(f"[CONTENT] AI call completed, {total_tokens} tokens used")
@@ -290,9 +342,16 @@ async def run_content(job_data: dict):
 
         # Queue next job in pipeline
         project_id = post.get("project_id")
+        thumbnail_source = post.get("thumbnail_source", "ai")
         if project_id:
-            await queue_next_job(post_id, project_id, "thumbnail")
-            logger.info(f"[PIPELINE] Queued thumbnail job for post {post_id}")
+            if thumbnail_source == "ai":
+                await queue_next_job(post_id, project_id, "thumbnail")
+                logger.info(f"[PIPELINE] Queued thumbnail job for post {post_id}")
+            else:
+                # Skip thumbnail generation for "upload later" or other sources
+                logger.info(f"[PIPELINE] Skipping thumbnail generation for post {post_id} (source: {thumbnail_source})")
+                await queue_next_job(post_id, project_id, "publish")
+                logger.info(f"[PIPELINE] Queued publish job for post {post_id}")
 
     except Exception as e:
         logger.error(f"[CONTENT] Content failed for post {post_id}: {e}")
@@ -321,6 +380,17 @@ async def run_thumbnail(job_data: dict):
             "thumbnail_provider_id"
         )
         model_name = job_data.get("model_name") or post.get("thumbnail_model_name")
+        thumbnail_source = post.get("thumbnail_source", "ai")
+
+        if thumbnail_source != "ai":
+            logger.warning(f"[THUMBNAIL] Skipping AI generation as source is {thumbnail_source}")
+            await _update_job_status(job_id, post_id, "completed")
+            
+            # Queue next job in pipeline
+            project_id = post.get("project_id")
+            if project_id:
+                await queue_next_job(post_id, project_id, "publish")
+            return
 
         logger.info(f"[THUMBNAIL] Topic: {topic}")
         logger.info(f"[THUMBNAIL] Title: {title}")
@@ -328,8 +398,17 @@ async def run_thumbnail(job_data: dict):
         logger.info(f"[THUMBNAIL] Model: {model_name}")
         logger.info(f"[THUMBNAIL] Calling image service")
 
+        async def handle_retry(attempt, max_retries):
+            await _update_job_status(
+                job_id,
+                post_id,
+                "retrying",
+                retry_attempt=attempt,
+                max_retries=max_retries,
+            )
+
         filepath = await image_service.generate_thumbnail(
-            topic, title, provider_id, model_name
+            topic, title, provider_id, model_name, on_retry=handle_retry
         )
 
         logger.info(f"[THUMBNAIL] Generated thumbnail: {filepath}")
@@ -393,7 +472,20 @@ async def run_publish(job_data: dict):
             logger.info(f"[PUBLISH] Thumbnail URL: {post.get('thumbnail_url')}")
             logger.info(f"[PUBLISH] Uploading thumbnail to WordPress...")
             try:
-                media = await wp_service.upload_media(project_id, post["thumbnail_url"])
+                async def handle_retry(attempt, max_retries):
+                    await _update_job_status(
+                        job_id,
+                        post_id,
+                        "retrying",
+                        retry_attempt=attempt,
+                        max_retries=max_retries,
+                    )
+
+                media = await wp_service.upload_media(
+                    project_id,
+                    post["thumbnail_url"],
+                    on_retry=handle_retry,
+                )
                 thumbnail_media_id = media.get("id")
                 logger.info(
                     f"[PUBLISH] Thumbnail uploaded, media ID: {thumbnail_media_id}"
@@ -414,6 +506,16 @@ async def run_publish(job_data: dict):
 
         # Create or update WP post
         logger.info(f"[PUBLISH] Creating/updating WordPress post...")
+
+        async def handle_retry(attempt, max_retries):
+            await _update_job_status(
+                job_id,
+                post_id,
+                "retrying",
+                retry_attempt=attempt,
+                max_retries=max_retries,
+            )
+
         if post.get("wp_post_id"):
             wp_post = await wp_service.update_wp_post(
                 project_id,
@@ -422,6 +524,7 @@ async def run_publish(job_data: dict):
                 content=content,
                 status=status,
                 thumbnail_media_id=thumbnail_media_id,
+                on_retry=handle_retry,
             )
         else:
             wp_post = await wp_service.create_wp_post(
@@ -431,6 +534,7 @@ async def run_publish(job_data: dict):
                 meta_description=post.get("meta_description", ""),
                 thumbnail_media_id=thumbnail_media_id,
                 status=status,
+                on_retry=handle_retry,
             )
 
         logger.info(f"[PUBLISH] WordPress post ID: {wp_post.get('id')}")

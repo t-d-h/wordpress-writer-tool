@@ -52,10 +52,12 @@ class PostUpdate(BaseModel):
 class JobInfo(BaseModel):
     job_id: str
     job_type: str  # research, outline, content, thumbnail, publish
-    status: str  # pending, running, completed, failed
+    status: str  # pending, running, completed, failed, retrying
     error: Optional[str] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
+    retry_attempt: Optional[int] = None
+    max_retries: Optional[int] = None
 
 
 class TokenUsage(BaseModel):
@@ -100,3 +102,13 @@ class PostResponse(BaseModel):
     origin: str = "tool"  # "tool" or "wordpress"
     language: str = "vietnamese"
     validation_results: Optional[Dict[str, Any]] = None
+
+
+class WordCountValidationResponse(BaseModel):
+    is_valid: bool
+    word_count: int
+    min_words: Optional[int]
+    max_words: Optional[int]
+    meets_min: bool
+    meets_max: bool
+    errors: List[str]

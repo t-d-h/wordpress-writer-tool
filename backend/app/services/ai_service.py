@@ -3,10 +3,15 @@ AI Service — handles research, outline, and content generation
 using OpenAI, Gemini, or Anthropic depending on the configured provider.
 """
 
+import asyncio
 import json
 import re
+import httpx
 from bson import ObjectId
 from app.database import ai_providers_col
+from openai import RateLimitError
+from anthropic import RateLimitError as AnthropicRateLimitError
+from google.api_core.exceptions import ResourceExhausted
 
 ALLOWED_TAGS = {
     "h1",
@@ -231,31 +236,50 @@ async def _call_ai(
     system_prompt: str = "",
     provider_id: str = None,
     model_name: str = None,
+    max_retries: int = 3,
+    delay: int = 60,
 ) -> tuple[str, int]:
-    """Route to the appropriate AI provider."""
+    """Route to the appropriate AI provider with retry logic."""
     provider = await _get_provider(provider_id)
     provider_type = provider["provider_type"]
     api_key = provider["api_key"]
 
-    if provider_type == "openai":
-        return await _call_openai(
-            api_key, prompt, system_prompt, model_name=model_name or "gpt-4o"
-        )
-    elif provider_type == "gemini":
-        return await _call_gemini(api_key, prompt, system_prompt)
-    elif provider_type == "anthropic":
-        return await _call_anthropic(api_key, prompt, system_prompt)
-    elif provider_type == "openai_compatible":
-        api_url = provider.get("api_url", "")
-        return await _call_openai(
-            api_key,
-            prompt,
-            system_prompt,
-            base_url=api_url,
-            model_name=model_name or provider.get("model_name", "gpt-4o"),
-        )
-    else:
-        raise Exception(f"Unknown provider type: {provider_type}")
+    for attempt in range(max_retries):
+        try:
+            if provider_type == "openai":
+                return await _call_openai(
+                    api_key, prompt, system_prompt, model_name=model_name or "gpt-4o"
+                )
+            elif provider_type == "gemini":
+                return await _call_gemini(api_key, prompt, system_prompt)
+            elif provider_type == "anthropic":
+                return await _call_anthropic(api_key, prompt, system_prompt)
+            elif provider_type == "openai_compatible":
+                api_url = provider.get("api_url", "")
+                return await _call_openai(
+                    api_key,
+                    prompt,
+                    system_prompt,
+                    base_url=api_url,
+                    model_name=model_name or provider.get("model_name", "gpt-4o"),
+                )
+            else:
+                raise Exception(f"Unknown provider type: {provider_type}")
+        except (RateLimitError, AnthropicRateLimitError, ResourceExhausted) as e:
+            if attempt < max_retries - 1:
+                print(
+                    f"[RATE_LIMIT] AI provider rate limit exceeded. Retrying in {delay}s... ({attempt + 1}/{max_retries})"
+                )
+                await asyncio.sleep(delay)
+            else:
+                raise Exception(
+                    f"AI provider call failed after {max_retries} retries: {e}"
+                ) from e
+        except Exception as e:
+            # Catch any other unexpected errors
+            raise Exception(
+                f"An unexpected error occurred while calling the AI provider: {e}"
+            ) from e
 
 
 async def research_topic(

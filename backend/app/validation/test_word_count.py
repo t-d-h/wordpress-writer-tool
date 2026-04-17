@@ -1,5 +1,5 @@
 import unittest
-from src.validation.word_count import WordCountService, WordCountValidator
+from app.validation.word_count import WordCountService, WordCountValidator
 
 
 class TestWordCountService(unittest.TestCase):
@@ -27,6 +27,26 @@ class TestWordCountService(unittest.TestCase):
 
     def test_numeric_words(self):
         self.assertEqual(WordCountService.count_words("123 456 789"), 3)
+
+    def test_with_complex_html(self):
+        html = """
+        <div>
+            <h1>Title</h1>
+            <p>This is a paragraph with <strong>bold</strong> and <i>italic</i> text.</p>
+            <ul>
+                <li>Item 1</li>
+                <li>Item 2</li>
+            </ul>
+            <style>
+                .red { color: red; }
+            </style>
+            <script>
+                console.log("This should not be counted");
+            </script>
+            <!-- This is a comment -->
+        </div>
+        """
+        self.assertEqual(WordCountService.count_words(html), 13)
 
 
 class TestWordCountValidator(unittest.TestCase):

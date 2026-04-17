@@ -7,8 +7,15 @@ import os
 from pydantic import BaseModel
 from typing import List, Optional
 from app.database import posts_col, projects_col, jobs_col
-from app.models.post import PostCreate, BulkPostCreate, PostUpdate, PostResponse
+from app.models.post import (
+    PostCreate,
+    BulkPostCreate,
+    PostUpdate,
+    PostResponse,
+    WordCountValidationResponse,
+)
 from app.validation.content_validator import ContentValidationService
+from app.validation.word_count import WordCountValidator
 from app.redis_client import publish_job
 
 
@@ -18,6 +25,22 @@ class ThumbnailRequest(BaseModel):
 
 
 router = APIRouter(prefix="/api/posts", tags=["Posts"])
+
+
+@router.post(
+    "/{post_id}/validate-word-count", response_model=WordCountValidationResponse
+)
+async def validate_word_count(post_id: str):
+    """Validate the word count of a post's content."""
+    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    content = doc.get("content", "")
+    validator = WordCountValidator(min_words=100, max_words=2000)
+    result = validator.validate(content)
+
+    return result
 
 
 def format_post(doc: dict) -> dict:
@@ -62,6 +85,9 @@ async def list_posts_by_project(
     project = await projects_col.find_one({"_id": ObjectId(project_id)})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    total_posts = await posts_col.count_documents({"project_id": project_id})
+
     posts = []
     skip = (page - 1) * limit
     async for doc in (
@@ -71,7 +97,7 @@ async def list_posts_by_project(
         .limit(limit)
     ):
         posts.append(format_post(doc))
-    return {"posts": posts, "total": len(posts)}
+    return {"posts": posts, "total": total_posts}
 
 
 @router.get("/{post_id}")
@@ -85,7 +111,7 @@ async def get_post(post_id: str):
             min_words=doc.get("target_word_count", 0) * 0.8,
             max_words=doc.get("target_word_count", 0) * 1.2,
             min_sections=doc.get("target_section_count", 0),
-            max_sections=doc.get("target_section_count", 0),
+            max_sections=doc.get("target_section_.count", 0),
         )
         validation_results = validator.validate(
             html_content=doc.get("content", ""),
@@ -299,6 +325,7 @@ async def publish_post(post_id: str, request: PublishRequest = None):
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Post not found")
+
     if not doc.get("content"):
         raise HTTPException(status_code=400, detail="Post has no content to publish")
 
@@ -314,7 +341,8 @@ async def publish_post(post_id: str, request: PublishRequest = None):
         "completed_at": None,
     }
     await posts_col.update_one(
-        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+        {"_id": ObjectId(post_id)},
+        {"$set": {"status": "draft"}, "$push": {"jobs": job_info}},
     )
     await jobs_col.insert_one(
         {
@@ -413,7 +441,8 @@ async def generate_outline(post_id: str):
         "completed_at": None,
     }
     await posts_col.update_one(
-        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+        {"_id": ObjectId(post_id)},
+        {"$set": {"status": "draft"}, "$push": {"jobs": job_info}},
     )
     await jobs_col.insert_one(
         {
@@ -455,7 +484,8 @@ async def generate_content(post_id: str):
         "completed_at": None,
     }
     await posts_col.update_one(
-        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+        {"_id": ObjectId(post_id)},
+        {"$set": {"status": "draft"}, "$push": {"jobs": job_info}},
     )
     await jobs_col.insert_one(
         {
@@ -498,7 +528,8 @@ async def generate_thumbnail(post_id: str, request: ThumbnailRequest = None):
         "completed_at": None,
     }
     await posts_col.update_one(
-        {"_id": ObjectId(post_id)}, {"$push": {"jobs": job_info}}
+        {"_id": ObjectId(post_id)},
+        {"$set": {"status": "draft"}, "$push": {"jobs": job_info}},
     )
     await jobs_col.insert_one(
         {

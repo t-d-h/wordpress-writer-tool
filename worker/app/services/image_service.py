@@ -2,6 +2,7 @@
 Image Service — generate thumbnails and section images using Gemini or OpenAI.
 """
 
+import asyncio
 import base64
 import os
 import uuid
@@ -125,24 +126,43 @@ async def generate_image(
     provider_id: str = None,
     model_name: str = None,
     save_dir: str = "/tmp/wp_images",
+    max_retries: int = 2,
+    delay: int = 30,
+    on_retry: callable = None,
 ) -> str:
-    """Generate an image using the specified provider and save it locally. Returns the file path."""
+    """Generate an image using the specified provider and save it locally with retry logic."""
     provider = await _get_provider(provider_id)
     provider_type = provider.get("provider_type")
 
-    if provider_type == "openai":
-        model = model_name or "dall-e-3"
-        return await generate_image_with_openai(prompt, model, save_dir)
-    elif provider_type == "gemini":
-        return await generate_image_with_gemini(prompt, save_dir)
-    else:
-        raise Exception(
-            f"Image generation not supported for provider type: {provider_type}"
-        )
+    for attempt in range(max_retries):
+        try:
+            if provider_type == "openai":
+                model = model_name or "dall-e-3"
+                return await generate_image_with_openai(prompt, model, save_dir)
+            elif provider_type == "gemini":
+                return await generate_image_with_gemini(prompt, save_dir)
+            else:
+                raise Exception(
+                    f"Image generation not supported for provider type: {provider_type}"
+                )
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(
+                    f"[RETRY] Image generation failed. Retrying in {delay}s... ({attempt + 1}/{max_retries}): {e}"
+                )
+                if on_retry:
+                    await on_retry(attempt + 1, max_retries)
+                await asyncio.sleep(delay)
+            else:
+                raise e
 
 
 async def generate_thumbnail(
-    topic: str, title: str, provider_id: str = None, model_name: str = None
+    topic: str,
+    title: str,
+    provider_id: str = None,
+    model_name: str = None,
+    on_retry: callable = None,
 ) -> str:
     """Generate a blog post thumbnail."""
     prompt = f"""Create a professional, eye-catching blog post thumbnail image for:
@@ -156,11 +176,15 @@ The image should be:
 - Clean with good visual hierarchy
 - No text overlay needed"""
 
-    return await generate_image(prompt, provider_id, model_name)
+    return await generate_image(prompt, provider_id, model_name, on_retry=on_retry)
 
 
 async def generate_section_image(
-    topic: str, section_title: str, provider_id: str = None, model_name: str = None
+    topic: str,
+    section_title: str,
+    provider_id: str = None,
+    model_name: str = None,
+    on_retry: callable = None,
 ) -> str:
     """Generate an image for a blog post section."""
     prompt = f"""Create a professional illustration for a blog section:

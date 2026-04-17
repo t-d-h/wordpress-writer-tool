@@ -69,6 +69,7 @@ export const unpublishPost = (id) => api.post(`/posts/${id}/unpublish`);
 export const generateOutline = (id) => api.post(`/posts/${id}/generate-outline`);
 export const generateContent = (id) => api.post(`/posts/${id}/generate-content`);
 export const generateThumbnail = (id) => api.post(`/posts/${id}/generate-thumbnail`);
+export const validateWordCount = (id) => api.post(`/posts/${id}/validate-word-count`);
 
 export const uploadThumbnail = (id, file) => {
   const formData = new FormData();

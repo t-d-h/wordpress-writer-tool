@@ -2,6 +2,7 @@
 WordPress Service — publish/update posts via the WordPress REST API.
 """
 
+import asyncio
 import base64
 import httpx
 import os
@@ -24,6 +25,39 @@ def _get_auth_header(username: str, api_key: str) -> dict:
     """Create Basic Auth header for WordPress REST API."""
     credentials = base64.b64encode(f"{username}:{api_key}".encode()).decode()
     return {"Authorization": f"Basic {credentials}"}
+
+
+async def fetch_with_retry(
+    client,
+    method,
+    url,
+    on_retry: callable = None,
+    max_retries=3,
+    delay=5,
+    **kwargs,
+):
+    """Make an HTTP request with retry logic for WordPress API."""
+    for attempt in range(max_retries):
+        try:
+            resp = await client.request(method, url, **kwargs)
+            resp.raise_for_status()
+            return resp
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            if attempt < max_retries - 1:
+                # Retry on 5xx or connection errors
+                is_retryable = (
+                    isinstance(e, httpx.HTTPStatusError) and e.response.status_code >= 500
+                ) or isinstance(e, httpx.RequestError)
+
+                if is_retryable:
+                    print(
+                        f"[RETRY] WordPress API error {e}. Retrying in {delay}s... ({attempt + 1}/{max_retries})"
+                    )
+                    if on_retry:
+                        await on_retry(attempt + 1, max_retries)
+                    await asyncio.sleep(delay)
+                    continue
+            raise e
 
 
 async def verify_wp_site(url: str, username: str, api_key: str) -> dict:
@@ -79,7 +113,9 @@ async def verify_wp_site(url: str, username: str, api_key: str) -> dict:
     return {"ok": True}
 
 
-async def upload_media(project_id: str, file_path: str, filename: str = None) -> dict:
+async def upload_media(
+    project_id: str, file_path: str, filename: str = None, on_retry: callable = None
+) -> dict:
     """Upload an image to WordPress media library. Returns media object."""
     import logging
 
@@ -135,10 +171,9 @@ async def upload_media(project_id: str, file_path: str, filename: str = None) ->
     }
 
     async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(url, headers=headers, files=files)
-        logger.info(f"[UPLOAD_MEDIA] Response status: {response.status_code}")
-        logger.info(f"[UPLOAD_MEDIA] Response body: {response.text[:500]}")
-        response.raise_for_status()
+        response = await fetch_with_retry(
+            client, "POST", url, headers=headers, files=files, on_retry=on_retry
+        )
         result = response.json()
         logger.info(f"[UPLOAD_MEDIA] Upload successful, media ID: {result.get('id')}")
         return result
@@ -151,6 +186,7 @@ async def create_wp_post(
     meta_description: str = "",
     thumbnail_media_id: int = None,
     status: str = "draft",
+    on_retry: callable = None,
 ) -> dict:
     """Create a post on WordPress. Returns the WP post object."""
     wp_site = await _get_wp_site(project_id)
@@ -169,8 +205,9 @@ async def create_wp_post(
         post_data["featured_media"] = thumbnail_media_id
 
     async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(url, headers=headers, json=post_data)
-        response.raise_for_status()
+        response = await fetch_with_retry(
+            client, "POST", url, headers=headers, json=post_data, on_retry=on_retry
+        )
         return response.json()
 
 
@@ -181,6 +218,7 @@ async def update_wp_post(
     content: str = None,
     status: str = None,
     thumbnail_media_id: int = None,
+    on_retry: callable = None,
 ) -> dict:
     """Update an existing WordPress post."""
     wp_site = await _get_wp_site(project_id)
@@ -200,6 +238,7 @@ async def update_wp_post(
         post_data["featured_media"] = thumbnail_media_id
 
     async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(url, headers=headers, json=post_data)
-        response.raise_for_status()
+        response = await fetch_with_retry(
+            client, "POST", url, headers=headers, json=post_data, on_retry=on_retry
+        )
         return response.json()

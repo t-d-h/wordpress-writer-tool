@@ -644,7 +644,19 @@ tbody tr:last-child td {
 .status-pending { background: rgba(253,203,110,0.15); color: var(--warning); }
 .status-running { background: rgba(116,185,255,0.15); color: var(--info); }
 .status-completed { background: rgba(0,184,148,0.15); color: var(--success); }
+.status-retrying {
+  background: rgba(253, 203, 110, 0.15);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.3);
+  animation: pulse-retry 2s infinite;
+}
 .status-idle { background: rgba(107,107,128,0.08); color: var(--text-muted); }
+
+@keyframes pulse-retry {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
 
 .bool-indicator {
   width: 20px;

@@ -1,5 +1,6 @@
-import re
 from typing import Optional
+
+from bs4 import BeautifulSoup
 
 
 class HtmlCleaningService:
@@ -18,17 +19,20 @@ class HtmlCleaningService:
         if not html_content or not html_content.strip():
             return ""
 
-        # Remove script and style elements
-        text_only = re.sub(
-            r"<(script|style)[^>]*>.*?</\1>", " ", html_content, flags=re.DOTALL
-        )
-        # Remove HTML comments
-        text_only = re.sub(r"<!--.*?-->", " ", text_only, flags=re.DOTALL)
-        # Remove all other HTML tags
-        text_only = re.sub(r"<[^>]+>", " ", text_only)
-        # Remove HTML entities
-        text_only = re.sub(r"&\w+;", " ", text_only)
-        # Replace multiple spaces with a single space
-        text_only = re.sub(r"\s+", " ", text_only).strip()
+        soup = BeautifulSoup(html_content, "lxml")
 
-        return text_only
+        # Remove script and style elements
+        for script_or_style in soup(["script", "style"]):
+            script_or_style.decompose()
+
+        # Get text
+        text = soup.get_text()
+
+        # Break into lines and remove leading and trailing space on each
+        lines = (line.strip() for line in text.splitlines())
+        # Break multi-headlines into a line each
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        # Drop blank lines
+        text = "\n".join(chunk for chunk in chunks if chunk)
+
+        return text

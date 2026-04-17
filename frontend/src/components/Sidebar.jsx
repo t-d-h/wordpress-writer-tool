@@ -9,9 +9,7 @@ export default function Sidebar() {
   const [settingsOpen, setSettingsOpen] = useState(
     location.pathname.startsWith('/settings')
   )
-  const [projectsOpen, setProjectsOpen] = useState(
-    location.pathname.startsWith('/projects')
-  )
+  const [projectsOpen, setProjectsOpen] = useState(true)
   const [projects, setProjects] = useState([])
   const [isDark, setIsDark] = useState(true)
 
@@ -72,22 +70,28 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        <button
-          className="btn btn-primary"
-          style={{ width: '100%', marginBottom: '16px' }}
-          onClick={() => navigate('/projects?create=true')}
-        >
-          <HiOutlineFolderOpen /> Create Project
-        </button>
+
 
         <div className="sidebar-subtitle">Menu</div>
 
         <div className="nav-section">
-          <div className="nav-item" onClick={() => setProjectsOpen(!projectsOpen)}>
+          <NavLink to="/projects" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <HiOutlineFolderOpen className="nav-icon" />
             <span>Projects</span>
-            {projectsOpen ? <HiOutlineChevronDown style={{ marginLeft: 'auto', fontSize: 14 }} /> : <HiOutlineChevronRight style={{ marginLeft: 'auto', fontSize: 14 }} />}
-          </div>
+            <span
+              style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}
+              onClick={(e) => {
+                e.preventDefault();
+                setProjectsOpen(!projectsOpen);
+              }}
+            >
+              {projectsOpen ? (
+                <HiOutlineChevronDown style={{ fontSize: 14 }} />
+              ) : (
+                <HiOutlineChevronRight style={{ fontSize: 14 }} />
+              )}
+            </span>
+          </NavLink>
           {projectsOpen && (
             <div className="nav-children project-list-nav">
               {projects.map(project => (

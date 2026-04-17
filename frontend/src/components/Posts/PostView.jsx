@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles, HiExclamationTriangle } from 'react-icons/hi2'
-import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP } from '../../api/client'
+import { getPost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP, validateWordCount } from '../../api/client'
 
 export default function PostView() {
   const { id } = useParams()
@@ -26,6 +26,7 @@ export default function PostView() {
   })
   const [selectedFile, setSelectedFile] = useState(null)
   const [filePreview, setFilePreview] = useState(null)
+  const [wordCountValidation, setWordCountValidation] = useState(null)
 
   useEffect(() => { load() }, [id])
 
@@ -148,6 +149,15 @@ export default function PostView() {
     }
   }
 
+  const handleValidateWordCount = async () => {
+    try {
+      const res = await validateWordCount(id)
+      setWordCountValidation(res.data)
+    } catch (e) {
+      alert('Error: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
   if (loading) return <div className="loading-page"><div className="loading-spinner" /></div>
   if (!post) return <div className="empty-state"><div className="empty-state-title">Post not found</div></div>
 
@@ -166,10 +176,13 @@ export default function PostView() {
   }
 
   const getStepDisplayStatus = (key, isDone) => {
-    const job = jobs.find(j => j.job_type === key)
-    if (isDone) return 'completed'
-    if (!job) return 'idle'
-    return job.status
+    const job = jobs.find(j => j.job_type === key);
+    if (isDone) return 'completed';
+    if (key === 'thumbnail' && post.thumbnail_source === 'upload' && !post.thumbnail_done) {
+      return 'pending';
+    }
+    if (!job) return 'idle';
+    return job.status;
   }
 
   const tu = post.token_usage || {}
@@ -267,7 +280,11 @@ export default function PostView() {
                   </div>
                   <div className="pipeline-step-label">{step.label}</div>
                   <div className="pipeline-step-status">
-                    {status === 'running' ? 'Running...' : status === 'failed' ? 'Failed' : status === 'completed' || step.done ? 'Completed' : 'Pending'}
+                    {status === 'running' ? 'Running...' :
+                     status === 'failed' ? 'Failed' :
+                     status === 'completed' || step.done ? 'Completed' :
+                     (step.key === 'thumbnail' && post.thumbnail_source === 'upload') ? 'Waiting for upload' :
+                     'Pending'}
                   </div>
                 </div>
                 {!isLast && <div className="pipeline-connector" />}
@@ -275,6 +292,16 @@ export default function PostView() {
             )
           })}
         </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 24 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Word Count Validation</h3>
+        <button className="btn btn-secondary" onClick={handleValidateWordCount}>Validate</button>
+        {wordCountValidation && (
+          <div style={{ marginTop: 16 }}>
+            <ValidationResults results={{ word_count: wordCountValidation }} />
+          </div>
+        )}
       </div>
 
       {expandedStage && (

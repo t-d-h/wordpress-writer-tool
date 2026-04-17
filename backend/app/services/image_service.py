@@ -2,11 +2,14 @@
 Image Service — generate thumbnails and section images using Gemini or OpenAI.
 """
 
+import asyncio
 import base64
 import os
 import uuid
 from bson import ObjectId
 from app.database import ai_providers_col
+from openai import RateLimitError
+from google.api_core.exceptions import ResourceExhausted
 
 
 async def _get_provider(provider_id: str = None):
@@ -125,20 +128,39 @@ async def generate_image(
     provider_id: str = None,
     model_name: str = None,
     save_dir: str = "/tmp/wp_images",
+    max_retries: int = 3,
+    delay: int = 60,
 ) -> str:
     """Generate an image using the specified provider and save it locally. Returns the file path."""
     provider = await _get_provider(provider_id)
     provider_type = provider.get("provider_type")
 
-    if provider_type == "openai":
-        model = model_name or "dall-e-3"
-        return await generate_image_with_openai(prompt, model, save_dir)
-    elif provider_type == "gemini":
-        return await generate_image_with_gemini(prompt, save_dir)
-    else:
-        raise Exception(
-            f"Image generation not supported for provider type: {provider_type}"
-        )
+    for attempt in range(max_retries):
+        try:
+            if provider_type == "openai":
+                model = model_name or "dall-e-3"
+                return await generate_image_with_openai(prompt, model, save_dir)
+            elif provider_type == "gemini":
+                return await generate_image_with_gemini(prompt, save_dir)
+            else:
+                raise Exception(
+                    f"Image generation not supported for provider type: {provider_type}"
+                )
+        except (RateLimitError, ResourceExhausted) as e:
+            if attempt < max_retries - 1:
+                print(
+                    f"[RATE_LIMIT] Image generation rate limit exceeded. Retrying in {delay}s... ({attempt + 1}/{max_retries})"
+                )
+                await asyncio.sleep(delay)
+            else:
+                raise Exception(
+                    f"Image generation failed after {max_retries} retries: {e}"
+                ) from e
+        except Exception as e:
+            # Catch any other unexpected errors
+            raise Exception(
+                f"An unexpected error occurred during image generation: {e}"
+            ) from e
 
 
 async def generate_thumbnail(

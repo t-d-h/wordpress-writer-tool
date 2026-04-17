@@ -3,9 +3,18 @@ AI Service — handles research, outline, and content generation
 using OpenAI, Gemini, or Anthropic depending on the configured provider.
 """
 
+import asyncio
 import json
 from bson import ObjectId
 from app.database import ai_providers_col
+from openai import RateLimitError
+from anthropic import RateLimitError as AnthropicRateLimitError
+try:
+    from google.api_core.exceptions import ResourceExhausted
+except ImportError:
+    # Fallback if google-api-core is not installed
+    class ResourceExhausted(Exception):
+        pass
 
 
 async def _get_provider(provider_id: str = None):
@@ -165,31 +174,53 @@ async def _call_ai(
     system_prompt: str = "",
     provider_id: str = None,
     model_name: str = None,
+    max_retries: int = 3,
+    delay: int = 60,
+    on_retry: callable = None,
 ) -> tuple[str, int]:
-    """Route to the appropriate AI provider."""
+    """Route to the appropriate AI provider with retry logic."""
     provider = await _get_provider(provider_id)
     provider_type = provider["provider_type"]
     api_key = provider["api_key"]
 
-    if provider_type == "openai":
-        return await _call_openai(
-            api_key, prompt, system_prompt, model_name=model_name or "gpt-4o"
-        )
-    elif provider_type == "gemini":
-        return await _call_gemini(api_key, prompt, system_prompt)
-    elif provider_type == "anthropic":
-        return await _call_anthropic(api_key, prompt, system_prompt)
-    elif provider_type == "openai_compatible":
-        api_url = provider.get("api_url", "")
-        return await _call_openai(
-            api_key,
-            prompt,
-            system_prompt,
-            base_url=api_url,
-            model_name=model_name or provider.get("model_name", "gpt-4o"),
-        )
-    else:
-        raise Exception(f"Unknown provider type: {provider_type}")
+    for attempt in range(max_retries):
+        try:
+            if provider_type == "openai":
+                return await _call_openai(
+                    api_key, prompt, system_prompt, model_name=model_name or "gpt-4o"
+                )
+            elif provider_type == "gemini":
+                return await _call_gemini(api_key, prompt, system_prompt)
+            elif provider_type == "anthropic":
+                return await _call_anthropic(api_key, prompt, system_prompt)
+            elif provider_type == "openai_compatible":
+                api_url = provider.get("api_url", "")
+                return await _call_openai(
+                    api_key,
+                    prompt,
+                    system_prompt,
+                    base_url=api_url,
+                    model_name=model_name or provider.get("model_name", "gpt-4o"),
+                )
+            else:
+                raise Exception(f"Unknown provider type: {provider_type}")
+        except (RateLimitError, AnthropicRateLimitError, ResourceExhausted) as e:
+            if attempt < max_retries - 1:
+                print(
+                    f"[RATE_LIMIT] AI provider rate limit exceeded. Retrying in {delay}s... ({attempt + 1}/{max_retries})"
+                )
+                if on_retry:
+                    await on_retry(attempt + 1, max_retries)
+                await asyncio.sleep(delay)
+            else:
+                raise Exception(
+                    f"AI provider call failed after {max_retries} retries: {e}"
+                ) from e
+        except Exception as e:
+            # Catch any other unexpected errors
+            raise Exception(
+                f"An unexpected error occurred while calling the AI provider: {e}"
+            ) from e
 
 
 async def research_topic(
@@ -198,6 +229,7 @@ async def research_topic(
     provider_id: str = None,
     model_name: str = None,
     language: str = "vietnamese",
+    on_retry: callable = None,
 ) -> tuple[dict, int]:
     """Research a topic: audience, keywords, key points to mention."""
     # Language-specific system prompt
@@ -226,7 +258,9 @@ Provide your research as JSON with these keys:
     "competitors_angle": "what competitors typically cover on this topic"
 }}"""
 
-    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
+    text, total_tokens = await _call_ai(
+        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
+    )
     # Parse JSON from response
     try:
         # Try to extract JSON from markdown code block if present
@@ -248,6 +282,7 @@ async def generate_outline(
     model_name: str = None,
     target_section_count: int = None,
     language: str = "vietnamese",
+    on_retry: callable = None,
 ) -> tuple[dict, int]:
     """Generate a post outline: SEO title, meta description, intro, sections."""
     # Language-specific system prompt
@@ -291,7 +326,9 @@ Create an outline as JSON:
     ]
 }}"""
 
-    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
+    text, total_tokens = await _call_ai(
+        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
+    )
     try:
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
@@ -313,6 +350,7 @@ async def generate_section_content(
     model_name: str = None,
     target_word_count: int = None,
     language: str = "vietnamese",
+    on_retry: callable = None,
 ) -> tuple[str, int]:
     """Generate content for a single section."""
     # Language-specific system prompt
@@ -346,7 +384,9 @@ Include relevant examples and practical advice.
 Do NOT include the section title itself — just the body content.
 Format in HTML."""
 
-    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
+    text, total_tokens = await _call_ai(
+        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
+    )
     return text, total_tokens
 
 
@@ -357,6 +397,7 @@ async def generate_introduction(
     provider_id: str = None,
     model_name: str = None,
     language: str = "vietnamese",
+    on_retry: callable = None,
 ) -> tuple[str, int]:
     """Generate the introduction based on hook/problem/promise."""
     intro = outline.get("introduction", {})
@@ -387,7 +428,9 @@ Write a compelling 150-300 word introduction that:
 3. Promises what the reader will learn
 Format in HTML."""
 
-    text, total_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name)
+    text, total_tokens = await _call_ai(
+        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
+    )
     return text, total_tokens
 
 
@@ -399,13 +442,20 @@ async def generate_full_content(
     model_name: str = None,
     target_word_count: int = None,
     language: str = "vietnamese",
+    on_retry: callable = None,
 ) -> tuple[str, list, int]:
     """Generate the full post content from an outline. Returns (full_html, sections_list, total_tokens)."""
     total_tokens = 0
 
     # Generate introduction
     intro_html, intro_tokens = await generate_introduction(
-        topic, outline, additional_requests, provider_id, model_name, language
+        topic,
+        outline,
+        additional_requests,
+        provider_id,
+        model_name,
+        language,
+        on_retry=on_retry,
     )
     total_tokens += intro_tokens
 
@@ -431,6 +481,7 @@ async def generate_full_content(
             model_name,
             words_per_section,
             language,
+            on_retry=on_retry,
         )
         total_tokens += sec_tokens
         sections.append(
