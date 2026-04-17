@@ -94,4 +94,8 @@ export const getDashboardStats = () => api.get('/jobs/dashboard-stats');
 export const getJob = (id) => api.get(`/jobs/${id}`);
 export const getJobsByPost = (postId) => api.get(`/jobs/by-post/${postId}`);
 
+// Link Map
+export const getLinkMap = (projectId) => api.get(`/projects/${projectId}/link-map`);
+export const refreshLinkMap = (projectId) => api.post(`/projects/${projectId}/link-map/refresh`);
+
 export default api;

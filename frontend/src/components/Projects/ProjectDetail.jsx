@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineCheckCircle, HiOutlineXCircle, HiOutlineClock, HiOutlineSparkles, HiArrowPath, HiExclamationTriangle, HiMagnifyingGlass } from 'react-icons/hi2'
-import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts, getSitePosts, getSiteCategories } from '../../api/client'
+import { getProject, getProjectStats, getPostsByProject, createPost, createBulkPosts, deletePost, publishPost, unpublishPost, generateOutline, generateContent, generateThumbnail, getProviders, getProviderModels, getDefaultModels, getProjectTokenUsage, getProjectPosts, getSitePosts, getSiteCategories, getLinkMap, refreshLinkMap } from '../../api/client'
 import TokenUsageCard from './TokenUsageCard'
 import { formatDateOnly } from '../../utils/dateUtils'
 import WpSiteInfoCard from './WpSiteInfoCard'
+import LinkMapGraph from './LinkMapGraph'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -71,6 +72,10 @@ export default function ProjectDetail() {
     video_provider_id: '',
     video_model_name: '',
   })
+  const [linkMapData, setLinkMapData] = useState(null)
+  const [loadingLinkMap, setLoadingLinkMap] = useState(false)
+  const [refreshingLinkMap, setRefreshingLinkMap] = useState(false)
+  const [linkMapError, setLinkMapError] = useState(null)
 
   useEffect(() => { load() }, [id])
 
@@ -174,6 +179,12 @@ export default function ProjectDetail() {
     }
   }, [activeTab, id, project?.wp_site_id, statusFilter, categoryFilter, sortBy, searchQuery, wpPostsPage])
 
+  useEffect(() => {
+    if (activeTab === 'link-map' && id) {
+      loadLinkMap()
+    }
+  }, [activeTab, id])
+
   const load = async () => {
     try {
       const [projRes, statsRes, postsRes, providersRes, defaultsRes] = await Promise.all([
@@ -272,6 +283,34 @@ export default function ProjectDetail() {
   const handleSearch = () => {
     setSearchQuery(searchTerm)
     setWpPostsPage(1)
+  }
+
+  const loadLinkMap = async () => {
+    setLoadingLinkMap(true)
+    setLinkMapError(null)
+    try {
+      const { data } = await getLinkMap(id)
+      setLinkMapData(data)
+    } catch (e) {
+      console.error('Failed to load link map:', e)
+      setLinkMapError('Failed to load link map data')
+    } finally {
+      setLoadingLinkMap(false)
+    }
+  }
+
+  const handleRefreshLinkMap = async () => {
+    setRefreshingLinkMap(true)
+    setLinkMapError(null)
+    try {
+      const { data } = await refreshLinkMap(id)
+      setLinkMapData(data)
+    } catch (e) {
+      console.error('Failed to refresh link map:', e)
+      setLinkMapError('Failed to scan links: ' + (e.response?.data?.detail || e.message))
+    } finally {
+      setRefreshingLinkMap(false)
+    }
   }
 
   const handleCreateSingle = async (e) => {
@@ -485,6 +524,7 @@ export default function ProjectDetail() {
         <button className={`tab ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>General</button>
         <button className={`tab ${activeTab === 'content' ? 'active' : ''}`} onClick={() => setActiveTab('content')}>AI Content</button>
         <button className={`tab ${activeTab === 'all-posts' ? 'active' : ''}`} onClick={() => setActiveTab('all-posts')}>All WordPress posts</button>
+        <button className={`tab ${activeTab === 'link-map' ? 'active' : ''}`} onClick={() => setActiveTab('link-map')}>Link Mapper</button>
       </div>
 
       {activeTab === 'general' && (
@@ -779,6 +819,66 @@ export default function ProjectDetail() {
                 </div>
               )}
             </>
+          )}
+        </>
+      )}
+
+      {activeTab === 'link-map' && (
+        <>
+          <div className="toolbar" style={{ marginBottom: 20 }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <button
+                className="btn btn-primary"
+                onClick={handleRefreshLinkMap}
+                disabled={refreshingLinkMap}
+              >
+                <HiArrowPath className={refreshingLinkMap ? 'spin' : ''} />
+                {refreshingLinkMap ? 'Scanning...' : 'Refresh'}
+              </button>
+              {linkMapData?.scanned_at && (
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                  Last scanned: {formatDateOnly(linkMapData.scanned_at)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {linkMapError && (
+            <div className="empty-state" style={{ marginBottom: 20 }}>
+              <div className="empty-state-icon">⚠️</div>
+              <div className="empty-state-title">Error</div>
+              <div className="empty-state-text">{linkMapError}</div>
+            </div>
+          )}
+
+          {linkMapData?.stats && linkMapData.nodes?.length > 0 && (
+            <div className="link-map-stats">
+              <div className="link-map-stat-item">
+                <span className="link-map-stat-value">{linkMapData.stats.total_posts_scanned}</span>
+                <span className="link-map-stat-label">Posts Scanned</span>
+              </div>
+              <div className="link-map-stat-item">
+                <span className="link-map-stat-value">{linkMapData.stats.total_internal_links}</span>
+                <span className="link-map-stat-label">Internal Links</span>
+              </div>
+              <div className="link-map-stat-item">
+                <span className="link-map-stat-value">{linkMapData.stats.total_external_links}</span>
+                <span className="link-map-stat-label">External Links</span>
+              </div>
+              <div className="link-map-stat-item">
+                <span className="link-map-stat-value">{linkMapData.stats.total_unique_external_domains}</span>
+                <span className="link-map-stat-label">External Domains</span>
+              </div>
+            </div>
+          )}
+
+          {loadingLinkMap ? (
+            <div className="loading-page"><div className="loading-spinner" /></div>
+          ) : (
+            <LinkMapGraph
+              nodes={linkMapData?.nodes || []}
+              edges={linkMapData?.edges || []}
+            />
           )}
         </>
       )}

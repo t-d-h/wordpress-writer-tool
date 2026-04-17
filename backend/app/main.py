@@ -10,6 +10,7 @@ from app.routers import (
     default_models,
     wordpress,
     version,
+    link_map,
 )
 
 app = FastAPI(
@@ -42,6 +43,7 @@ app.include_router(jobs.router)
 app.include_router(default_models.router)
 app.include_router(wordpress.router)
 app.include_router(version.router)
+app.include_router(link_map.router)
 
 
 @app.get("/health")
