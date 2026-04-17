@@ -85,11 +85,11 @@ export default function LinkMapGraph({ nodes, edges }) {
     if (!sim || sim.coolingFactor < 0.01) return
 
     const alpha = 0.3 * sim.coolingFactor
-    const repulsion = 4000
-    const springLen = 140
-    const springK = 0.006
-    const centerK = 0.012
-    const damping = 0.8
+    const repulsion = 12000 // Increased from 4000
+    const springLen = 160   // Increased from 140
+    const springK = 0.005   // Slightly softer springs
+    const centerK = 0.01
+    const damping = 0.82
     const w = dimensions.width
     const h = dimensions.height
 
@@ -100,14 +100,29 @@ export default function LinkMapGraph({ nodes, edges }) {
         const b = sim.nodes[j]
         let dx = b.x - a.x
         let dy = b.y - a.y
-        let dist = Math.sqrt(dx * dx + dy * dy) || 1
-        const force = repulsion / (dist * dist)
+        let distSq = dx * dx + dy * dy || 1
+        let dist = Math.sqrt(distSq)
+        
+        // standard repulsion
+        const force = repulsion / distSq
         const fx = (dx / dist) * force * alpha
         const fy = (dy / dist) * force * alpha
         a.vx -= fx
         a.vy -= fy
         b.vx += fx
         b.vy += fy
+
+        // Stronger collision avoidance if nodes are too close
+        const minGap = (a.radius + b.radius) * 1.8
+        if (dist < minGap) {
+          const pushForce = (minGap - dist) * 0.5 * alpha
+          const pfx = (dx / dist) * pushForce
+          const pfy = (dy / dist) * pushForce
+          a.vx -= pfx
+          a.vy -= pfy
+          b.vx += pfx
+          b.vy += pfy
+        }
       }
     }
 
@@ -151,7 +166,7 @@ export default function LinkMapGraph({ nodes, edges }) {
       positionsRef.current[node.id] = { x: node.x, y: node.y, vx: node.vx, vy: node.vy }
     }
 
-    sim.coolingFactor *= 0.995
+    sim.coolingFactor *= 0.997 // Slower cooling
   }, [dimensions])
 
   // Draw function
@@ -315,7 +330,7 @@ export default function LinkMapGraph({ nodes, edges }) {
     }
 
     // Run intense simulation first to settle layout
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
       simulate(sim)
     }
 
