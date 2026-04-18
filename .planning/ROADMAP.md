@@ -1,14 +1,15 @@
 # Roadmap
 
 **Project:** WordPress Writer Tool
-**Last Updated:** 2026-04-16
+**Last Updated:** 2026-04-18
 
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1-3 (shipped 2026-04-14)
 - ✅ **v1.1 All Posts Table View** — Phases 4-11 (shipped 2026-04-15)
 - ✅ **v1.2 Vietnamese Language Support** — Phases 12-14 (shipped 2026-04-16)
-- ⏳ **v1.3 Content Quality Improvements** — Phases 15-16 (completed)
+- ✅ **v1.3 Content Quality Improvements** — Phases 15-16 (shipped 2026-04-17)
+- ⏳ **v1.4 User Management** — Phases 17-20 (in progress)
 
 ## Phases
 
@@ -44,7 +45,73 @@
 
 </details>
 
-- ✅ **v1.3 Content Quality Improvements** — See [v1.3-ROADMAP.md](./milestones/v1.3-ROADMAP.md) (shipped 2026-04-17, phases 15-16 only)
+<details>
+<summary>✅ v1.3 Content Quality Improvements (Phases 15-16) — SHIPPED 2026-04-17</summary>
+
+- [x] Phase 15: HTML Cleaning Foundation (2/2 plans) — completed 2026-04-16
+- [x] Phase 16: Word Count Validation (1/1 plan) — completed 2026-04-17
+
+</details>
+
+<details>
+<summary>⏳ v1.4 User Management (Phases 17-20) — IN PROGRESS</summary>
+
+- [ ] Phase 17: Backend Authentication Foundation (0/0 plans) — not started
+- [ ] Phase 18: Backend User Management (0/0 plans) — not started
+- [ ] Phase 19: Frontend Authentication (0/0 plans) — not started
+- [ ] Phase 20: Security Integration (0/0 plans) — not started
+
+</details>
+
+## Phase Details
+
+### Phase 17: Backend Authentication Foundation
+**Goal**: Establish backend authentication infrastructure with user service, JWT tokens, and secure password handling
+**Depends on**: Nothing (first phase of v1.4)
+**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-06, SEC-05, SEC-06
+**Success Criteria** (what must be TRUE):
+  1. User can login with valid username and password and receive JWT token
+  2. System validates JWT token on protected API requests and rejects invalid/expired tokens
+  3. System hashes passwords using Argon2 before storage in MongoDB
+  4. System uses SECRET_KEY environment variable for JWT signing
+  5. System sets ACCESS_TOKEN_EXPIRE_MINUTES for token lifetime
+**Plans**: TBD
+
+### Phase 18: Backend User Management
+**Goal**: Enable admin to manage user accounts with CRUD operations and validation
+**Depends on**: Phase 17
+**Requirements**: USER-01, USER-02, USER-03, USER-04, USER-05, USER-06, USER-07
+**Success Criteria** (what must be TRUE):
+  1. System creates admin account on first startup using ADMIN_PASSWORD environment variable
+  2. Admin can create new user accounts with username and password
+  3. Admin can list all user accounts
+  4. Admin can delete user accounts
+  5. System validates username uniqueness on user creation
+  6. System validates password strength on user creation
+**Plans**: TBD
+
+### Phase 19: Frontend Authentication
+**Goal**: Provide frontend authentication UI with login component, auth context, and protected routes
+**Depends on**: Phase 17
+**Requirements**: AUTH-05, AUTH-07, SEC-03, SEC-04
+**Success Criteria** (what must be TRUE):
+  1. User can login with valid credentials via login form
+  2. User can logout by clearing token from localStorage
+  3. System stores JWT token in localStorage on frontend
+  4. Frontend redirects unauthenticated users to login page
+  5. Frontend protects all routes with authentication check
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 20: Security Integration
+**Goal**: Integrate authentication middleware and token validation across all API endpoints
+**Depends on**: Phase 17, Phase 19
+**Requirements**: SEC-01, SEC-02, SEC-07
+**Success Criteria** (what must be TRUE):
+  1. System requires authentication for all API endpoints
+  2. System injects user context into protected route handlers
+  3. Frontend automatically injects JWT token in API requests via axios interceptor
+**Plans**: TBD
 
 ## Progress
 
@@ -66,11 +133,10 @@
 | 14. Frontend UI | v1.2 | 6/6 | Complete | 2026-04-16 |
 | 15. HTML Cleaning Foundation | v1.3 | 2/2 | Complete | 2026-04-16 |
 | 16. Word Count Validation | v1.3 | 1/1 | Complete | 2026-04-17 |
-| 17. Section Count Validation | v1.4 | 1/1 | Deferred | — |
-| 18. Validation Results Display | v1.4 | 1/1 | Deferred | — |
-| 19. Validation Warnings | v1.4 | 1/1 | Deferred | — |
-| 20. Research Data Utilization | v1.4 | 1/1 | Deferred | — |
-| 21. Research Context in Prompts | v1.4 | 1/1 | Deferred | — |
+| 17. Backend Authentication Foundation | v1.4 | 0/0 | Not started | - |
+| 18. Backend User Management | v1.4 | 0/0 | Not started | - |
+| 19. Frontend Authentication | v1.4 | 0/0 | Not started | - |
+| 20. Security Integration | v1.4 | 0/0 | Not started | - |
 
 ---
 

@@ -60,31 +60,29 @@ Explicitly excluded from this milestone with reasoning:
 
 ## Traceability
 
-This section will be populated by the roadmap to map requirements to phases.
-
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| AUTH-01 | TBD | Pending |
-| AUTH-02 | TBD | Pending |
-| AUTH-03 | TBD | Pending |
-| AUTH-04 | TBD | Pending |
-| AUTH-05 | TBD | Pending |
-| AUTH-06 | TBD | Pending |
-| AUTH-07 | TBD | Pending |
-| USER-01 | TBD | Pending |
-| USER-02 | TBD | Pending |
-| USER-03 | TBD | Pending |
-| USER-04 | TBD | Pending |
-| USER-05 | TBD | Pending |
-| USER-06 | TBD | Pending |
-| USER-07 | TBD | Pending |
-| SEC-01 | TBD | Pending |
-| SEC-02 | TBD | Pending |
-| SEC-03 | TBD | Pending |
-| SEC-04 | TBD | Pending |
-| SEC-05 | TBD | Pending |
-| SEC-06 | TBD | Pending |
-| SEC-07 | TBD | Pending |
+| AUTH-01 | Phase 17 | Pending |
+| AUTH-02 | Phase 17 | Pending |
+| AUTH-03 | Phase 17 | Pending |
+| AUTH-04 | Phase 17 | Pending |
+| AUTH-05 | Phase 19 | Pending |
+| AUTH-06 | Phase 17 | Pending |
+| AUTH-07 | Phase 19 | Pending |
+| USER-01 | Phase 18 | Pending |
+| USER-02 | Phase 18 | Pending |
+| USER-03 | Phase 18 | Pending |
+| USER-04 | Phase 18 | Pending |
+| USER-05 | Phase 18 | Pending |
+| USER-06 | Phase 18 | Pending |
+| USER-07 | Phase 18 | Pending |
+| SEC-01 | Phase 20 | Pending |
+| SEC-02 | Phase 20 | Pending |
+| SEC-03 | Phase 19 | Pending |
+| SEC-04 | Phase 19 | Pending |
+| SEC-05 | Phase 17 | Pending |
+| SEC-06 | Phase 17 | Pending |
+| SEC-07 | Phase 20 | Pending |
 
 ---
 

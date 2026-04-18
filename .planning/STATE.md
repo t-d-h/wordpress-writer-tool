@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: User Management
 status: in_progress
-last_updated: "2026-04-18T11:36:00+07:00"
-last_activity: 2026-04-18 -- Milestone v1.4 started
+last_updated: "2026-04-18T11:54:00+07:00"
+last_activity: 2026-04-18 -- Roadmap created for v1.4 User Management milestone
 progress:
-  total_phases: 0
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_phases: 20
+  completed_phases: 16
+  total_plans: 50
+  completed_plans: 50
+  percent: 80
 ---
 
 # WordPress Writer Tool - State
@@ -19,30 +19,30 @@ progress:
 
 **Core Value**: Validate WordPress site connectivity and credentials before saving, so users know immediately if their site is configured correctly -- not after wasting time creating content that can't be published.
 
-**Current Focus**: Milestone v1.4 in progress. Defining requirements for user management.
+**Current Focus**: Phase 17: Backend Authentication Foundation
 
-**Milestone**: v1.4 (In progress - defining requirements)
+**Milestone**: v1.4 (In progress - 4 phases defined)
 
 **Tech Stack**: Python/FastAPI backend, MongoDB, Redis, React frontend
 
-**Constraints**: MVP stage, pragmatism over engineering, no app-level auth
+**Constraints**: MVP stage, pragmatism over engineering, JWT-based authentication with Argon2 password hashing
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-18 — Milestone v1.4 started
+Phase: 17 of 20 (Backend Authentication Foundation)
+Plan: 0 of 0 in current phase
+Status: Ready to plan
+Last activity: 2026-04-18 — Roadmap created for v1.4 User Management milestone
 
-[░░░░░░░░░░] 0%
+[████████░░░░░░░░░] 80% (16/20 phases complete)
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
-| Phase Progress | 0/0 (v1.4) |
+| Phase Progress | 16/20 (overall) |
 | Total Plans Complete | 50 (v1.0-v1.3) |
-| Plans Pending | 0 |
+| Plans Pending | 0 (v1.4) |
 
 **By Phase (v1.0-v1.3):**
 
@@ -65,6 +65,15 @@ Last activity: 2026-04-18 — Milestone v1.4 started
 | 15 | 2 | Complete |
 | 16 | 1 | Complete |
 
+**By Phase (v1.4):**
+
+| Phase | Plans | Status |
+|-------|-------|--------|
+| 17 | 0 | Not started |
+| 18 | 0 | Not started |
+| 19 | 0 | Not started |
+| 20 | 0 | Not started |
+
 ## Accumulated Context
 
 ### Decisions
@@ -76,6 +85,11 @@ Recent decisions affecting current work:
 - Phase 15: Integration of clean_html() into generate_section_content() and generate_introduction()
 - Phase 16: Word count validation service with regex-based HTML stripping
 - Phase 16: Bug fix for HTML tag stripping to handle tags with attributes
+- Phase 17: Use FastAPI Security + PyJWT + pwdlib for authentication infrastructure
+- Phase 17: Implement JWT-based authentication with Argon2 password hashing
+- Phase 18: Admin account created on first startup using ADMIN_PASSWORD environment variable
+- Phase 19: Frontend authentication with localStorage token storage and protected routes
+- Phase 20: Axios interceptor for automatic token injection in API requests
 
 ### Open Questions
 
@@ -85,8 +99,20 @@ Recent decisions affecting current work:
 
 - None currently
 
+## Deferred Items
+
+Items acknowledged and carried forward from previous milestone close:
+
+| Category | Item | Status | Deferred At |
+|----------|------|--------|-------------|
+| Content Quality | Section count validation | Deferred to v1.5 | 2026-04-17 |
+| Content Quality | Validation results display UI | Deferred to v1.5 | 2026-04-17 |
+| Content Quality | Validation warnings system | Deferred to v1.5 | 2026-04-17 |
+| Content Quality | Research data utilization | Deferred to v1.5 | 2026-04-17 |
+| Content Quality | Research context in prompts | Deferred to v1.5 | 2026-04-17 |
+
 ## Session Continuity
 
-**Last Session**: Milestone v1.3 completed (2026-04-18)
+**Last Session**: 2026-04-18 11:54 — Roadmap created for v1.4 User Management milestone
 
-**Next Session**: Defining requirements for v1.4 User Management
+**Next Session**: Plan Phase 17: Backend Authentication Foundation
