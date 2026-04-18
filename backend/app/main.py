@@ -12,7 +12,9 @@ from app.routers import (
     version,
     link_map,
     auth,
+    users,
 )
+from app.services.user_service import create_admin_account
 
 app = FastAPI(
     title="WordPress AI Writer",
@@ -46,6 +48,13 @@ app.include_router(wordpress.router)
 app.include_router(version.router)
 app.include_router(link_map.router)
 app.include_router(auth.router)
+app.include_router(users.router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Create admin account on first startup."""
+    await create_admin_account()
 
 
 @app.get("/health")
