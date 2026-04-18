@@ -36,3 +36,14 @@ async def get_current_active_user(
 ) -> dict:
     """Get current active user (can be extended for status checks)."""
     return current_user
+
+
+async def get_current_admin(
+    current_user: Annotated[dict, Depends(get_current_user)],
+) -> dict:
+    """Get current admin user (admin-only access)."""
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+        )
+    return current_user
