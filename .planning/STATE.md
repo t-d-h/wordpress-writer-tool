@@ -1,16 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: User Management
-status: in_progress
-last_updated: "2026-04-18T11:54:00+07:00"
-last_activity: 2026-04-18 -- Roadmap created for v1.4 User Management milestone
+milestone: v1.0
+milestone_name: milestone
+status: planning
+last_updated: "2026-04-18T05:35:18.459Z"
+last_activity: 2026-04-18 — Roadmap created for v1.4 User Management milestone
 progress:
-  total_phases: 20
-  completed_phases: 16
-  total_plans: 50
-  completed_plans: 50
-  percent: 80
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # WordPress Writer Tool - State
