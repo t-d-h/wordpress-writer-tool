@@ -10,7 +10,7 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ## Current State
 
-**Version:** v1.3 (shipped 2026-04-17)
+**Version:** v1.4 (in progress)
 
 **Shipped Features (v1.3 Content Quality Improvements):**
 - HTML cleaning foundation with 5-stage algorithm
@@ -27,20 +27,16 @@ Validate WordPress site connectivity and credentials before saving, so users kno
   - Bug fixed: HTML tag stripping now correctly handles tags with attributes
 
 **Known Limitations:**
+- No authentication or user management (current milestone)
 - Word count validation not yet integrated into content generation pipeline
-- Section count validation not yet implemented (deferred to v1.4)
-- Validation results display UI not yet implemented (deferred to v1.4)
-- Validation warnings system not yet implemented (deferred to v1.4)
-- Research data utilization not yet implemented (deferred to v1.4)
-- Research context in prompts not yet implemented (deferred to v1.4)
+- Section count validation not yet implemented
+- Validation results display UI not yet implemented
+- Validation warnings system not yet implemented
+- Research data utilization not yet implemented
+- Research context in prompts not yet implemented
 
-**Next Milestone Goals (v1.4):**
-- Implement section count validation (Phase 17)
-- Implement validation results display UI (Phase 18)
-- Implement validation warnings system (Phase 19)
-- Implement research data utilization (Phase 20)
-- Implement research context in prompts (Phase 21)
-- Integrate word count validation into content generation pipeline
+**Next Milestone Goals (v1.5):**
+- TBD after v1.4 completion
 
 <details>
 <summary>v1.3 Development History</summary>
@@ -85,18 +81,18 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ### Active
 
-None — all v1.3 requirements to be defined
+None — all v1.4 requirements to be defined
 
-## Current Milestone: v1.3 Content Quality Improvements
+## Current Milestone: v1.4 User Management
 
-**Goal:** Fix content generation issues to improve output quality and ensure AI-generated content meets user specifications.
+**Goal:** Add authentication and user management to protect the service.
 
 **Target features:**
-- Recheck how Outline uses content from Research
-- Recheck how Content uses content from Outline and Research
-- Verify how Additional Requests (Optional) is used
-- Fix output content that includes "`html or `" characters that shouldn't be there
-- Ensure content follows Target Section Count and Target Word Count (actual vs desired numbers shouldn't be too different)
+- First account will be admin with password from ADMIN_PASSWORD environment variable
+- Service will be protected, users must login to use
+- Admin can create users with passwords
+- New MongoDB collections to store accounts
+- Authentication required for all service access
 
 ## Current State
 
@@ -241,6 +237,6 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-**Last updated:** 2026-04-18 (v1.3 milestone completed)
+**Last updated:** 2026-04-18 (v1.4 milestone started)
 
 </details>
