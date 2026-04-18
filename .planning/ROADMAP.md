@@ -9,7 +9,7 @@
 - ✅ **v1.1 All Posts Table View** — Phases 4-11 (shipped 2026-04-15)
 - ✅ **v1.2 Vietnamese Language Support** — Phases 12-14 (shipped 2026-04-16)
 - ✅ **v1.3 Content Quality Improvements** — Phases 15-16 (shipped 2026-04-17)
-- ⏳ **v1.4 User Management** — Phases 17-20 (in progress)
+- ✅ **v1.4 User Management** — Phases 17-20 (shipped 2026-04-18)
 
 ## Phases
 
@@ -54,12 +54,12 @@
 </details>
 
 <details>
-<summary>⏳ v1.4 User Management (Phases 17-20) — IN PROGRESS</summary>
+<summary>✅ v1.4 User Management (Phases 17-20) — SHIPPED 2026-04-18</summary>
 
-- [x] Phase 17: Backend Authentication Foundation (0/0 plans) — not started (completed 2026-04-18)
-- [x] Phase 18: Backend User Management (0/0 plans) — not started (completed 2026-04-18)
-- [x] Phase 19: Frontend Authentication (0/0 plans) — not started (completed 2026-04-18)
-- [ ] Phase 20: Security Integration (0/0 plans) — not started
+- [x] Phase 17: Backend Authentication Foundation (1/1 plans) — completed 2026-04-18
+- [x] Phase 18: Backend User Management (1/1 plans) — completed 2026-04-18
+- [x] Phase 19: Frontend Authentication (1/1 plans) — completed 2026-04-18
+- [x] Phase 20: Security Integration (1/1 plans) — completed 2026-04-18
 
 </details>
 
@@ -133,10 +133,10 @@
 | 14. Frontend UI | v1.2 | 6/6 | Complete | 2026-04-16 |
 | 15. HTML Cleaning Foundation | v1.3 | 2/2 | Complete | 2026-04-16 |
 | 16. Word Count Validation | v1.3 | 1/1 | Complete | 2026-04-17 |
-| 17. Backend Authentication Foundation | v1.4 | 1/1 | Complete    | 2026-04-18 |
-| 18. Backend User Management | v1.4 | 1/1 | Complete    | 2026-04-18 |
-| 19. Frontend Authentication | v1.4 | 1/1 | Complete    | 2026-04-18 |
-| 20. Security Integration | v1.4 | 0/0 | Not started | - |
+| 17. Backend Authentication Foundation | v1.4 | 1/1 | Complete | 2026-04-18 |
+| 18. Backend User Management | v1.4 | 1/1 | Complete | 2026-04-18 |
+| 19. Frontend Authentication | v1.4 | 1/1 | Complete | 2026-04-18 |
+| 20. Security Integration | v1.4 | 1/1 | Complete | 2026-04-18 |
 
 ---
 
