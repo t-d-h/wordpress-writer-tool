@@ -1,11 +1,14 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles, HiOutlineChatBubbleLeftRight } from 'react-icons/hi2'
+import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles, HiOutlineChatBubbleLeftRight, HiOutlineLogout } from 'react-icons/hi2'
 import { getProjects } from '../api/client'
+import { useAuth } from '../contexts/AuthContext'
+import Logout from './Logout'
 
 export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(
     location.pathname.startsWith('/settings')
   )
@@ -133,6 +136,11 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer" style={{ padding: '16px', borderTop: '1px solid var(--border-color)' }}>
+        <div className="user-info" style={{ marginBottom: '12px' }}>
+          <span className="user-name">{user?.username || 'Guest'}</span>
+          <span className="user-role">{user?.role || ''}</span>
+        </div>
+        <Logout />
         <a
           href="https://t.me/hoantdh"
           target="_blank"
