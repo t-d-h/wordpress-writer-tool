@@ -1,5 +1,28 @@
 # Milestones
 
+## v1.3 Content Quality Improvements (Shipped: 2026-04-17)
+
+**Phases completed:** 2 phases, 3 plans
+
+**Key accomplishments:**
+
+- Implemented HTML cleaning foundation with 5-stage algorithm to sanitize AI-generated content
+- Added beautifulsoup4>=4.12.0 and lxml>=5.0.0 dependencies for robust HTML sanitization
+- Integrated HTML cleaning into generate_section_content() and generate_introduction()
+- Created comprehensive test suite with 6 test functions covering HTML-01, HTML-02, HTML-03 requirements
+- Ensured only safe HTML tags (h1-h6, p, strong, em, ul, ol, li, a, img) and attributes (href, src, alt, title) are preserved
+- Removed markdown artifacts (backticks, code blocks) from AI-generated content
+- Implemented WordCountService to accurately count words in HTML content
+- Created WordCountValidator to check content against minimum and maximum word counts
+- Added comprehensive unit tests for word count validation logic
+- Fixed bug in HTML stripping logic to correctly handle tags with attributes
+
+**Known gaps:**
+- Phases 17-21 (Section Count Validation, Validation Results Display, Validation Warnings, Research Data Utilization, Research Context in Prompts) deferred to v1.4
+- Word count validation service not yet integrated into content generation pipeline
+
+---
+
 ## v1.1 All Posts Table View (Shipped: 2026-04-15)
 
 **Phases completed:** 8 phases, 14 plans, 43 tasks

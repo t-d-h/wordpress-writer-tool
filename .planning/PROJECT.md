@@ -12,9 +12,35 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 **Version:** v1.3 (shipped 2026-04-17)
 
-**Next Milestone Goals:**
+**Shipped Features (v1.3 Content Quality Improvements):**
+- HTML cleaning foundation with 5-stage algorithm
+  - Removes markdown code blocks and backticks
+  - Sanitizes HTML with allowed tags whitelist
+  - Integrated into generate_section_content() and generate_introduction()
+- Word count validation service
+  - WordCountService.count_words(html_content) for accurate word counting
+  - WordCountValidator.validate() for min/max threshold checking
+  - Comprehensive unit tests for edge cases
+- Comprehensive test coverage
+  - 6 test functions for HTML cleaning (HTML-01, HTML-02, HTML-03)
+  - Unit tests for word count validation
+  - Bug fixed: HTML tag stripping now correctly handles tags with attributes
 
-- To be defined.
+**Known Limitations:**
+- Word count validation not yet integrated into content generation pipeline
+- Section count validation not yet implemented (deferred to v1.4)
+- Validation results display UI not yet implemented (deferred to v1.4)
+- Validation warnings system not yet implemented (deferred to v1.4)
+- Research data utilization not yet implemented (deferred to v1.4)
+- Research context in prompts not yet implemented (deferred to v1.4)
+
+**Next Milestone Goals (v1.4):**
+- Implement section count validation (Phase 17)
+- Implement validation results display UI (Phase 18)
+- Implement validation warnings system (Phase 19)
+- Implement research data utilization (Phase 20)
+- Implement research context in prompts (Phase 21)
+- Integrate word count validation into content generation pipeline
 
 <details>
 <summary>v1.3 Development History</summary>
@@ -74,7 +100,7 @@ None — all v1.3 requirements to be defined
 
 ## Current State
 
-**Version:** v1.3 (starting 2026-04-16)
+**Version:** v1.3 (shipped 2026-04-17)
 
 **Shipped Features (v1.0 MVP):**
 - Token usage display with breakdown by post type
@@ -113,11 +139,13 @@ None — all v1.3 requirements to be defined
   - Frontend testing infrastructure
   - Language parameter to worker AI service
 
-**Next Milestone Goals:**
-- Content quality improvements
-- Fix content generation pipeline issues
-- Ensure content meets user specifications (section count, word count)
-- Remove unwanted characters from output
+**Next Milestone Goals (v1.4):**
+- Implement section count validation (Phase 17)
+- Implement validation results display UI (Phase 18)
+- Implement validation warnings system (Phase 19)
+- Implement research data utilization (Phase 20)
+- Implement research context in prompts (Phase 21)
+- Integrate word count validation into content generation pipeline
 
 **Technical Debt:**
 - 10 code review findings documented (2 critical, 5 warnings, 3 info)
@@ -156,6 +184,13 @@ This is a brownfield project with existing codebase mapped in `.planning/codebas
 - AI service integration for language support
 - Frontend UI for language selection
 - End-to-end language flow from MongoDB to AI providers
+
+**v1.3 Content Quality Improvements State:**
+- 2 phases completed, 3 plans executed
+- HTML cleaning foundation with 5-stage algorithm
+- Word count validation service
+- Comprehensive test coverage for HTML cleaning and validation
+- Phases 17-21 deferred to v1.4
 
 **Known Issues:**
 - Plain-text credential storage (deferred for security milestone)
@@ -206,6 +241,6 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-**Last updated:** 2026-04-16 (starting v1.3 milestone)
+**Last updated:** 2026-04-18 (v1.3 milestone completed)
 
 </details>
