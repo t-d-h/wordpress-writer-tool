@@ -14,6 +14,7 @@ from app.database import (
     wp_sites_col,
     default_models_col,
     wp_posts_cache_col,
+    users_col,
 )
 
 
@@ -75,6 +76,7 @@ async def cleanup_db(mongodb_test_db):
         "wp_sites",
         "default_models",
         "wp_posts_cache",
+        "users",
     ]
 
     for collection_name in collections:
