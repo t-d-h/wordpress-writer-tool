@@ -1,476 +1,536 @@
-# Architecture Research
+# Architecture Patterns
 
-**Domain:** Content Quality Improvements for AI Content Generation
-**Researched:** 2026-04-16
-**Confidence:** HIGH
+**Domain:** User Management and Authentication
+**Researched:** 2026-04-18
 
-## Standard Architecture
-
-### System Overview
+## Recommended Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Frontend Layer (React)                   │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ ProjectDetail│  │ PostView     │  │ PostList     │      │
-│  │   .jsx       │  │   .jsx       │  │   .jsx       │      │
-│  │              │  │              │  │              │      │
-│  │ Display      │  │ Display      │  │ Display      │      │
-│  │ Validation   │  │ Validation   │  │ Validation   │      │
-│  │ Results      │  │ Results      │  │ Results      │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                  │                  │              │
-└─────────┼──────────────────┼──────────────────┼──────────────┘
-          │                  │                  │
-          ↓                  ↓                  ↓
-┌─────────────────────────────────────────────────────────────┐
-│                  Backend API Layer (FastAPI)                 │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ posts.py     │  │ Post Model   │  │ Validation   │      │
-│  │ Router       │  │ (Pydantic)   │  │ Model        │      │
-│  │              │  │              │  │              │      │
-│  │ GET /posts   │  │ validation:  │  │ word_count:  │      │
-│  │              │  │ dict         │  │ int          │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                  │                  │              │
-└─────────┼──────────────────┼──────────────────┼──────────────┘
-          │                  │                  │
-          ↓                  ↓                  ↓
-┌─────────────────────────────────────────────────────────────┐
-│                  Service Layer (Python)                      │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ ai_service   │  │ validation   │  │ wp_service   │      │
-│  │              │  │ _service     │  │              │      │
-│  │ research_    │  │              │  │ (no change)  │      │
-│  │ topic()      │  │ clean_html() │  │              │      │
-│  │              │  │ validate_    │  │              │      │
-│  │ + HTML       │  │ word_count() │  │              │      │
-│  │   cleaning   │  │ validate_    │  │              │      │
-│  │ + validation │  │ section_     │  │              │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                  │                  │              │
-└─────────┼──────────────────┼──────────────────┼──────────────┘
-          │                  │                  │
-          ↓                  ↓                  ↓
-┌─────────────────────────────────────────────────────────────┐
-│                  Worker Layer (Async Tasks)                  │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ run_         │  │ run_         │  │ run_         │      │
-│  │ research()   │  │ outline()    │  │ content()    │      │
-│  │              │  │              │  │              │      │
-│  │ Call AI      │  │ Call AI      │  │ Call AI      │      │
-│  │ + Clean HTML │  │ + Validate   │  │ + Validate   │      │
-│  │ + Validate   │  │   Section    │  │   Word Count │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-└─────────────────────────────────────────────────────────────┘
-          │                  │                  │
-          ↓                  ↓                  ↓
-┌─────────────────────────────────────────────────────────────┐
-│                  Data Layer (MongoDB)                        │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ posts_col    │  │ projects_col │  │ jobs_col     │      │
-│  │              │  │              │  │              │      │
-│  │ validation:  │  │ (no change)  │  │ (no change)  │      │
-│  │ {            │  │              │  │              │      │
-│  │   word_      │  │              │  │              │      │
-│  │   count: int │  │              │  │              │      │
-│  │   section_   │  │              │  │              │      │
-│  │   count: int │  │              │  │              │      │
-│  │   html_      │  │              │  │              │      │
-│  │   clean: bool │  │              │  │              │      │
-│  │ }            │  │              │  │              │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         Frontend (React)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │  Login Page  │───▶│ AuthContext  │───▶│ Protected    │      │
+│  │              │    │  (Provider)  │    │   Routes     │      │
+│  └──────────────┘    └──────────────┘    └──────────────┘      │
+│         │                   │                    │               │
+│         │                   │                    │               │
+│         ▼                   ▼                    ▼               │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              API Client (axios interceptor)              │   │
+│  │  - Adds Authorization: Bearer <token> to all requests    │   │
+│  │  - Handles 401 responses (redirect to login)             │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTPS + JWT
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Backend (FastAPI)                           │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │  /token      │    │  /api/users  │    │  All /api/*  │      │
+│  │  (login)     │    │  (CRUD)      │    │  (protected) │      │
+│  └──────────────┘    └──────────────┘    └──────────────┘      │
+│         │                   │                    │               │
+│         │                   │                    │               │
+│         ▼                   ▼                    ▼               │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              Auth Middleware (Depends)                     │   │
+│  │  - get_current_user() dependency                         │   │
+│  │  - Validates JWT token                                    │   │
+│  │  - Returns User object to route handlers                 │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│         │                   │                    │               │
+│         ▼                   ▼                    ▼               │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              User Service                                 │   │
+│  │  - authenticate_user()                                    │   │
+│  │  - create_user()                                          │   │
+│  │  - get_user()                                              │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Database (MongoDB)                          │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │  users      │    │  projects    │    │  posts       │      │
+│  │  collection │    │  collection  │    │  collection  │      │
+│  └──────────────┘    └──────────────┘    └──────────────┘      │
+│         │                   │                    │               │
+│         └───────────────────┴────────────────────┘               │
+│                           │                                        │
+│                           ▼                                        │
+│              All data scoped by user_id                          │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+### Component Boundaries
 
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| **Validation Service** | Content quality validation and cleaning | Add `validation_service.py` with `clean_html()`, `validate_word_count()`, `validate_section_count()` |
-| **AI Service** | Generate content with HTML cleaning and validation | Add HTML cleaning to `generate_section_content()` and `generate_introduction()`; add validation to `generate_outline()` and `generate_full_content()` |
-| **Worker Tasks** | Apply validation and cleaning after generation | Call validation functions after AI generation; store validation results in post document |
-| **Post Model** | Store validation results | Add `validation: dict` field to `PostResponse` |
-| **Frontend** | Display validation results | Show word count, section count, and HTML cleanliness in post detail view |
+| Component | Responsibility | Communicates With |
+|-----------|---------------|-------------------|
+| **AuthContext** (Frontend) | Manages authentication state, token storage, login/logout | All React components, API client |
+| **ProtectedRoute** (Frontend) | Route wrapper that checks auth before rendering | React Router, AuthContext |
+| **Login** (Frontend) | Login form, calls /token endpoint | AuthContext, API client |
+| **API Client** (Frontend) | Axios instance with token interceptor | Backend API, localStorage |
+| **Auth Router** (Backend) | /token endpoint, /api/users CRUD | User service, MongoDB |
+| **Auth Middleware** (Backend) | JWT validation, user context injection | All routers, User service |
+| **User Service** (Backend) | User CRUD, password hashing, authentication | MongoDB, pwdlib |
+| **Users Collection** (Database) | Stores user credentials and metadata | User service |
 
-## Recommended Project Structure
+### Data Flow
 
+#### Login Flow
 ```
-backend/
-├── app/
-│   ├── models/
-│   │   ├── post.py              # Add validation field to PostResponse
-│   │   └── validation.py        # NEW: Validation result model
-│   ├── services/
-│   │   ├── ai_service.py        # Add HTML cleaning and validation
-│   │   ├── validation_service.py  # NEW: Validation and cleaning functions
-│   │   ├── wp_service.py        # No changes needed
-│   │   └── job_service.py       # No changes needed
-│   ├── routers/
-│   │   └── posts.py             # No changes needed
-│   └── workers/
-│       └── tasks.py             # Add validation calls after generation
-frontend/
-└── src/
-    └── components/
-        └── Posts/
-            ├── PostView.jsx     # Display validation results
-            └── PostList.jsx     # Display validation results
+1. User enters credentials in Login component
+2. Login component calls POST /token with form data
+3. Backend authenticates user (User service)
+4. Backend generates JWT token (signed with SECRET_KEY)
+5. Backend returns { access_token, token_type: "bearer" }
+6. Frontend stores token in localStorage
+7. AuthContext updates state: isAuthenticated = true
+8. User redirected to protected route
 ```
 
-### Structure Rationale
+#### Authenticated Request Flow
+```
+1. Component makes API call (e.g., getProjects())
+2. Axios interceptor adds Authorization: Bearer <token> header
+3. Request sent to backend
+4. FastAPI Depends(get_current_user) extracts token
+5. Token validated (JWT decode, signature check)
+6. User fetched from MongoDB by username
+7. User object injected into route handler
+8. Route handler uses user.user_id to filter data
+9. Response returned to frontend
+```
 
-- **backend/app/services/validation_service.py:** Centralized location for validation and cleaning functions. Reusable across AI service and worker tasks.
-- **backend/app/models/validation.py:** Validation result model for type safety and consistency.
-- **backend/app/services/ai_service.py:** AI service should clean and validate content before returning. Ensures quality at generation time.
-- **backend/app/workers/tasks.py:** Worker tasks should call validation after generation and store results in post document.
-- **frontend/src/components/Posts/PostView.jsx:** Post detail view is natural place to display validation results.
+#### Logout Flow
+```
+1. User clicks logout button
+2. AuthContext clears token from localStorage
+3. AuthContext updates state: isAuthenticated = false
+4. User redirected to /login
+5. Subsequent API calls fail with 401
+6. Axios interceptor redirects to login
+```
 
-## Architectural Patterns
+## Patterns to Follow
 
-### Pattern 1: Validation as Non-Blocking Check
+### Pattern 1: FastAPI Dependency Injection for Auth
 
-**What:** Validation functions return results but don't fail generation. Warnings are logged but content is still saved.
+**What:** Use FastAPI's `Depends()` to inject authentication into route handlers
 
-**When to use:** When validation is advisory rather than mandatory. AI models cannot guarantee exact specifications.
-
-**Trade-offs:**
-- **Pros:** Doesn't block content generation, users can publish content that doesn't meet validation, clear feedback on quality
-- **Cons:** Users may ignore warnings, content may not meet specifications
+**When:** All protected routes need user context
 
 **Example:**
 ```python
-# Validation returns results, doesn't raise exceptions
-validation_result = validate_word_count(content, target_word_count)
-if not validation_result["passed"]:
-    logger.warning(f"Word count validation failed: {validation_result['actual']} vs {validation_result['target']}")
-# Content is still saved, validation result stored in post document
+# backend/app/auth/dependencies.py
+from typing import Annotated
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jwt.exceptions import InvalidTokenError
+from app.auth.service import get_user_by_username
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)]
+) -> User:
+    """Validate JWT token and return current user."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except InvalidTokenError:
+        raise credentials_exception
+
+    user = await get_user_by_username(username)
+    if user is None:
+        raise credentials_exception
+    return user
+
+# Usage in routers
+@router.get("/projects")
+async def get_projects(
+    current_user: Annotated[User, Depends(get_current_user)]
+):
+    """Get all projects for current user."""
+    projects = await projects_col.find({"user_id": current_user.id}).to_list(None)
+    return projects
 ```
 
-### Pattern 2: HTML Cleaning Before Validation
+### Pattern 2: React Context for Auth State
 
-**What:** HTML content is cleaned before validation to ensure accurate word and section counts.
+**What:** Use React Context to manage authentication state globally
 
-**When to use:** When AI-generated content may contain markdown artifacts or malformed HTML.
-
-**Trade-offs:**
-- **Pros:** Accurate validation counts, clean content for WordPress, consistent behavior
-- **Cons:** May remove content that user intended to keep, requires careful whitelist definition
+**When:** Multiple components need access to auth state
 
 **Example:**
-```python
-# Clean HTML first
-cleaned_content = clean_html_content(content)
-# Then validate
-word_count_result = validate_word_count(cleaned_content, target_word_count)
-section_count_result = validate_section_count(cleaned_content, target_section_count)
-```
+```javascript
+// frontend/src/contexts/AuthContext.jsx
+import { createContext, useContext, useState } from 'react'
 
-### Pattern 3: Validation Results Stored in Document
+const AuthContext = createContext(null)
 
-**What:** Validation results are stored in the post document for historical tracking and display.
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null)
+  const [token, setToken] = useState(localStorage.getItem('token'))
 
-**When to use:** When validation results need to be displayed to users or tracked over time.
+  const login = async (username, password) => {
+    const formData = new FormData()
+    formData.append('username', username)
+    formData.append('password', password)
 
-**Trade-offs:**
-- **Pros:** Historical tracking, easy display in UI, no separate queries needed
-- **Cons:** Document size increases, validation results may become stale if content is edited
+    const response = await fetch('/token', {
+      method: 'POST',
+      body: formData
+    })
 
-**Example:**
-```python
-# Post document structure
-{
-    "_id": ObjectId("..."),
-    "topic": "How to improve website SEO",
-    "content": "<h2>Introduction</h2>...",
-    "validation": {
-        "word_count": {
-            "actual": 1200,
-            "target": 1500,
-            "passed": false,
-            "tolerance": 0.2
-        },
-        "section_count": {
-            "actual": 4,
-            "target": 5,
-            "passed": true,
-            "tolerance": 1
-        },
-        "html_clean": true
+    if (response.ok) {
+      const data = await response.json()
+      localStorage.setItem('token', data.access_token)
+      setToken(data.access_token)
+      setUser({ username })
+      return true
     }
+    return false
+  }
+
+  const logout = () => {
+    localStorage.removeItem('token')
+    setToken(null)
+    setUser(null)
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
+
+export const useAuth = () => useContext(AuthContext)
 ```
 
-## Data Flow
+### Pattern 3: Axios Interceptor for Token Injection
 
-### Request Flow
+**What:** Use axios interceptor to automatically add auth headers
 
-```
-[User creates post with target_word_count=1500, target_section_count=5]
-    ↓
-[Frontend sends POST /api/posts with targets]
-    ↓
-[Backend creates Post document with targets]
-    ↓
-[Backend queues research job with targets]
-    ↓
-[Worker picks up research job]
-    ↓
-[Worker calls ai_service.research_topic()]
-    ↓
-[AI generates research]
-    ↓
-[Worker queues outline job with targets]
-    ↓
-[Worker calls ai_service.generate_outline()]
-    ↓
-[AI generates outline]
-    ↓
-[Worker validates section count]
-    ↓
-[Worker queues content job with targets]
-    ↓
-[Worker calls ai_service.generate_full_content()]
-    ↓
-[AI generates content]
-    ↓
-[Worker cleans HTML content]
-    ↓
-[Worker validates word count]
-    ↓
-[Worker stores validation results in Post document]
-    ↓
-[Post updated with validation results]
-```
+**When:** All API calls need authentication
 
-### State Management
+**Example:**
+```javascript
+// frontend/src/api/client.js
+import axios from 'axios'
 
-```
-[Post Document in MongoDB]
-    ↓ (read by worker)
-[Job Data with targets]
-    ↓ (passed to AI service)
-[AI Service Functions]
-    ↓ (generate content)
-[Generated Content]
-    ↓ (cleaned and validated)
-[Validation Results]
-    ↓ (stored back to Post)
-[Post Document Updated with Validation Results]
+const api = axios.create({
+  baseURL: `${API_BASE}/api`,
+  headers: { 'Content-Type': 'application/json' },
+})
+
+// Request interceptor: add token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+// Response interceptor: handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
+export default api
 ```
 
-### Key Data Flows
+### Pattern 4: Protected Routes with React Router
 
-1. **Target Flow:** User input → API request → Post document → Job data → AI service calls → Validation
-2. **Content Flow:** AI generation → HTML cleaning → Validation → Storage
-3. **Validation Flow:** Validation functions → Validation results → Post document → Frontend display
+**What:** Create a wrapper component to protect routes
 
-## Scaling Considerations
+**When:** Routes should only be accessible to authenticated users
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-1k users | Current architecture is sufficient. Validation adds minimal overhead. |
-| 1k-100k users | Consider caching validation results. Add validation result indexing if filtering by validation status becomes common. |
-| 100k+ users | Consider separate validation service. Add validation result aggregation for quality dashboards. |
+**Example:**
+```javascript
+// frontend/src/components/ProtectedRoute.jsx
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
-### Scaling Priorities
+export default function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth()
 
-1. **First bottleneck:** AI API rate limits. Validation doesn't change this, but HTML cleaning adds minimal overhead.
-2. **Second bottleneck:** MongoDB document size. Adding validation results increases document size but not significantly.
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
 
-## Anti-Patterns
+  return children
+}
 
-### Anti-Pattern 1: Validation as Blocking Check
+// Usage in App.jsx
+<Route
+  path="/projects"
+  element={
+    <ProtectedRoute>
+      <ProjectList />
+    </ProtectedRoute>
+  }
+/>
+```
 
-**What people do:** Validation failures raise exceptions and block content generation.
+### Pattern 5: User-Scoped Data Queries
 
-**Why it's wrong:** AI models cannot guarantee exact specifications. Blocking generation frustrates users and wastes tokens.
+**What:** Filter all database queries by user_id
 
-**Do this instead:** Use validation as advisory checks. Log warnings and store results, but don't block generation.
+**When:** Any data retrieval or modification
 
-### Anti-Pattern 2: Validation After Storage
+**Example:**
+```python
+# Backend: All queries include user_id filter
+@router.get("/projects")
+async def get_projects(current_user: User = Depends(get_current_user)):
+    projects = await projects_col.find({"user_id": current_user.id}).to_list(None)
+    return projects
 
-**What people do:** Store content first, then validate separately.
+@router.post("/projects")
+async def create_project(
+    project: ProjectCreate,
+    current_user: User = Depends(get_current_user)
+):
+    project_dict = project.model_dump()
+    project_dict["user_id"] = current_user.id
+    result = await projects_col.insert_one(project_dict)
+    return {**project_dict, "id": str(result.inserted_id)}
 
-**Why it's wrong:** Validation results may not be associated with content. Content may be published before validation completes.
+@router.get("/projects/{project_id}")
+async def get_project(
+    project_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    project = await projects_col.find_one({
+        "_id": ObjectId(project_id),
+        "user_id": current_user.id
+    })
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+```
 
-**Do this instead:** Validate before storage. Store validation results with content in same document.
+## Anti-Patterns to Avoid
 
-### Anti-Pattern 3: HTML Cleaning After Validation
+### Anti-Pattern 1: Storing Passwords in Plain Text
 
-**What people do:** Validate word count first, then clean HTML.
+**What:** Storing user passwords without hashing
 
-**Why it's wrong:** Word count may be inaccurate if HTML contains markdown artifacts or code blocks.
+**Why bad:** If database is compromised, all user passwords are exposed
 
-**Do this instead:** Clean HTML first, then validate. Ensures accurate validation counts.
+**Instead:** Use password hashing with Argon2 (via pwdlib)
 
-### Anti-Pattern 4: Strict Enforcement Without Tolerance
+```python
+# BAD
+user_dict["password"] = password  # Never do this!
 
-**What people do:** Validation requires exact word count and section count.
+# GOOD
+from pwdlib import PasswordHash
+password_hash = PasswordHash.recommended()
+user_dict["hashed_password"] = password_hash.hash(password)
+```
 
-**Why it's wrong:** AI models cannot guarantee exact specifications. Strict enforcement leads to frequent failures.
+### Anti-Pattern 2: Hardcoded Secret Keys
 
-**Do this instead:** Use tolerance-based validation (±20% for word count, ±1 section for section count).
+**What:** Hardcoding JWT secret keys in source code
 
-## Integration Points
+**Why bad:** If code is exposed, anyone can forge tokens
 
-### External Services
+**Instead:** Use environment variables
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| OpenAI API | No changes | AI generation unchanged, validation added after |
-| Gemini API | No changes | AI generation unchanged, validation added after |
-| Anthropic API | No changes | AI generation unchanged, validation added after |
-| WordPress REST API | No changes | Content is cleaned before publishing, but WordPress API unchanged |
+```python
+# BAD
+SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 
-### Internal Boundaries
+# GOOD
+from app.config import settings
+SECRET_KEY = settings.SECRET_KEY  # Loaded from environment
+```
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| AI Service ↔ Validation Service | Function call | AI service calls validation functions after generation |
-| Worker ↔ Validation Service | Function call | Worker calls validation functions after AI generation |
-| Worker ↔ MongoDB | Document field | Worker stores validation results in post document |
-| Frontend ↔ Backend API | HTTP response | Backend includes validation results in PostResponse |
+### Anti-Pattern 3: Missing User Context in Routes
+
+**What:** Routes that don't validate user context
+
+**Why bad:** Users can access other users' data
+
+**Instead:** Always use `Depends(get_current_user)` on protected routes
+
+```python
+# BAD
+@router.get("/projects/{project_id}")
+async def get_project(project_id: str):
+    project = await projects_col.find_one({"_id": ObjectId(project_id)})
+    return project  # Anyone can access any project!
+
+# GOOD
+@router.get("/projects/{project_id}")
+async def get_project(
+    project_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    project = await projects_col.find_one({
+        "_id": ObjectId(project_id),
+        "user_id": current_user.id  # User-scoped query
+    })
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+```
+
+### Anti-Pattern 4: Token Storage in Cookies Without HttpOnly
+
+**What:** Storing JWT tokens in cookies without HttpOnly flag
+
+**Why bad:** Vulnerable to XSS attacks
+
+**Instead:** Use localStorage with proper security, or HttpOnly cookies
+
+```javascript
+// BAD (if using cookies without HttpOnly)
+document.cookie = `token=${token}`  # Vulnerable to XSS
+
+// GOOD
+localStorage.setItem('token', token)  # Better, but still vulnerable to XSS
+// OR use HttpOnly cookies (set by backend)
+```
+
+### Anti-Pattern 5: Global Auth Middleware Without Granularity
+
+**What:** Applying auth to all routes without exceptions
+
+**Why bad:** Public endpoints (like /token) become inaccessible
+
+**Instead:** Use per-route dependencies or exclude public routes
+
+```python
+# BAD
+app.add_middleware(AuthMiddleware)  # Blocks /token endpoint!
+
+# GOOD
+@router.post("/token")  # Public endpoint, no auth
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    ...
+
+@router.get("/projects")  # Protected endpoint
+async def get_projects(current_user: User = Depends(get_current_user)):
+    ...
+```
+
+## Scalability Considerations
+
+| Concern | At 10 users | At 100 users | At 1,000 users |
+|---------|-------------|--------------|----------------|
+| **JWT Token Storage** | localStorage (client-side) | localStorage (client-side) | localStorage (client-side) - no server storage needed |
+| **Password Hashing** | Argon2 (CPU-intensive) | Argon2 (consider caching) | Argon2 with optimized parameters or bcrypt |
+| **User Queries** | Direct MongoDB queries | Add index on user_id | Add index on user_id, consider read replicas |
+| **Token Validation** | JWT decode per request | JWT decode per request (fast) | JWT decode per request (fast) - stateless scales well |
+| **Session Management** | Stateless (JWT) | Stateless (JWT) | Stateless (JWT) - no session storage needed |
+
+**Key insight:** JWT-based authentication is stateless and scales horizontally without additional infrastructure. The main bottleneck is password hashing during login, which can be optimized with caching or parameter tuning.
+
+## Integration Points with Existing Architecture
+
+### Backend Integration Points
+
+| Existing Component | Integration Required | Changes Needed |
+|-------------------|---------------------|----------------|
+| **All Routers** (ai_providers, wp_sites, projects, posts, jobs) | Add auth dependency | Add `current_user: User = Depends(get_current_user)` to all routes |
+| **All Services** (ai_service, wp_service) | Add user context | Pass user_id to service methods for data filtering |
+| **Database Queries** | Add user_id filter | All queries must include `{"user_id": current_user.id}` filter |
+| **Worker Tasks** (tasks.py) | Add user context | Pass user_id with job data, validate on task execution |
+| **MongoDB Collections** | Add user_id field | Add `user_id` to all existing documents (migration needed) |
+
+### Frontend Integration Points
+
+| Existing Component | Integration Required | Changes Needed |
+|-------------------|---------------------|----------------|
+| **App.jsx** | Wrap with AuthProvider | Add `<AuthProvider>` around `<Routes>` |
+| **All Routes** | Add ProtectedRoute wrapper | Wrap all existing routes with `<ProtectedRoute>` |
+| **API Client** (client.js) | Add token interceptor | Add request/response interceptors for JWT |
+| **All Components** | Add auth checks | Redirect to login if not authenticated |
+| **Sidebar** | Add logout button | Add logout button that calls `useAuth().logout()` |
+
+### Data Migration Requirements
+
+**Existing collections need user_id field:**
+- `ai_providers` - Add `user_id` field
+- `wp_sites` - Add `user_id` field
+- `projects` - Add `user_id` field
+- `posts` - Add `user_id` field
+- `jobs` - Add `user_id` field
+- `default_models` - Add `user_id` field (or make global)
+
+**Migration strategy:**
+1. Create admin user from `ADMIN_PASSWORD` env var
+2. Assign all existing data to admin user
+3. Add unique index on `(user_id, resource_id)` for each collection
+4. Update all queries to include user_id filter
 
 ## Build Order
 
-Based on dependencies and integration points, recommended build order:
+### Phase 1: Backend Foundation (No Breaking Changes)
+1. **User Service** - Create user CRUD, password hashing, JWT generation
+2. **Auth Router** - Create `/token` endpoint, `/api/users` CRUD
+3. **Auth Dependencies** - Create `get_current_user()` dependency
+4. **Database Migration** - Add `users` collection, add `user_id` to existing collections
 
-### Phase 1: HTML Cleaning (Foundation)
-1. **Add Validation Service** (`backend/app/services/validation_service.py`)
-   - Implement `clean_html_content()` using BeautifulSoup4 + lxml
-   - Implement `sanitize_html()` with whitelist of allowed tags
-   - Add tests for HTML cleaning
+### Phase 2: Backend Integration (Breaking Changes)
+5. **Update All Routers** - Add `current_user` dependency to all routes
+6. **Update All Services** - Pass user_id to service methods
+7. **Update Worker Tasks** - Add user context to job processing
+8. **Test Backend** - Verify all endpoints require auth
 
-2. **Update AI Service** (`backend/app/services/ai_service.py`)
-   - Add HTML cleaning to `generate_section_content()`
-   - Add HTML cleaning to `generate_introduction()`
-   - Test cleaning with all AI providers
+### Phase 3: Frontend Foundation
+9. **AuthContext** - Create authentication context provider
+10. **Login Component** - Create login form
+11. **API Client Interceptor** - Add token injection and 401 handling
+12. **ProtectedRoute Component** - Create route wrapper
 
-### Phase 2: Validation Functions (Core Logic)
-3. **Update Validation Service** (`backend/app/services/validation_service.py`)
-   - Implement `validate_word_count()` using textstat
-   - Implement `validate_section_count()` using outline structure
-   - Add tolerance-based validation (±20% word count, ±1 section)
+### Phase 4: Frontend Integration
+13. **Wrap App with AuthProvider** - Add context to App.jsx
+14. **Add Login Route** - Add `/login` route to App.jsx
+15. **Wrap All Routes** - Add ProtectedRoute to all existing routes
+16. **Add Logout Button** - Add logout to Sidebar
 
-4. **Update AI Service** (`backend/app/services/ai_service.py`)
-   - Add validation to `generate_outline()`
-   - Add validation to `generate_full_content()`
-   - Return validation results from AI service functions
-
-5. **Update Worker Tasks** (`backend/app/workers/tasks.py`)
-   - Call validation functions after AI generation
-   - Store validation results in post document
-   - Log validation warnings
-
-### Phase 3: Research Data Utilization (Enhancement)
-6. **Update AI Service** (`backend/app/services/ai_service.py`)
-   - Pass `research_data` to `generate_full_content()`
-   - Update prompts to include research context
-   - Test that research data influences content
-
-### Phase 4: Additional Requests Validation (Nice-to-have)
-7. **Update Worker Tasks** (`backend/app/workers/tasks.py`)
-   - Log when `additional_requests` provided
-   - Add warning if AI output doesn't reflect requests
-   - Document known limitations
-
-### Phase 5: Frontend Display (User Interface)
-8. **Update Post Model** (`backend/app/models/post.py`)
-   - Add `validation: dict` field to `PostResponse`
-   - Define validation result structure
-
-9. **Update Frontend** (`frontend/src/components/Posts/PostView.jsx`)
-   - Display word count validation results
-   - Display section count validation results
-   - Display HTML cleanliness status
-
-## Data Model Changes
-
-### Post Model Changes
-
-```python
-# backend/app/models/post.py
-
-class PostResponse(BaseModel):
-    # ... existing fields ...
-    validation: Optional[Dict[str, Any]] = None  # NEW: Validation results
-```
-
-### Validation Result Structure
-
-```python
-# backend/app/models/validation.py
-
-from pydantic import BaseModel
-from typing import Optional
-
-class WordCountValidation(BaseModel):
-    actual: int
-    target: int
-    passed: bool
-    tolerance: float = 0.2  # ±20%
-
-class SectionCountValidation(BaseModel):
-    actual: int
-    target: int
-    passed: bool
-    tolerance: int = 1  # ±1 section
-
-class ValidationResult(BaseModel):
-    word_count: Optional[WordCountValidation] = None
-    section_count: Optional[SectionCountValidation] = None
-    html_clean: bool = False
-```
-
-### Database Schema Changes
-
-```python
-# backend/app/database.py
-
-# No index changes needed for validation field
-# Validation is stored as a simple dict field in Post documents
-# Example Post document structure:
-{
-    "_id": ObjectId("..."),
-    "project_id": "...",
-    "topic": "How to improve website SEO",
-    "content": "<h2>Introduction</h2>...",
-    "validation": {  # NEW: Validation results
-        "word_count": {
-            "actual": 1200,
-            "target": 1500,
-            "passed": false,
-            "tolerance": 0.2
-        },
-        "section_count": {
-            "actual": 4,
-            "target": 5,
-            "passed": true,
-            "tolerance": 1
-        },
-        "html_clean": true
-    },
-    # ... other fields ...
-}
-```
+### Phase 5: Testing & Validation
+17. **End-to-End Testing** - Test login flow, protected routes, data isolation
+18. **Security Testing** - Test token validation, user isolation, password hashing
+19. **Performance Testing** - Verify JWT validation doesn't impact performance
 
 ## Sources
 
-- Existing codebase analysis: `backend/app/services/ai_service.py`, `backend/app/workers/tasks.py`, `backend/app/models/post.py`
-- Project requirements: `.planning/PROJECT.md` (v1.3 Content Quality Improvements milestone)
-- FastAPI documentation: https://fastapi.tiangolo.com/
-- Pydantic documentation: https://docs.pydantic.dev/
-- React documentation: https://react.dev/
-- BeautifulSoup4 documentation: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
-- lxml documentation: https://lxml.de/
-- textstat documentation: https://github.com/textstat/textstat
-
----
-*Architecture research for: WordPress Writer Tool v1.3 Content Quality Improvements*
-*Researched: 2026-04-16*
+- FastAPI Security Tutorial: https://fastapi.tiangolo.com/tutorial/security/ (HIGH confidence - official docs)
+- FastAPI Dependencies: https://fastapi.tiangolo.com/tutorial/dependencies/ (HIGH confidence - official docs)
+- FastAPI OAuth2 with JWT: https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/ (HIGH confidence - official docs)
+- pwdlib Documentation: https://pwdlib.readthedocs.io/ (HIGH confidence - official docs)
+- PyJWT Documentation: https://pyjwt.readthedocs.io/ (HIGH confidence - official docs)
+- React Context API: https://react.dev/learn/scaling-up-with-reducer-and-context (HIGH confidence - official docs)
+- Axios Interceptors: https://axios-http.com/docs/interceptors (HIGH confidence - official docs)
+- MongoDB Indexing: https://www.mongodb.com/docs/manual/indexes/ (HIGH confidence - official docs)
