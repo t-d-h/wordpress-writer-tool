@@ -13,6 +13,7 @@ jobs_col = db["jobs"]
 default_models_col = db["default_models"]
 wp_posts_cache_col = db["wp_posts_cache"]
 link_maps_col = db["link_maps"]
+users_col = db["users"]
 
 
 async def create_indexes():
@@ -38,3 +39,6 @@ async def create_indexes():
 
     # Index for link maps
     await link_maps_col.create_index([("project_id", 1)])
+
+    # Index for Phase 17: Users collection
+    await users_col.create_index([("username", 1)], unique=True)
