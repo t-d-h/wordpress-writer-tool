@@ -1,7 +1,7 @@
 # Roadmap
 
 **Project:** WordPress Writer Tool
-**Last Updated:** 2026-04-18
+**Last Updated:** 2026-04-20
 
 ## Milestones
 
@@ -9,7 +9,7 @@
 - ✅ **v1.1 All Posts Table View** — Phases 4-11 (shipped 2026-04-15)
 - ✅ **v1.2 Vietnamese Language Support** — Phases 12-14 (shipped 2026-04-16)
 - ✅ **v1.3 Content Quality Improvements** — Phases 15-16 (shipped 2026-04-17)
-- ✅ **v1.4 User Management** — Phases 17-20 (shipped 2026-04-18)
+- 🔄 **v1.4 Initial Admin Account on First Startup** — Phases 17-20 (in progress)
 
 ## Phases
 
@@ -54,63 +54,64 @@
 </details>
 
 <details>
-<summary>✅ v1.4 User Management (Phases 17-20) — SHIPPED 2026-04-18</summary>
+<summary>🔄 v1.4 Initial Admin Account on First Startup (Phases 17-20) — IN PROGRESS</summary>
 
-- [x] Phase 17: Backend Authentication Foundation (1/1 plans) — completed 2026-04-18
-- [x] Phase 18: Backend User Management (1/1 plans) — completed 2026-04-18
-- [x] Phase 19: Frontend Authentication (1/1 plans) — completed 2026-04-18
-- [x] Phase 20: Security Integration (1/1 plans) — completed 2026-04-18
+- [ ] Phase 17: Configuration Layer (TBD plans) — not started
+- [ ] Phase 18: Environment Variable Validation (TBD plans) — not started
+- [ ] Phase 19: Admin Account Creation (TBD plans) — not started
+- [ ] Phase 20: MongoDB Storage Integration (TBD plans) — not started
 
 </details>
 
 ## Phase Details
 
-### Phase 17: Backend Authentication Foundation
-**Goal**: Establish backend authentication infrastructure with user service, JWT tokens, and secure password handling
+### Phase 17: Configuration Layer
+**Goal**: Update config.py to include INIT_USER and INIT_PASSWORD fields with default values
 **Depends on**: Nothing (first phase of v1.4)
-**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-06, SEC-05, SEC-06
+**Requirements**: CONFIG-01, CONFIG-02, CONFIG-03
 **Success Criteria** (what must be TRUE):
-  1. User can login with valid username and password and receive JWT token
-  2. System validates JWT token on protected API requests and rejects invalid/expired tokens
-  3. System hashes passwords using Argon2 before storage in MongoDB
-  4. System uses SECRET_KEY environment variable for JWT signing
-  5. System sets ACCESS_TOKEN_EXPIRE_MINUTES for token lifetime
+  1. config.py includes INIT_USER field with default value
+  2. config.py includes INIT_PASSWORD field with default value
+  3. config.py validates INIT_USER and INIT_PASSWORD on startup
+  4. System loads INIT_USER from environment variable or uses default
+  5. System loads INIT_PASSWORD from environment variable or uses default
 **Plans**: TBD
 
-### Phase 18: Backend User Management
-**Goal**: Enable admin to manage user accounts with CRUD operations and validation
+### Phase 18: Environment Variable Validation
+**Goal**: Validate environment variables and provide sensible defaults
 **Depends on**: Phase 17
-**Requirements**: USER-01, USER-02, USER-03, USER-04, USER-05, USER-06, USER-07
+**Requirements**: CONF-01, CONF-02, CONF-03, CONF-04, CONF-05
 **Success Criteria** (what must be TRUE):
-  1. System creates admin account on first startup using ADMIN_PASSWORD environment variable
-  2. Admin can create new user accounts with username and password
-  3. Admin can list all user accounts
-  4. Admin can delete user accounts
-  5. System validates username uniqueness on user creation
-  6. System validates password strength on user creation
+  1. System reads INIT_USER environment variable for admin username
+  2. System reads INIT_PASSWORD environment variable for admin password
+  3. System validates that INIT_USER is provided (non-empty string)
+  4. System validates that INIT_PASSWORD is provided (non-empty string)
+  5. System provides sensible default values if environment variables are missing
 **Plans**: TBD
 
-### Phase 19: Frontend Authentication
-**Goal**: Provide frontend authentication UI with login component, auth context, and protected routes
-**Depends on**: Phase 17
-**Requirements**: AUTH-05, AUTH-07, SEC-03, SEC-04
+### Phase 19: Admin Account Creation
+**Goal**: Create admin account on first startup with idempotent behavior
+**Depends on**: Phase 18
+**Requirements**: ADMIN-01, ADMIN-02, ADMIN-03, IDEMP-01, IDEMP-02, IDEMP-03
 **Success Criteria** (what must be TRUE):
-  1. User can login with valid credentials via login form
-  2. User can logout by clearing token from localStorage
-  3. System stores JWT token in localStorage on frontend
-  4. Frontend redirects unauthenticated users to login page
-  5. Frontend protects all routes with authentication check
+  1. System creates admin account on first application startup
+  2. Admin account uses username from INIT_USER environment variable
+  3. Admin account uses password from INIT_PASSWORD environment variable
+  4. System checks if admin account already exists before creating
+  5. System handles container restarts gracefully without duplicate key errors
+  6. System logs when admin account already exists (skip creation)
 **Plans**: TBD
-**UI hint**: yes
 
-### Phase 20: Security Integration
-**Goal**: Integrate authentication middleware and token validation across all API endpoints
-**Depends on**: Phase 17, Phase 19
-**Requirements**: SEC-01, SEC-02, SEC-07
+### Phase 20: MongoDB Storage Integration
+**Goal**: Store admin account in MongoDB with proper schema and uniqueness constraints
+**Depends on**: Phase 19
+**Requirements**: MONGO-01, MONGO-02, MONGO-03
 **Success Criteria** (what must be TRUE):
-  1. System requires authentication for all API endpoints
-  2. System injects user context into protected route handlers
-  3. Frontend automatically injects JWT token in API requests via axios interceptor
+  1. System stores admin account in MongoDB users collection
+  2. System uses existing users collection schema for admin account
+  3. System ensures username uniqueness in users collection
+  4. Admin account persists across application restarts
+  5. MongoDB unique index prevents duplicate usernames
 **Plans**: TBD
 
 ## Progress
@@ -133,10 +134,10 @@
 | 14. Frontend UI | v1.2 | 6/6 | Complete | 2026-04-16 |
 | 15. HTML Cleaning Foundation | v1.3 | 2/2 | Complete | 2026-04-16 |
 | 16. Word Count Validation | v1.3 | 1/1 | Complete | 2026-04-17 |
-| 17. Backend Authentication Foundation | v1.4 | 1/1 | Complete | 2026-04-18 |
-| 18. Backend User Management | v1.4 | 1/1 | Complete | 2026-04-18 |
-| 19. Frontend Authentication | v1.4 | 1/1 | Complete | 2026-04-18 |
-| 20. Security Integration | v1.4 | 1/1 | Complete | 2026-04-18 |
+| 17. Configuration Layer | v1.4 | 0/0 | Not started | — |
+| 18. Environment Variable Validation | v1.4 | 0/0 | Not started | — |
+| 19. Admin Account Creation | v1.4 | 0/0 | Not started | — |
+| 20. MongoDB Storage Integration | v1.4 | 0/0 | Not started | — |
 
 ---
 

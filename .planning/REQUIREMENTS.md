@@ -64,23 +64,23 @@ Explicitly excluded from this milestone:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONF-01 | TBD | Pending |
-| CONF-02 | TBD | Pending |
-| CONF-03 | TBD | Pending |
-| CONF-04 | TBD | Pending |
-| CONF-05 | TBD | Pending |
-| ADMIN-01 | TBD | Pending |
-| ADMIN-02 | TBD | Pending |
-| ADMIN-03 | TBD | Pending |
-| IDEMP-01 | TBD | Pending |
-| IDEMP-02 | TBD | Pending |
-| IDEMP-03 | TBD | Pending |
-| MONGO-01 | TBD | Pending |
-| MONGO-02 | TBD | Pending |
-| MONGO-03 | TBD | Pending |
-| CONFIG-01 | TBD | Pending |
-| CONFIG-02 | TBD | Pending |
-| CONFIG-03 | TBD | Pending |
+| CONF-01 | Phase 18 | Pending |
+| CONF-02 | Phase 18 | Pending |
+| CONF-03 | Phase 18 | Pending |
+| CONF-04 | Phase 18 | Pending |
+| CONF-05 | Phase 18 | Pending |
+| ADMIN-01 | Phase 19 | Pending |
+| ADMIN-02 | Phase 19 | Pending |
+| ADMIN-03 | Phase 19 | Pending |
+| IDEMP-01 | Phase 19 | Pending |
+| IDEMP-02 | Phase 19 | Pending |
+| IDEMP-03 | Phase 19 | Pending |
+| MONGO-01 | Phase 20 | Pending |
+| MONGO-02 | Phase 20 | Pending |
+| MONGO-03 | Phase 20 | Pending |
+| CONFIG-01 | Phase 17 | Pending |
+| CONFIG-02 | Phase 17 | Pending |
+| CONFIG-03 | Phase 17 | Pending |
 
 ---
 
