@@ -56,10 +56,10 @@
 <details>
 <summary>🔄 v1.4 Initial Admin Account on First Startup (Phases 17-20) — IN PROGRESS</summary>
 
- - [x] Phase 17: Configuration Layer (1 plan) — planned (completed 2026-04-20)
- - [ ] Phase 18: Environment Variable Validation (TBD plans) — not started
- - [ ] Phase 19: Admin Account Creation (TBD plans) — not started
- - [ ] Phase 20: MongoDB Storage Integration (TBD plans) — not started
+  - [x] Phase 17: Configuration Layer (1 plan) — planned (completed 2026-04-20)
+  - [ ] Phase 18: Environment Variable Validation (1 plan) — planned
+  - [ ] Phase 19: Admin Account Creation (TBD plans) — not started
+  - [ ] Phase 20: MongoDB Storage Integration (TBD plans) — not started
 
 </details>
 
@@ -79,7 +79,7 @@
 - [x] 17-01-PLAN.md — Add INIT_USER and INIT_PASSWORD fields to config.py with validation on startup
 
 ### Phase 18: Environment Variable Validation
-**Goal**: Validate environment variables and provide sensible defaults
+**Goal**: Validate environment variables with error logging and fail-fast behavior
 **Depends on**: Phase 17
 **Requirements**: CONF-01, CONF-02, CONF-03, CONF-04, CONF-05
 **Success Criteria** (what must be TRUE):
@@ -87,8 +87,11 @@
   2. System reads INIT_PASSWORD environment variable for admin password
   3. System validates that INIT_USER is provided (non-empty string)
   4. System validates that INIT_PASSWORD is provided (non-empty string)
-  5. System provides sensible default values if environment variables are missing
-**Plans**: TBD
+  5. System fails fast if INIT_USER or INIT_PASSWORD are missing or empty (no default values)
+  6. System logs error when INIT_USER or INIT_PASSWORD are missing
+  7. System does not log when environment variables are successfully loaded
+**Plans**: 1 plan
+- [ ] 18-01-PLAN.md — Add error logging to validate() method and update CONF-05 requirement
 
 ### Phase 19: Admin Account Creation
 **Goal**: Create admin account on first startup with idempotent behavior
@@ -133,12 +136,12 @@
 | 12. Backend Foundation | v1.2 | 3/3 | Complete | 2026-04-15 |
 | 13. AI Service Integration | v1.2 | 3/3 | Complete | 2026-04-15 |
 | 14. Frontend UI | v1.2 | 6/6 | Complete | 2026-04-16 |
-| 15. HTML Cleaning Foundation | v1.3 | 2/2 | Complete | 2026-04-16 |
-| 16. Word Count Validation | v1.3 | 1/1 | Complete | 2026-04-17 |
- | 17. Configuration Layer | v1.4 | 0/1 | Planned | — |
-| 18. Environment Variable Validation | v1.4 | 0/0 | Not started | — |
-| 19. Admin Account Creation | v1.4 | 0/0 | Not started | — |
-| 20. MongoDB Storage Integration | v1.4 | 0/0 | Not started | — |
+ | 15. HTML Cleaning Foundation | v1.3 | 2/2 | Complete | 2026-04-16 |
+ | 16. Word Count Validation | v1.3 | 1/1 | Complete | 2026-04-17 |
+  | 17. Configuration Layer | v1.4 | 1/1 | Complete | 2026-04-20 |
+ | 18. Environment Variable Validation | v1.4 | 0/1 | Planned | — |
+ | 19. Admin Account Creation | v1.4 | 0/0 | Not started | — |
+ | 20. MongoDB Storage Integration | v1.4 | 0/0 | Not started | — |
 
 ---
 
