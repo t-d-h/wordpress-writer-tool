@@ -117,7 +117,8 @@
   3. System ensures username uniqueness in users collection
   4. Admin account persists across application restarts
   5. MongoDB unique index prevents duplicate usernames
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] 20-01-PLAN.md — Create automated test suite to verify MongoDB storage integration (MONGO-01, MONGO-02, MONGO-03)
 
 ## Progress
 
@@ -139,10 +140,10 @@
 | 14. Frontend UI | v1.2 | 6/6 | Complete | 2026-04-16 |
  | 15. HTML Cleaning Foundation | v1.3 | 2/2 | Complete | 2026-04-16 |
  | 16. Word Count Validation | v1.3 | 1/1 | Complete | 2026-04-17 |
-  | 17. Configuration Layer | v1.4 | 1/1 | Complete | 2026-04-20 |
-  | 18. Environment Variable Validation | v1.4 | 1/1 | Planned | — |
-  | 19. Admin Account Creation | v1.4 | 0/1 | Planned | — |
-  | 20. MongoDB Storage Integration | v1.4 | 0/0 | Not started | — |
+   | 17. Configuration Layer | v1.4 | 1/1 | Complete | 2026-04-20 |
+   | 18. Environment Variable Validation | v1.4 | 1/1 | Planned | — |
+   | 19. Admin Account Creation | v1.4 | 0/1 | Planned | — |
+   | 20. MongoDB Storage Integration | v1.4 | 0/1 | Planned | — |
 
 ---
 
