@@ -1,5 +1,31 @@
 # Milestones
 
+## v1.4 Initial Admin Account on First Startup (Shipped: 2026-04-20)
+
+**Phases completed:** 4 phases, 4 plans, 7 tasks
+
+**Key accomplishments:**
+
+- Files created/modified:
+- Files created/modified:
+- Idempotent admin account creation using INIT_USER/INIT_PASSWORD with username conflict prevention and comprehensive logging
+- Automated test suite validating MongoDB storage integration for admin account with schema verification, uniqueness constraints, and persistence across restarts
+
+---
+
+## v1.0 Initial Admin Account on First Startup (Shipped: 2026-04-20)
+
+**Phases completed:** 4 phases, 4 plans, 7 tasks
+
+**Key accomplishments:**
+
+- Files created/modified:
+- Files created/modified:
+- Idempotent admin account creation using INIT_USER/INIT_PASSWORD with username conflict prevention and comprehensive logging
+- Automated test suite validating MongoDB storage integration for admin account with schema verification, uniqueness constraints, and persistence across restarts
+
+---
+
 ## v1.3 Content Quality Improvements (Shipped: 2026-04-17)
 
 **Phases completed:** 2 phases, 3 plans
@@ -18,6 +44,7 @@
 - Fixed bug in HTML stripping logic to correctly handle tags with attributes
 
 **Known gaps:**
+
 - Phases 17-21 (Section Count Validation, Validation Results Display, Validation Warnings, Research Data Utilization, Research Context in Prompts) deferred to v1.4
 - Word count validation service not yet integrated into content generation pipeline
 
