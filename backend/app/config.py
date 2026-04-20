@@ -16,5 +16,17 @@ class Settings:
     INIT_USER: str = os.getenv("INIT_USER")
     INIT_PASSWORD: str = os.getenv("INIT_PASSWORD")
 
+    def validate(self) -> bool:
+        """Validate that required configuration fields are present and non-empty."""
+        if not self.INIT_USER:
+            raise ValueError(
+                "INIT_USER environment variable is required and cannot be empty"
+            )
+        if not self.INIT_PASSWORD:
+            raise ValueError(
+                "INIT_PASSWORD environment variable is required and cannot be empty"
+            )
+        return True
+
 
 settings = Settings()
