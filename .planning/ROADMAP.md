@@ -57,7 +57,7 @@
 <summary>🔄 v1.4 Initial Admin Account on First Startup (Phases 17-20) — IN PROGRESS</summary>
 
   - [x] Phase 17: Configuration Layer (1 plan) — planned (completed 2026-04-20)
-  - [ ] Phase 18: Environment Variable Validation (1 plan) — planned
+  - [x] Phase 18: Environment Variable Validation (1 plan) — planned (completed 2026-04-20)
   - [ ] Phase 19: Admin Account Creation (TBD plans) — not started
   - [ ] Phase 20: MongoDB Storage Integration (TBD plans) — not started
 
