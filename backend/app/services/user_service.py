@@ -12,34 +12,63 @@ logger = logging.getLogger(__name__)
 
 
 async def create_admin_account():
-    """Create admin account on first startup if it doesn't exist."""
-    # Prevent INIT_USER from being 'admin' to avoid username conflict
-    if settings.INIT_USER == "admin":
-        logger.error(
-            "INIT_USER cannot be 'admin' — this username is reserved for the existing admin account"
-        )
-        raise ValueError(
-            "INIT_USER cannot be 'admin' — this username is reserved for the existing admin account"
-        )
+    """Create admin accounts on first startup if they don't exist."""
+    admin_username = "admin"
+    init_username = settings.INIT_USER
 
-    # Check if admin account already exists
-    existing_admin = await users_col.find_one({"username": settings.INIT_USER})
-    if existing_admin:
-        logger.info(
-            f"Admin account '{settings.INIT_USER}' already exists, skipping creation"
-        )
+    # Check if both usernames are the same - only create one account in this case
+    if admin_username == init_username:
+        existing_admin = await users_col.find_one({"username": admin_username})
+        if existing_admin:
+            logger.info(
+                f"Admin account '{admin_username}' already exists, skipping creation"
+            )
+            return
+
+        admin_data = {
+            "username": admin_username,
+            "password_hash": hash_password(settings.ADMIN_PASSWORD),
+            "role": "admin",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "last_login_at": None,
+        }
+        await users_col.insert_one(admin_data)
+        logger.info(f"Admin account '{admin_username}' created successfully")
         return
 
-    # Create admin account with INIT_USER and hashed INIT_PASSWORD
-    admin_data = {
-        "username": settings.INIT_USER,
-        "password_hash": hash_password(settings.INIT_PASSWORD),
-        "role": "admin",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "last_login_at": None,
-    }
-    await users_col.insert_one(admin_data)
-    logger.info(f"Admin account '{settings.INIT_USER}' created successfully")
+    # Create admin account with hardcoded username "admin" and ADMIN_PASSWORD
+    existing_admin = await users_col.find_one({"username": admin_username})
+    if existing_admin:
+        logger.info(
+            f"Admin account '{admin_username}' already exists, skipping creation"
+        )
+    else:
+        admin_data = {
+            "username": admin_username,
+            "password_hash": hash_password(settings.ADMIN_PASSWORD),
+            "role": "admin",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "last_login_at": None,
+        }
+        await users_col.insert_one(admin_data)
+        logger.info(f"Admin account '{admin_username}' created successfully")
+
+    # Create admin account with INIT_USER and INIT_PASSWORD
+    existing_init_admin = await users_col.find_one({"username": init_username})
+    if existing_init_admin:
+        logger.info(
+            f"Admin account '{init_username}' already exists, skipping creation"
+        )
+    else:
+        init_admin_data = {
+            "username": init_username,
+            "password_hash": hash_password(settings.INIT_PASSWORD),
+            "role": "admin",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "last_login_at": None,
+        }
+        await users_col.insert_one(init_admin_data)
+        logger.info(f"Admin account '{init_username}' created successfully")
 
 
 async def create_user(username: str, password: str, role: str = "user") -> dict:

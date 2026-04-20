@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineGlobeAlt, HiOutlinePencil } from 'react-icons/hi2'
 import { getProjects, createProject, deleteProject, updateProject, getSites } from '../../api/client'
 import { formatDateOnly } from '../../utils/dateUtils'
@@ -165,8 +165,11 @@ export default function ProjectList() {
             </div>
             {sites.length === 0 ? (
               <div className="empty-state" style={{ padding: '32px 0' }}>
+                <div className="empty-state-icon">🌐</div>
                 <div className="empty-state-title">No WordPress Sites</div>
-                <div className="empty-state-text">Add a WordPress site first in Settings</div>
+                <div className="empty-state-text">
+                  Add a WordPress site first in <Link to="/settings/wp-sites" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Settings</Link>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit}>

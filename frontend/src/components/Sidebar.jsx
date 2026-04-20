@@ -56,7 +56,7 @@ export default function Sidebar() {
       <div className="sidebar-header">
         <div className="sidebar-logo">W</div>
         <div>
-          <div className="sidebar-title">WP Management tool</div>
+          <div className="sidebar-title">WP Content writer</div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>AI-Powered</div>
         </div>
         <button
@@ -184,6 +184,9 @@ export default function Sidebar() {
           <HiOutlineChatBubbleLeftRight className="nav-icon" />
           <span>Nhắn tin cho Chồng iu</span>
         </a>
+        <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
+          Version v1.0.0
+        </div>
       </div>
       {notification && (
         <Notification
