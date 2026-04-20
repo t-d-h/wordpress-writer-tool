@@ -189,10 +189,12 @@ This is a brownfield project with existing codebase mapped in `.planning/codebas
 - Phases 17-21 deferred to v1.4
 
 **v1.4 Initial Admin Account on First Startup State:**
-- 1 phase completed, 1 plan executed
+- 2 phases completed, 2 plans executed
 - Configuration layer with INIT_USER and INIT_PASSWORD fields
 - Fail-fast validation on startup for required environment variables
+- Error logging for missing environment variables
 - Phase 17 complete — configuration infrastructure ready for admin account creation
+- Phase 18 complete — environment variable validation with error logging
 
 **Known Issues:**
 - Plain-text credential storage (deferred for security milestone)
@@ -243,6 +245,6 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-**Last updated:** 2026-04-20 (v1.4 milestone - Phase 17 complete)
+**Last updated:** 2026-04-20 (v1.4 milestone - Phase 18 complete)
 
 </details>
