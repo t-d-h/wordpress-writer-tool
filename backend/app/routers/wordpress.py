@@ -2,15 +2,22 @@
 WordPress Router — API endpoints for WordPress sync operations.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Annotated
 from bson import ObjectId
 from app.services.post_sync_service import sync_wordpress_posts, detect_orphaned_posts
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/projects/{project_id}/wordpress", tags=["wordpress"])
 
 
 @router.post("/sync")
-async def sync_posts(project_id: str, status: str = "any", per_page: int = 100):
+async def sync_posts(
+    project_id: str,
+    status: str = "any",
+    per_page: int = 100,
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     """Sync posts from WordPress to local database.
 
     Args:
@@ -31,7 +38,9 @@ async def sync_posts(project_id: str, status: str = "any", per_page: int = 100):
 
 
 @router.get("/orphans")
-async def get_orphaned_posts(project_id: str):
+async def get_orphaned_posts(
+    project_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Get posts that exist locally but not in WordPress.
 
     Args:
@@ -56,6 +65,7 @@ async def get_wordpress_posts(
     search: str = None,
     orderby: str = "date",
     order: str = "desc",
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
 ):
     """Fetch posts from WordPress REST API.
 

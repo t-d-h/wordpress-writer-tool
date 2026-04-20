@@ -2,15 +2,19 @@
 Link Map Router — endpoints for scanning and retrieving link maps.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Annotated
 from bson import ObjectId
 from app.database import projects_col
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/projects", tags=["Link Map"])
 
 
 @router.post("/{project_id}/link-map/refresh")
-async def refresh_link_map(project_id: str):
+async def refresh_link_map(
+    project_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Trigger a fresh scan of all published posts to build the link map."""
     from app.services.link_map_service import scan_and_build_link_map
 
@@ -28,7 +32,9 @@ async def refresh_link_map(project_id: str):
 
 
 @router.get("/{project_id}/link-map")
-async def get_link_map(project_id: str):
+async def get_link_map(
+    project_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Get the latest link map for a project."""
     from app.services.link_map_service import get_link_map as get_map
 

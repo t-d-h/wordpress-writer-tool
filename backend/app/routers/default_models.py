@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Annotated
 from bson import ObjectId
 from app.utils.time_utils import get_now
 from pydantic import BaseModel
@@ -8,6 +9,7 @@ from app.models.default_models import (
     DefaultModelsUpdate,
     DefaultModelsResponse,
 )
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/default-models", tags=["Default Models"])
 
@@ -21,14 +23,20 @@ def format_default_models(doc: dict) -> dict:
         image_model_name=doc.get("image_model_name"),
         video_provider_id=doc.get("video_provider_id"),
         video_model_name=doc.get("video_model_name"),
-        writing_input_price_per_m_tokens=doc.get("writing_input_price_per_m_tokens", 0.0),
-        writing_output_price_per_m_tokens=doc.get("writing_output_price_per_m_tokens", 0.0),
+        writing_input_price_per_m_tokens=doc.get(
+            "writing_input_price_per_m_tokens", 0.0
+        ),
+        writing_output_price_per_m_tokens=doc.get(
+            "writing_output_price_per_m_tokens", 0.0
+        ),
         updated_at=doc.get("updated_at", get_now()),
     ).model_dump()
 
 
 @router.get("")
-async def get_default_models():
+async def get_default_models(
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     """Get current default models settings (singleton)."""
     doc = await default_models_col.find_one()
     if not doc:
@@ -48,7 +56,10 @@ async def get_default_models():
 
 
 @router.put("")
-async def update_default_models(data: DefaultModelsUpdate):
+async def update_default_models(
+    data: DefaultModelsUpdate,
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     """Update default models settings (create if doesn't exist)."""
     update_data = {
         k: v for k, v in data.model_dump().items() if v is not None and v != ""

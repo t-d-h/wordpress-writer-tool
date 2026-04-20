@@ -1,0 +1,37 @@
+[     245ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=97aa3f09:21550
+[   29379ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://100.99.179.63:8000/api/ai-providers/69e5110222fe4fa703ff35b2/models:0
+[   29382ms] [ERROR] Failed to fetch models for writing AxiosError: Request failed with status code 400
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:2330:41)
+    at async init (http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620451386:66:45) @ http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620451386:68
+[   29399ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://100.99.179.63:8000/api/ai-providers/69e5110222fe4fa703ff35b2/models:0
+[   29443ms] [ERROR] Failed to fetch models for image AxiosError: Request failed with status code 400
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:2330:41)
+    at async init (http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620451386:66:45) @ http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620451386:68
+[   33281ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://100.99.179.63:8000/api/ai-providers/69e5110222fe4fa703ff35b2/models:0
+[   33317ms] [ERROR] Failed to fetch models for writing AxiosError: Request failed with status code 400
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:2330:41)
+    at async init (http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620455239:66:45) @ http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620455239:68
+[   33353ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://100.99.179.63:8000/api/ai-providers/69e5110222fe4fa703ff35b2/models:0
+[   33379ms] [ERROR] Failed to fetch models for image AxiosError: Request failed with status code 400
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:2330:41)
+    at async init (http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620455239:66:45) @ http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620455239:68
+[   33445ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://100.99.179.63:8000/api/ai-providers/69e5110222fe4fa703ff35b2/models:0
+[   33489ms] [ERROR] Failed to fetch models for writing AxiosError: Request failed with status code 400
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:2330:41)
+    at async init (http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620455345:66:45) @ http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620455345:68
+[   33511ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://100.99.179.63:8000/api/ai-providers/69e5110222fe4fa703ff35b2/models:0
+[   33548ms] [ERROR] Failed to fetch models for image AxiosError: Request failed with status code 400
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=574e0ab2:2330:41)
+    at async init (http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620455345:66:45) @ http://localhost:5173/src/components/Settings/DefaultModels.jsx?t=1776620455345:68

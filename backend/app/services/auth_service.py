@@ -8,6 +8,16 @@ from app.database import users_col
 from app.redis_client import redis_client
 import json
 
+
+class ObjectIdEncoder(json.JSONEncoder):
+    """Custom JSON encoder for MongoDB ObjectId."""
+
+    def default(self, obj):
+        if isinstance(obj, ObjectId):
+            return str(obj)
+        return super().default(obj)
+
+
 # Configure Argon2id with balanced parameters
 password_hasher = argon2.using(
     type="id", time_cost=3, memory_cost=128000, parallelism=2, salt_size=16, hash_len=32
@@ -92,7 +102,8 @@ async def get_user(username: str) -> Optional[dict]:
     user = await users_col.find_one({"username": username})
     if user:
         user["id"] = str(user["_id"])
-        await redis_client.set(cache_key, json.dumps(user), ex=900)
+        del user["_id"]
+        await redis_client.set(cache_key, json.dumps(user, cls=ObjectIdEncoder), ex=900)
     return user
 
 
@@ -106,7 +117,8 @@ async def get_user_by_id(user_id: str) -> Optional[dict]:
     user = await users_col.find_one({"_id": ObjectId(user_id)})
     if user:
         user["id"] = str(user["_id"])
-        await redis_client.set(cache_key, json.dumps(user), ex=900)
+        del user["_id"]
+        await redis_client.set(cache_key, json.dumps(user, cls=ObjectIdEncoder), ex=900)
     return user
 
 

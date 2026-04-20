@@ -143,4 +143,11 @@ export const login = async (username, password) => {
   })
 }
 
+export const changePassword = async (currentPassword, newPassword) => {
+  return apiClient.post('/auth/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  })
+}
+
 export default apiClient;

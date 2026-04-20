@@ -1,0 +1,11 @@
+- generic [ref=e4]:
+  - heading "WordPress AI Writer" [level=1] [ref=e5]
+  - heading "Login" [level=2] [ref=e6]
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - text: Username
+      - textbox "Username" [ref=e9]
+    - generic [ref=e10]:
+      - text: Password
+      - textbox "Password" [ref=e11]
+    - button "Login" [ref=e12]

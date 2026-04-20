@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineXMark } from 'react-icons/hi2'
 import { getProviders, createProvider, updateProvider, deleteProvider, verifyProvider, fetchProviderModels } from '../../api/client'
 import { formatDateOnly } from '../../utils/dateUtils'
+import Notification from '../Notification'
+import PasswordInput from '../PasswordInput'
 
 export default function AIProviders() {
   const [providers, setProviders] = useState([])
@@ -13,8 +15,25 @@ export default function AIProviders() {
   const [verifyResult, setVerifyResult] = useState(null)
   const [availableModels, setAvailableModels] = useState([])
   const [fetchingModels, setFetchingModels] = useState(false)
+  const [useCustomModel, setUseCustomModel] = useState(false)
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    setForm(prevForm => {
+      if (prevForm.provider_type === 'openrouter' && !prevForm.api_url) {
+        return { ...prevForm, api_url: 'https://openrouter.ai/api/v1/' }
+      } else if (prevForm.provider_type === 'nvidia_nim' && !prevForm.api_url) {
+        return { ...prevForm, api_url: 'https://integrate.api.nvidia.com/v1/' }
+      } else if (prevForm.provider_type !== 'openai_compatible' && prevForm.provider_type !== 'openrouter' && prevForm.provider_type !== 'nvidia_nim') {
+        return { ...prevForm, api_url: '' }
+      }
+      return prevForm
+    })
+    setAvailableModels([])
+    setUseCustomModel(false)
+  }, [form.provider_type])
 
   const load = async () => {
     try {
@@ -41,15 +60,18 @@ export default function AIProviders() {
       setEditingId(null)
       setForm({ name: '', provider_type: 'gemini', api_key: '', api_url: '', model_name: '' })
       setAvailableModels([])
+      setUseCustomModel(false)
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
   const handleEdit = (p) => {
     setEditingId(p.id)
     setForm({ name: p.name, provider_type: p.provider_type, api_key: '', api_url: p.api_url || '', model_name: p.model_name || '' })
+    setAvailableModels([])
+    setUseCustomModel(false)
     setShowModal(true)
   }
 
@@ -59,7 +81,7 @@ export default function AIProviders() {
       await deleteProvider(id)
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
@@ -71,7 +93,7 @@ export default function AIProviders() {
     setVerifying(true)
     setVerifyResult(null)
     const body = { provider_type: form.provider_type, api_key: form.api_key }
-    if (form.provider_type === 'openai_compatible') {
+    if (form.provider_type === 'openai_compatible' || form.provider_type === 'openrouter' || form.provider_type === 'nvidia_nim') {
       body.api_url = form.api_url
     }
     try {
@@ -87,7 +109,7 @@ export default function AIProviders() {
 
   const handleFetchModels = async () => {
     if (!form.api_url || (!form.api_key && !editingId)) {
-      alert('Please enter an API URL and API Key first.')
+      setNotification({ type: 'error', message: 'Please enter an API URL and API Key first.' })
       return
     }
     setFetchingModels(true)
@@ -95,13 +117,23 @@ export default function AIProviders() {
       const { data } = await fetchProviderModels({ api_url: form.api_url, api_key: form.api_key })
       setAvailableModels(data.models)
     } catch (e) {
-      alert('Failed to fetch models: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Failed to fetch models: ' + (e.response?.data?.detail || e.message) })
     } finally {
       setFetchingModels(false)
     }
   }
 
-  const providerLabels = { openai: 'OpenAI', gemini: 'Gemini', anthropic: 'Anthropic', openai_compatible: 'OpenAI Compatible' }
+  const handleModelChange = (value) => {
+    if (value === '__custom__') {
+      setUseCustomModel(true)
+      setForm({ ...form, model_name: '' })
+    } else {
+      setUseCustomModel(false)
+      setForm({ ...form, model_name: value })
+    }
+  }
+
+  const providerLabels = { openai: 'OpenAI', gemini: 'Gemini', anthropic: 'Anthropic', openai_compatible: 'OpenAI Compatible', openrouter: 'OpenRouter', nvidia_nim: 'Nvidia NIM' }
 
   return (
     <div className="page-enter">
@@ -110,9 +142,17 @@ export default function AIProviders() {
         <p className="page-description">Manage your AI provider API keys</p>
       </div>
 
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+
       <div className="toolbar">
         <div />
-        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ name: '', provider_type: 'gemini', api_key: '', api_url: '', model_name: '' }); setAvailableModels([]); setShowModal(true) }}>
+        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ name: '', provider_type: 'gemini', api_key: '', api_url: '', model_name: '' }); setAvailableModels([]); setUseCustomModel(false); setShowModal(true) }}>
           <HiOutlinePlus /> Add Provider
         </button>
       </div>
@@ -136,7 +176,6 @@ export default function AIProviders() {
                 <th>Name</th>
                 <th>Provider</th>
                 <th>API Key</th>
-                <th>Model</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
@@ -149,7 +188,6 @@ export default function AIProviders() {
                     <span className="status-badge status-completed">{providerLabels[p.provider_type]}</span>
                   </td>
                   <td style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>{p.api_key_preview}</td>
-                  <td style={{ color: 'var(--text-muted)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.model_name || '—'}</td>
                   <td style={{ color: 'var(--text-muted)' }}>{formatDateOnly(p.created_at)}</td>
                   <td>
                     <div className="action-buttons">
@@ -183,46 +221,76 @@ export default function AIProviders() {
                   <option value="openai">OpenAI</option>
                   <option value="anthropic">Anthropic</option>
                   <option value="openai_compatible">OpenAI Compatible</option>
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="nvidia_nim">Nvidia NIM</option>
                 </select>
               </div>
-              {form.provider_type === 'openai_compatible' && (
-                <>
-                  <div className="form-group">
-                    <label className="form-label">API URL</label>
-                    <input className="form-input" placeholder="e.g. https://api.groq.com/openai/v1" value={form.api_url} onChange={e => setForm({ ...form, api_url: e.target.value })} required />
-                  </div>
-                  {availableModels.length > 0 && (
-                    <div className="form-group">
-                      <label className="form-label">Model</label>
-                      <select className="form-select" value={form.model_name} onChange={e => setForm({ ...form, model_name: e.target.value })}>
-                        <option value="">-- select model --</option>
-                        {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </div>
-                  )}
-                </>
-              )}
+               {(form.provider_type === 'openai_compatible' || form.provider_type === 'openrouter' || form.provider_type === 'nvidia_nim') && (
+                 <>
+                   <div className="form-group">
+                     <label className="form-label">API URL</label>
+                     <input className="form-input" placeholder="e.g. https://api.groq.com/openai/v1" value={form.api_url} onChange={e => setForm({ ...form, api_url: e.target.value })} required />
+                   </div>
+                   <div className="form-group">
+                     <label className="form-label">Model Name</label>
+                     {availableModels.length > 0 && !useCustomModel ? (
+                       <select className="form-select" value={form.model_name} onChange={e => handleModelChange(e.target.value)}>
+                         <option value="">-- select model --</option>
+                         <option value="__custom__">-- enter custom model --</option>
+                         {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                       </select>
+                     ) : (
+                       <input
+                         className="form-input"
+                         placeholder="e.g. meta/llama-3.1-405b-instruct"
+                         value={form.model_name}
+                         onChange={e => setForm({ ...form, model_name: e.target.value })}
+                       />
+                     )}
+                     {availableModels.length > 0 && !useCustomModel && (
+                       <button
+                         type="button"
+                         onClick={() => setUseCustomModel(true)}
+                         style={{ fontSize: '12px', color: 'var(--accent-secondary)', background: 'none', border: 'none', cursor: 'pointer', marginTop: '4px' }}
+                       >
+                         Or enter custom model name
+                       </button>
+                     )}
+                     {form.provider_type === 'nvidia_nim' && (
+                       <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                         Enter model name manually (e.g., meta/llama-3.1-405b-instruct)
+                       </div>
+                     )}
+                   </div>
+                 </>
+               )}
               <div className="form-group">
                 <label className="form-label">API Key</label>
-                <input className="form-input" type="password" placeholder={editingId ? 'Leave blank to keep current' : 'Enter API key'} value={form.api_key} onChange={e => { setForm({ ...form, api_key: e.target.value }); setVerifyResult(null) }} required={!editingId} />
+                <PasswordInput
+                  className="form-input"
+                  placeholder={editingId ? 'Leave blank to keep current' : 'Enter API key'}
+                  value={form.api_key}
+                  onChange={e => { setForm({ ...form, api_key: e.target.value }); setVerifyResult(null) }}
+                  required={!editingId}
+                />
                 {verifyResult && (
                   <div style={{ fontSize: '13px', marginTop: '6px', padding: '6px 10px', borderRadius: '6px', background: verifyResult.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: verifyResult.ok ? 'var(--accent-primary, #22c55e)' : '#ef4444', border: `1px solid ${verifyResult.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
                     {verifyResult.message}
                   </div>
                 )}
               </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="button" className="btn btn-secondary" onClick={handleTestProvider} disabled={verifying} style={{ opacity: verifying ? 0.6 : 1 }}>
-                  {verifying ? 'Testing...' : 'Test API Key'}
-                </button>
-                {form.provider_type === 'openai_compatible' && (
-                  <button type="button" className="btn btn-secondary" onClick={handleFetchModels} disabled={fetchingModels} style={{ opacity: fetchingModels ? 0.6 : 1 }}>
-                    {fetchingModels ? 'Loading...' : 'Fetch Models'}
-                  </button>
-                )}
-                <button type="submit" className="btn btn-primary" disabled={verifying || fetchingModels}>{editingId ? 'Update' : 'Create'}</button>
-              </div>
+               <div className="modal-footer">
+                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                 <button type="button" className="btn btn-secondary" onClick={handleTestProvider} disabled={verifying} style={{ opacity: verifying ? 0.6 : 1 }}>
+                   {verifying ? 'Testing...' : 'Test API Key'}
+                 </button>
+                 {(form.provider_type === 'openai_compatible' || form.provider_type === 'openrouter' || form.provider_type === 'nvidia_nim') && (
+                   <button type="button" className="btn btn-secondary" onClick={handleFetchModels} disabled={fetchingModels} style={{ opacity: fetchingModels ? 0.6 : 1 }}>
+                     {fetchingModels ? 'Loading...' : 'Fetch Models'}
+                   </button>
+                 )}
+                 <button type="submit" className="btn btn-primary" disabled={verifying || fetchingModels}>{editingId ? 'Update' : 'Create'}</button>
+               </div>
             </form>
           </div>
         </div>

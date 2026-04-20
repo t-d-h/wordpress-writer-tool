@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Body, Query
+from fastapi import APIRouter, HTTPException, UploadFile, File, Body, Query, Depends
 from fastapi.responses import FileResponse
+from typing import Annotated
 from bson import ObjectId
 from app.utils.time_utils import get_now
 import uuid
@@ -14,6 +15,7 @@ from app.models.post import (
     PostResponse,
 )
 from app.redis_client import publish_job
+from app.dependencies.auth import get_current_user
 
 
 class ThumbnailRequest(BaseModel):
@@ -22,7 +24,6 @@ class ThumbnailRequest(BaseModel):
 
 
 router = APIRouter(prefix="/api/posts", tags=["Posts"])
-
 
 
 def format_post(doc: dict) -> dict:
@@ -59,7 +60,10 @@ def format_post(doc: dict) -> dict:
 
 @router.get("/by-project/{project_id}")
 async def list_posts_by_project(
-    project_id: str, page: int = Query(1, ge=1), limit: int = Query(100, ge=1, le=100)
+    project_id: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(100, ge=1, le=100),
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
 ):
     project = await projects_col.find_one({"_id": ObjectId(project_id)})
     if not project:
@@ -80,17 +84,20 @@ async def list_posts_by_project(
 
 
 @router.get("/{post_id}")
-async def get_post(post_id: str):
+async def get_post(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Post not found")
-
 
     return format_post(doc)
 
 
 @router.post("", status_code=201)
-async def create_post(data: PostCreate):
+async def create_post(
+    data: PostCreate, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Create a single post and queue AI pipeline jobs."""
     project = await projects_col.find_one({"_id": ObjectId(data.project_id)})
     if not project:
@@ -129,11 +136,11 @@ async def create_post(data: PostCreate):
         "created_at": get_now(),
         "wp_post_id": None,
         "wp_post_url": None,
+        "created_by": current_user["id"] if current_user else None,
     }
     result = await posts_col.insert_one(post_doc)
     post_id = str(result.inserted_id)
     post_doc["_id"] = result.inserted_id
-
 
     # Create the research job (first step in pipeline)
     job_id = str(uuid.uuid4())
@@ -181,7 +188,10 @@ async def create_post(data: PostCreate):
 
 
 @router.post("/bulk", status_code=201)
-async def create_bulk_posts(data: BulkPostCreate):
+async def create_bulk_posts(
+    data: BulkPostCreate,
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     """Create multiple posts from a list of topics."""
     project = await projects_col.find_one({"_id": ObjectId(data.project_id)})
     if not project:
@@ -209,7 +219,11 @@ async def create_bulk_posts(data: BulkPostCreate):
 
 
 @router.put("/{post_id}")
-async def update_post(post_id: str, data: PostUpdate):
+async def update_post(
+    post_id: str,
+    data: PostUpdate,
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
@@ -226,13 +240,27 @@ async def update_post(post_id: str, data: PostUpdate):
         raise HTTPException(status_code=404, detail="Post not found")
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
 
-
-
     return format_post(doc)
 
 
 @router.delete("/{post_id}")
-async def delete_post(post_id: str):
+async def delete_post(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
+    doc = await posts_col.find_one({"_id": ObjectId(post_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    if (
+        current_user
+        and current_user.get("id") != doc.get("created_by")
+        and current_user.get("role") != "admin"
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the user who created the post or an admin can delete it",
+        )
+
     result = await posts_col.delete_one({"_id": ObjectId(post_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -245,7 +273,11 @@ class PublishRequest(BaseModel):
 
 
 @router.post("/{post_id}/publish")
-async def publish_post(post_id: str, request: PublishRequest = None):
+async def publish_post(
+    post_id: str,
+    request: PublishRequest = None,
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     """Queue a publish job for a post."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
@@ -292,7 +324,9 @@ async def publish_post(post_id: str, request: PublishRequest = None):
 
 
 @router.post("/{post_id}/unpublish")
-async def unpublish_post(post_id: str):
+async def unpublish_post(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Unpublish a post from WordPress (set to draft)."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
@@ -350,7 +384,9 @@ async def unpublish_post(post_id: str):
 
 
 @router.post("/{post_id}/generate-research")
-async def generate_research(post_id: str):
+async def generate_research(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Queue research generation job."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
@@ -396,7 +432,9 @@ async def generate_research(post_id: str):
 
 
 @router.post("/{post_id}/generate-outline")
-async def generate_outline(post_id: str):
+async def generate_outline(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Queue outline generation job."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
@@ -439,7 +477,9 @@ async def generate_outline(post_id: str):
 
 
 @router.post("/{post_id}/generate-content")
-async def generate_content(post_id: str):
+async def generate_content(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Queue content generation job."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
@@ -480,7 +520,11 @@ async def generate_content(post_id: str):
 
 
 @router.post("/{post_id}/generate-thumbnail")
-async def generate_thumbnail(post_id: str, request: ThumbnailRequest = None):
+async def generate_thumbnail(
+    post_id: str,
+    request: ThumbnailRequest = None,
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     """Queue thumbnail generation job with optional provider/model."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
@@ -489,11 +533,11 @@ async def generate_thumbnail(post_id: str, request: ThumbnailRequest = None):
     # Use specific provider/model if requested, then fall back to post's thumbnail provider, then content provider
     provider_id = request.provider_id if request else None
     model_name = request.model_name if request else None
-    
+
     # If source is "upload", we should probably warn or skip, but if they explicitly asked for generation, we'll try
     thumbnail_source = doc.get("thumbnail_source", "ai")
     if not provider_id and not model_name and thumbnail_source == "upload":
-        # If they just clicked "generate" without options and it's an "upload" post, 
+        # If they just clicked "generate" without options and it's an "upload" post,
         # it might be a mistake, but we'll proceed using defaults if configured.
         pass
 
@@ -520,17 +564,13 @@ async def generate_thumbnail(post_id: str, request: ThumbnailRequest = None):
             "created_at": get_now(),
         }
     )
-    
+
     # Fallback chain: request -> post.thumbnail -> post.content
     final_provider_id = (
-        provider_id or 
-        doc.get("thumbnail_provider_id") or 
-        doc.get("ai_provider_id")
+        provider_id or doc.get("thumbnail_provider_id") or doc.get("ai_provider_id")
     )
     final_model_name = (
-        model_name or 
-        doc.get("thumbnail_model_name") or 
-        doc.get("model_name")
+        model_name or doc.get("thumbnail_model_name") or doc.get("model_name")
     )
 
     await publish_job(
@@ -547,7 +587,11 @@ async def generate_thumbnail(post_id: str, request: ThumbnailRequest = None):
 
 
 @router.post("/{post_id}/upload-thumbnail")
-async def upload_thumbnail(post_id: str, file: UploadFile = File(...)):
+async def upload_thumbnail(
+    post_id: str,
+    file: UploadFile = File(...),
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     """Upload a thumbnail image for a post."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
@@ -610,7 +654,9 @@ async def upload_thumbnail(post_id: str, file: UploadFile = File(...)):
 
 
 @router.get("/{post_id}/thumbnail")
-async def get_thumbnail(post_id: str):
+async def get_thumbnail(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Serve the thumbnail image for a post."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:
@@ -629,7 +675,9 @@ async def get_thumbnail(post_id: str):
 
 
 @router.post("/{post_id}/update-thumbnail-to-wp")
-async def update_thumbnail_to_wp(post_id: str):
+async def update_thumbnail_to_wp(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Upload thumbnail to WordPress and set as featured image."""
     doc = await posts_col.find_one({"_id": ObjectId(post_id)})
     if not doc:

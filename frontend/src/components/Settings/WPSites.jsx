@@ -2,15 +2,18 @@ import { useState, useEffect } from 'react'
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineXMark } from 'react-icons/hi2'
 import { getSites, createSite, updateSite, deleteSite, verifySite } from '../../api/client'
 import { formatDateOnly } from '../../utils/dateUtils'
+import Notification from '../Notification'
+import PasswordInput from '../PasswordInput'
 
 export default function WPSites() {
   const [sites, setSites] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ name: '', url: '', username: '', api_key: '', min_word_count: 250 })
+  const [form, setForm] = useState({ name: '', url: '', username: '', api_key: '' })
   const [verifying, setVerifying] = useState(false)
   const [verifyResult, setVerifyResult] = useState(null)
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => { load() }, [])
 
@@ -37,16 +40,16 @@ export default function WPSites() {
       }
       setShowModal(false)
       setEditingId(null)
-      setForm({ name: '', url: '', username: '', api_key: '', min_word_count: 250 })
+      setForm({ name: '', url: '', username: '', api_key: '' })
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
   const handleEdit = (s) => {
     setEditingId(s.id)
-    setForm({ name: s.name, url: s.url, username: s.username, api_key: '', min_word_count: s.min_word_count || 250 })
+    setForm({ name: s.name, url: s.url, username: s.username, api_key: '' })
     setShowModal(true)
   }
 
@@ -56,7 +59,7 @@ export default function WPSites() {
       await deleteSite(id)
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
@@ -84,9 +87,17 @@ export default function WPSites() {
         <p className="page-description">Manage your WordPress site connections</p>
       </div>
 
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+
       <div className="toolbar">
         <div />
-        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ name: '', url: '', username: '', api_key: '', min_word_count: 250 }); setShowModal(true) }}>
+        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ name: '', url: '', username: '', api_key: '' }); setShowModal(true) }}>
           <HiOutlinePlus /> Add Site
         </button>
       </div>
@@ -110,10 +121,9 @@ export default function WPSites() {
                 <th>Name</th>
                 <th>URL</th>
                 <th>Username</th>
-                <th>Min Words</th>
                 <th>API Key</th>
-<th>Created</th>
-<th>Actions</th>
+                <th>Created</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -122,7 +132,6 @@ export default function WPSites() {
                   <td style={{ fontWeight: 600 }}>{s.name}</td>
                   <td><a href={s.url} target="_blank" rel="noopener" style={{ color: 'var(--accent-secondary)' }}>{s.url}</a></td>
                   <td>{s.username}</td>
-                  <td>{s.min_word_count}</td>
                   <td style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>{s.api_key_preview}</td>
                   <td style={{ color: 'var(--text-muted)' }}>{formatDateOnly(s.created_at)}</td>
                   <td>
@@ -160,16 +169,26 @@ export default function WPSites() {
               </div>
               <div className="form-group">
                 <label className="form-label">Application Password</label>
-                <input className="form-input" type="password" placeholder={editingId ? 'Leave blank to keep current' : 'WordPress application password'} value={form.api_key} onChange={e => { setForm({ ...form, api_key: e.target.value }); setVerifyResult(null) }} required={!editingId} />
+                <PasswordInput
+                  className="form-input"
+                  placeholder={editingId ? 'Leave blank to keep current' : 'WordPress application password'}
+                  value={form.api_key}
+                  onChange={e => { setForm({ ...form, api_key: e.target.value }); setVerifyResult(null) }}
+                  required={!editingId}
+                />
                 {verifyResult && (
                   <div style={{ fontSize: '13px', marginTop: '6px', padding: '6px 10px', borderRadius: '6px', background: verifyResult.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: verifyResult.ok ? 'var(--accent-primary, #22c55e)' : '#ef4444', border: `1px solid ${verifyResult.ok ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}` }}>
                     {verifyResult.message}
                   </div>
                 )}
-              </div>
-              <div className="form-group">
-                <label className="form-label">Minimum Word Count</label>
-                <input className="form-input" type="number" placeholder="250" value={form.min_word_count} onChange={e => setForm({ ...form, min_word_count: parseInt(e.target.value, 10) })} required />
+                <a
+                  href="https://youtu.be/wswm6FN9Dh4?t=46"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'block', marginTop: '8px', fontSize: '12px', color: 'var(--accent-secondary)', textDecoration: 'none' }}
+                >
+                  Watch how to create an Application Password →
+                </a>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>

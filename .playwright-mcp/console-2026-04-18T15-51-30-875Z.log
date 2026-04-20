@@ -1,0 +1,45 @@
+[     214ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=de25f040:21550
+[     270ms] Error: Absolute route path "/settings/ai-providers" nested under path "/*" is not valid. An absolute child route path must start with the combined path of all its parent routes.
+    at invariant (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:643:11)
+    at flattenRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1002:7)
+    at http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1037:7
+    at Array.forEach (<anonymous>)
+    at flattenRoutes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1034:10)
+    at flattenRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1017:7)
+    at http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1037:7
+    at Array.forEach (<anonymous>)
+    at flattenRoutes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1034:10)
+    at matchRoutesImpl (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:966:18)
+[     272ms] Error: Absolute route path "/settings/ai-providers" nested under path "/*" is not valid. An absolute child route path must start with the combined path of all its parent routes.
+    at invariant (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:643:11)
+    at flattenRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1002:7)
+    at http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1037:7
+    at Array.forEach (<anonymous>)
+    at flattenRoutes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1034:10)
+    at flattenRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1017:7)
+    at http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1037:7
+    at Array.forEach (<anonymous>)
+    at flattenRoutes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1034:10)
+    at matchRoutesImpl (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:966:18)
+[     273ms] [ERROR] The above error occurred in the <Routes> component:
+
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:7286:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:7216:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:10514:3)
+    at AuthProvider (http://localhost:5173/src/contexts/AuthContext.jsx:29:32)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=de25f040:14031
+[     280ms] Error: Absolute route path "/settings/ai-providers" nested under path "/*" is not valid. An absolute child route path must start with the combined path of all its parent routes.
+    at invariant (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:643:11)
+    at flattenRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1002:7)
+    at http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1037:7
+    at Array.forEach (<anonymous>)
+    at flattenRoutes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1034:10)
+    at flattenRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1017:7)
+    at http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1037:7
+    at Array.forEach (<anonymous>)
+    at flattenRoutes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:1034:10)
+    at matchRoutesImpl (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=1fdbe83d:966:18)
+[  142634ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:5173/login:0

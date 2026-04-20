@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { HiOutlinePlus, HiOutlineXMark, HiOutlineTrash, HiOutlineGlobeAlt, HiOutlinePencil } from 'react-icons/hi2'
 import { getProjects, createProject, deleteProject, updateProject, getSites } from '../../api/client'
 import { formatDateOnly } from '../../utils/dateUtils'
+import Notification from '../Notification'
 
 export default function ProjectList() {
   const navigate = useNavigate()
@@ -16,6 +17,7 @@ export default function ProjectList() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', wp_site_id: '' })
   const [editForm, setEditForm] = useState({ id: '', title: '', description: '', wp_site_id: '' })
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => { load() }, [])
 
@@ -47,9 +49,9 @@ export default function ProjectList() {
       const { data } = await createProject(form)
       setShowModal(false)
       setForm({ title: '', description: '', wp_site_id: sites[0]?.id || '' })
-      navigate(`/projects/${data.id}`)
+      window.location.reload()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
@@ -74,7 +76,7 @@ export default function ProjectList() {
       setShowEditModal(false)
       load() // Reload list without navigating away
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
@@ -93,7 +95,7 @@ export default function ProjectList() {
       setDeleteConfirm(null)
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
@@ -103,6 +105,14 @@ export default function ProjectList() {
         <h1 className="page-title">Projects</h1>
         <p className="page-description">Manage your content projects</p>
       </div>
+
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
 
       <div className="toolbar">
         <div />

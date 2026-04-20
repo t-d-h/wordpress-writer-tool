@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
+from typing import Annotated, Optional
 from bson import ObjectId
 from app.utils.time_utils import get_now
-from typing import Optional
 from app.database import projects_col, wp_sites_col, posts_col
 from app.models.project import (
     ProjectCreate,
@@ -9,6 +9,7 @@ from app.models.project import (
     ProjectResponse,
     TokenUsageResponse,
 )
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/projects", tags=["Projects"])
 
@@ -29,7 +30,7 @@ def format_project(
 
 
 @router.get("")
-async def list_projects():
+async def list_projects(current_user: Annotated[dict, Depends(get_current_user)]):
     projects = []
     async for doc in projects_col.find().sort("created_at", -1):
         wp_site = await wp_sites_col.find_one({"_id": ObjectId(doc["wp_site_id"])})
@@ -40,7 +41,9 @@ async def list_projects():
 
 
 @router.get("/{project_id}")
-async def get_project(project_id: str):
+async def get_project(
+    project_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
     doc = await projects_col.find_one({"_id": ObjectId(project_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -51,7 +54,9 @@ async def get_project(project_id: str):
 
 
 @router.get("/{project_id}/stats")
-async def get_project_stats(project_id: str):
+async def get_project_stats(
+    project_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
     project = await projects_col.find_one({"_id": ObjectId(project_id)})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -84,7 +89,13 @@ async def get_project_stats(project_id: str):
     ]
     token_result = await posts_col.aggregate(token_pipeline).to_list(length=1)
     token_usage = TokenUsageResponse(
-        research=0, outline=0, content=0, thumbnail=0, total=0, input_tokens=0, output_tokens=0
+        research=0,
+        outline=0,
+        content=0,
+        thumbnail=0,
+        total=0,
+        input_tokens=0,
+        output_tokens=0,
     )
     if token_result:
         token_usage = TokenUsageResponse(
@@ -103,33 +114,89 @@ async def get_project_stats(project_id: str):
 
 
 @router.post("", status_code=201)
-async def create_project(data: ProjectCreate):
+async def create_project(
+    data: ProjectCreate, current_user: Annotated[dict, Depends(get_current_user)]
+):
     # Validate wp_site exists
     wp_site = await wp_sites_col.find_one({"_id": ObjectId(data.wp_site_id)})
     if not wp_site:
         raise HTTPException(status_code=400, detail="WordPress site not found")
 
-    doc = {
-        **data.model_dump(),
-        "created_at": get_now(),
+    # Check if user has permission to access this site
+    if current_user["role"] not in ["admin", "editor"]:
+        raise HTTPException(
+            status_code=403, detail="Only admin and editor roles can create projects"
+        )
+
+    # Add token usage to stats response
+    stats = {
+        "draft": 0,
+        "waiting_approve": 0,
+        "published": 0,
+        "failed": 0,
+        "total": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
     }
-    result = await projects_col.insert_one(doc)
-    doc["_id"] = result.inserted_id
-    return format_project(doc, wp_site["name"], wp_site["url"])
+
+    # Create project
+    project_data = data.model_dump()
+    project_data["created_at"] = get_now()
+    project_data["created_by"] = current_user["username"]
+
+    result = await projects_col.insert_one(project_data)
+    return {
+        "id": str(result.inserted_id),
+        "title": project_data["title"],
+        "description": project_data.get("description", ""),
+        "wp_site_id": project_data["wp_site_id"],
+        "language": project_data.get("language", "en"),
+        "created_at": project_data["created_at"],
+        "created_by": project_data["created_by"],
+    }
 
 
 @router.put("/{project_id}")
-async def update_project(project_id: str, data: ProjectUpdate):
+async def update_project(
+    project_id: str,
+    data: ProjectUpdate,
+    current_user: Annotated[dict, Depends(get_current_user)],
+):
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
+
+    # Check if user has permission to access this project
+    project = await projects_col.find_one({"_id": ObjectId(project_id)})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if (
+        current_user["id"] != project["created_by"]
+        and current_user.get("role") != "admin"
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the user who created the project can update it",
+        )
 
     if "wp_site_id" in update_data:
         wp_site = await wp_sites_col.find_one(
             {"_id": ObjectId(update_data["wp_site_id"])}
         )
         if not wp_site:
-            raise HTTPException(status_code=400, detail="WordPress site not found")
+            raise HTTPException(status_code=404, detail="WordPress site not found")
+
+        # Check if user has permission to access this site
+        if current_user["id"] != wp_site["created_by"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Only the user who created the site can update it",
+            )
+
+        result = await wp_sites_col.update_one(
+            {"_id": ObjectId(wp_site["_id"])}, {"$set": {"name": update_data["name"]}}
+        )
 
     result = await projects_col.update_one(
         {"_id": ObjectId(project_id)}, {"$set": update_data}
@@ -144,12 +211,28 @@ async def update_project(project_id: str, data: ProjectUpdate):
 
 
 @router.delete("/{project_id}")
-async def delete_project(project_id: str):
+async def delete_project(
+    project_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
+    # Check if user has permission to access this project
+    project = await projects_col.find_one({"_id": ObjectId(project_id)})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if (
+        current_user["id"] != project["created_by"]
+        and current_user.get("role") != "admin"
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the user who created the project can delete it",
+        )
+
     result = await projects_col.delete_one({"_id": ObjectId(project_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Project not found")
     # Also delete all posts in this project
-    await posts_col.delete_many({"project_id": project_id})
+    await posts_col.delete_many({"project_id": ObjectId(project_id)})
     return {"message": "Project and its posts deleted"}
 
 

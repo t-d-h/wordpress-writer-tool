@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPost, validateWordCount } from '../api/client';
+import Notification from './Notification';
 
 export default function PostView() {
   const { id } = useParams();
@@ -10,6 +11,7 @@ export default function PostView() {
   const [error, setError] = useState(null);
   const [validationResult, setValidationResult] = useState(null);
   const [validating, setValidating] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -33,7 +35,7 @@ export default function PostView() {
         setValidationResult(response.data);
       })
       .catch(err => {
-        alert('Error: ' + (err.response?.data?.detail || err.message));
+        setNotification({ type: 'error', message: 'Error: ' + (err.response?.data?.detail || err.message) });
       })
       .finally(() => {
         setValidating(false);
@@ -46,9 +48,16 @@ export default function PostView() {
 
   return (
     <div className="post-view">
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
       <h1>{post.title}</h1>
       <div className="post-content" dangerouslySetInnerHTML={{ __html: post.content }} />
-      
+
       <div className="word-count-validation">
         <button onClick={handleValidate} disabled={validating}>
           {validating ? 'Validating...' : 'Validate Word Count'}

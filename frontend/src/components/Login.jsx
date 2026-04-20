@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { login as apiLogin } from '../api/client'
+import PasswordInput from './PasswordInput'
 
 const Login = () => {
   const [username, setUsername] = useState('')
@@ -43,16 +44,19 @@ const Login = () => {
   }
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h1>WordPress AI Writer</h1>
-        <h2>Login</h2>
-        {error && <div className="error-message">{error}</div>}
+    <div className="login-page page-enter">
+      <div className="card">
+        <div className="page-header">
+          <h1 className="page-title">WordPress AI Writer</h1>
+          <p className="page-description">Sign in to your account</p>
+        </div>
+        {error && <div className="error-banner">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label className="form-label" htmlFor="username">Username</label>
             <input
               id="username"
+              className="form-input"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -61,17 +65,17 @@ const Login = () => {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
+            <label className="form-label" htmlFor="password">Password</label>
+            <PasswordInput
               id="password"
-              type="password"
+              className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
             />
           </div>
-          <button type="submit" disabled={loading}>
+          <button className="btn btn-primary" type="submit" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>

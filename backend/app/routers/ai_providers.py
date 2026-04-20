@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Annotated
 from bson import ObjectId
 from app.utils.time_utils import get_now
 from pydantic import BaseModel
@@ -8,6 +9,7 @@ from app.models.ai_provider import (
     AIProviderUpdate,
     AIProviderResponse,
 )
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/ai-providers", tags=["AI Providers"])
 
@@ -33,7 +35,7 @@ def format_provider(doc: dict) -> dict:
 
 
 @router.get("")
-async def list_providers():
+async def list_providers(current_user: Annotated[dict, Depends(get_current_user)]):
     providers = []
     async for doc in ai_providers_col.find().sort("created_at", -1):
         providers.append(format_provider(doc))
@@ -41,7 +43,9 @@ async def list_providers():
 
 
 @router.post("/verify")
-async def verify_provider(data: AIVerifyRequest):
+async def verify_provider(
+    data: AIVerifyRequest, current_user: Annotated[dict, Depends(get_current_user)]
+):
     """Verify AI provider API key before saving."""
     from app.services.ai_service import verify_api_key
 
@@ -52,10 +56,12 @@ async def verify_provider(data: AIVerifyRequest):
 
 
 @router.get("/{provider_id}")
-async def get_provider(provider_id: str):
+async def get_provider(
+    provider_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
     doc = await ai_providers_col.find_one({"_id": ObjectId(provider_id)})
     if not doc:
-        raise HTTPException(status_code=404, detail="Provider not found")
+        raise HTTPException(status_code=404, detail="AI provider not found")
     return format_provider(doc)
 
 
@@ -76,7 +82,11 @@ async def create_provider(data: AIProviderCreate):
 
 
 @router.put("/{provider_id}")
-async def update_provider(provider_id: str, data: AIProviderUpdate):
+async def update_provider(
+    provider_id: str,
+    data: AIProviderUpdate,
+    current_user: Annotated[dict, Depends(get_current_user)],
+):
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
@@ -108,7 +118,9 @@ async def update_provider(provider_id: str, data: AIProviderUpdate):
 
 
 @router.delete("/{provider_id}")
-async def delete_provider(provider_id: str):
+async def delete_provider(
+    provider_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
     result = await ai_providers_col.delete_one({"_id": ObjectId(provider_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Provider not found")
@@ -121,7 +133,9 @@ class FetchModelsRequest(BaseModel):
 
 
 @router.post("/fetch-models")
-async def fetch_models(data: FetchModelsRequest):
+async def fetch_models(
+    data: FetchModelsRequest, current_user: Annotated[dict, Depends(get_current_user)]
+):
     """Fetch available models from an OpenAI-compatible provider."""
     from openai import AsyncOpenAI
 
@@ -138,7 +152,9 @@ async def fetch_models(data: FetchModelsRequest):
 
 
 @router.get("/{provider_id}/models")
-async def get_provider_models(provider_id: str):
+async def get_provider_models(
+    provider_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
     """Fetch available models from a stored provider by ID."""
     doc = await ai_providers_col.find_one({"_id": ObjectId(provider_id)})
     if not doc:
@@ -155,16 +171,14 @@ async def get_provider_models(provider_id: str):
 
     if not api_url or not api_key:
         raise HTTPException(
-            status_code=400, detail="Provider missing API URL or API key"
+            status_code=400,
+            detail="Provider must have api_url and api_key to fetch models",
         )
 
-    from openai import AsyncOpenAI
-
-    base = api_url.rstrip("/")
-    if not base.endswith("/v1"):
-        base = base + "/v1"
     try:
-        client = AsyncOpenAI(api_key=api_key, base_url=base)
+        from openai import AsyncOpenAI
+
+        client = AsyncOpenAI(api_key=api_key, base_url=api_url)
         resp = await client.models.list()
         models = sorted([m.id for m in resp.data])
         return {"models": models}

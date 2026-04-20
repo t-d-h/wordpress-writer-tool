@@ -7,6 +7,7 @@ import TokenUsageCard from './TokenUsageCard'
 import { formatDateOnly } from '../../utils/dateUtils'
 import WpSiteInfoCard from './WpSiteInfoCard'
 import LinkMapGraph from './LinkMapGraph'
+import Notification from '../Notification'
 
 export default function ProjectDetail() {
   const { id } = useParams()
@@ -76,6 +77,7 @@ export default function ProjectDetail() {
   const [loadingLinkMap, setLoadingLinkMap] = useState(false)
   const [refreshingLinkMap, setRefreshingLinkMap] = useState(false)
   const [linkMapError, setLinkMapError] = useState(null)
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => { load() }, [id])
 
@@ -319,7 +321,7 @@ export default function ProjectDetail() {
       if (singleForm.thumbnail_source === 'ai' && singleForm.thumbnail_provider_id) {
         const provider = providers.find(p => p.id === singleForm.thumbnail_provider_id)
         if (provider && provider.provider_type === 'openai_compatible' && !singleForm.thumbnail_model_name) {
-          alert('Please select a model for thumbnail generation')
+          setNotification({ type: 'error', message: 'Please select a model for thumbnail generation' })
           return
         }
       }
@@ -327,7 +329,7 @@ export default function ProjectDetail() {
       if (singleForm.ai_provider_id) {
         const provider = providers.find(p => p.id === singleForm.ai_provider_id)
         if (provider && provider.provider_type === 'openai_compatible' && !singleForm.model_name) {
-          alert('Please select a model for content generation')
+          setNotification({ type: 'error', message: 'Please select a model for content generation' })
           return
         }
       }
@@ -365,19 +367,19 @@ export default function ProjectDetail() {
         navigate(`/posts/${response.data.id}`)
       }
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
   const handleCreateBulk = async (e) => {
     e.preventDefault()
     const topics = bulkForm.topics.split('\n').map(t => t.trim()).filter(Boolean)
-    if (topics.length === 0) { alert('Enter at least one topic'); return }
+    if (topics.length === 0) { setNotification({ type: 'error', message: 'Enter at least one topic' }); return }
 
     if (bulkForm.thumbnail_source === 'ai' && bulkForm.thumbnail_provider_id) {
       const provider = providers.find(p => p.id === bulkForm.thumbnail_provider_id)
       if (provider && provider.provider_type === 'openai_compatible' && !bulkForm.thumbnail_model_name) {
-        alert('Please select a model for thumbnail generation')
+        setNotification({ type: 'error', message: 'Please select a model for thumbnail generation' })
         return
       }
     }
@@ -385,7 +387,7 @@ export default function ProjectDetail() {
     if (bulkForm.ai_provider_id) {
       const provider = providers.find(p => p.id === bulkForm.ai_provider_id)
       if (provider && provider.provider_type === 'openai_compatible' && !bulkForm.model_name) {
-        alert('Please select a model for content generation')
+        setNotification({ type: 'error', message: 'Please select a model for content generation' })
         return
       }
     }
@@ -418,7 +420,7 @@ export default function ProjectDetail() {
       })
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
@@ -436,7 +438,7 @@ export default function ProjectDetail() {
       const result = await actions[action]?.()
       if (result !== null) load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
@@ -519,6 +521,14 @@ export default function ProjectDetail() {
         <p className="page-description">{project.description || 'No description'} · {project.wp_site_name}</p>
         <LanguageBadge language={project.language} />
       </div>
+
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
 
       <div className="tabs">
         <button className={`tab ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}>General</button>

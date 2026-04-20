@@ -1,0 +1,62 @@
+- generic [ref=e21]:
+  - complementary [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]: W
+      - generic [ref=e25]:
+        - generic [ref=e26]: WP Management tool
+        - generic [ref=e27]: AI-Powered
+      - button "Switch to dark mode" [ref=e28] [cursor=pointer]:
+        - img [ref=e29]
+    - navigation [ref=e31]:
+      - generic [ref=e32]: Menu
+      - generic [ref=e33]:
+        - link "Projects" [ref=e34] [cursor=pointer]:
+          - /url: /projects
+          - img [ref=e35]
+          - generic [ref=e37]: Projects
+          - img [ref=e39]
+        - link "test.hoantran.me" [ref=e42] [cursor=pointer]:
+          - /url: /projects/69e49a548a261aed65d6ec50
+      - link "News" [ref=e44] [cursor=pointer]:
+        - /url: /news
+        - img [ref=e45]
+        - generic [ref=e47]: News
+      - generic [ref=e49] [cursor=pointer]:
+        - img [ref=e50]
+        - generic [ref=e53]: Settings
+        - img [ref=e54]
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - generic [ref=e58]: admin
+        - generic [ref=e59]: admin
+      - generic [ref=e60]:
+        - button "Change Password" [ref=e61] [cursor=pointer]:
+          - img [ref=e62]
+          - text: Change Password
+        - button "Logout" [ref=e64] [cursor=pointer]
+      - link "Nhắn tin cho Chồng iu" [ref=e65] [cursor=pointer]:
+        - /url: https://t.me/hoantdh
+        - img [ref=e66]
+        - generic [ref=e68]: Nhắn tin cho Chồng iu
+  - main [ref=e69]:
+    - generic [ref=e70]:
+      - generic [ref=e71]:
+        - heading "Projects" [level=1] [ref=e72]
+        - paragraph [ref=e73]: Manage your content projects
+      - button "New Project" [ref=e75] [cursor=pointer]:
+        - img [ref=e76]
+        - text: New Project
+      - generic [ref=e79] [cursor=pointer]:
+        - generic [ref=e80]:
+          - generic [ref=e81]: test.hoantran.me
+          - generic [ref=e82]:
+            - button "Edit" [ref=e83]:
+              - img [ref=e84]
+            - button "Delete" [ref=e86]:
+              - img [ref=e87]
+        - generic [ref=e89]: No description
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - img [ref=e92]
+            - text: Unknown
+          - generic [ref=e94]: 19/04/2026

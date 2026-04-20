@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import { HiOutlineArrowLeft, HiOutlineRocketLaunch, HiOutlineStop, HiOutlineCheckCircle, HiOutlineClock, HiOutlineXCircle, HiOutlineCloudArrowUp, HiOutlineSparkles, HiExclamationTriangle, HiArrowPath, HiOutlineArrowTopRightOnSquare } from 'react-icons/hi2'
 import { getPost, publishPost, unpublishPost, generateResearch, generateOutline, generateContent, generateThumbnail, generateThumbnailWithOptions, getJobsByPost, getProviders, getDefaultModels, uploadThumbnail, updateThumbnailToWP } from '../../api/client'
 import { formatDateTime } from '../../utils/dateUtils'
+import Notification from '../Notification'
 
 export default function PostView() {
   const { id } = useParams()
@@ -27,6 +28,7 @@ export default function PostView() {
   })
   const [selectedFile, setSelectedFile] = useState(null)
   const [filePreview, setFilePreview] = useState(null)
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => { load() }, [id])
 
@@ -82,7 +84,7 @@ export default function PostView() {
       await actions[action]?.()
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     }
   }
 
@@ -93,7 +95,7 @@ export default function PostView() {
 
   const handleGenerateThumbnail = async () => {
     if (!defaultModels.image_provider_id || !defaultModels.image_model_name) {
-      alert('Please configure default image provider and model in settings first')
+      setNotification({ type: 'error', message: 'Please configure default image provider and model in settings first' })
       return
     }
     try {
@@ -101,7 +103,7 @@ export default function PostView() {
       await generateThumbnailWithOptions(id, defaultModels.image_provider_id, defaultModels.image_model_name)
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     } finally {
       setGeneratingThumbnail(false)
     }
@@ -109,7 +111,7 @@ export default function PostView() {
 
   const handleUploadThumbnail = async () => {
     if (!selectedFile) {
-      alert('Please select a file to upload')
+      setNotification({ type: 'error', message: 'Please select a file to upload' })
       return
     }
     try {
@@ -119,7 +121,7 @@ export default function PostView() {
       setFilePreview(null)
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     } finally {
       setUploadingThumbnail(false)
     }
@@ -135,16 +137,16 @@ export default function PostView() {
 
   const handleUpdateThumbnailToWP = async () => {
     if (!post.thumbnail_url) {
-      alert('No thumbnail to upload')
+      setNotification({ type: 'error', message: 'No thumbnail to upload' })
       return
     }
     try {
       setUpdatingThumbnailToWP(true)
       await updateThumbnailToWP(id)
-      alert('Thumbnail uploaded to WordPress successfully!')
+      setNotification({ type: 'success', message: 'Thumbnail uploaded to WordPress successfully!' })
       load()
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     } finally {
       setUpdatingThumbnailToWP(false)
     }
@@ -191,10 +193,10 @@ export default function PostView() {
         </h1>
         {post.content_done && post.status === 'published' && post.wp_post_url && (
           <div style={{ marginBottom: 20 }}>
-            <a 
-              href={post.wp_post_url} 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href={post.wp_post_url}
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn btn-success"
               style={{ fontSize: 13, padding: '8px 16px' }}
             >
@@ -247,8 +249,16 @@ export default function PostView() {
         </div>
       </div>
 
+      <>
+        {notification && (
+          <Notification
+            type={notification.type}
+            message={notification.message}
+            onDismiss={() => setNotification(null)}
+          />
+        )}
 
-      <div className="token-usage" style={{ marginBottom: 24 }}>
+        <div className="token-usage" style={{ marginBottom: 24 }}>
         <div className="token-item">
           <div className="token-label">Research</div>
           <div className="token-value">{(tu.research || 0).toLocaleString()}</div>
@@ -270,7 +280,7 @@ export default function PostView() {
           <div className="token-value">{(tu.total || 0).toLocaleString()}</div>
         </div>
       </div>
-
+      </>
 
       <div className="card" style={{ marginBottom: 24 }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: 'var(--text-heading)' }}>Pipeline Progress</h3>

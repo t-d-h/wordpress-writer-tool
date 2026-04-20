@@ -1,16 +1,18 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from typing import Annotated
 from app.database import jobs_col, posts_col
 from app.redis_client import get_job_status
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/jobs", tags=["Jobs"])
 
 
 @router.get("/dashboard-stats")
-async def get_dashboard_stats():
+async def get_dashboard_stats(
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
+):
     """Get overall job statistics for the dashboard."""
-    pipeline = [
-        {"$group": {"_id": "$status", "count": {"$sum": 1}}}
-    ]
+    pipeline = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
     stats = {"pending": 0, "running": 0, "completed": 0, "failed": 0}
     async for doc in jobs_col.aggregate(pipeline):
         if doc["_id"] in stats:
@@ -19,7 +21,9 @@ async def get_dashboard_stats():
 
 
 @router.get("/{job_id}")
-async def get_job(job_id: str):
+async def get_job(
+    job_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Get a specific job's status."""
     # Check Redis cache first
     cached = await get_job_status(job_id)
@@ -41,16 +45,22 @@ async def get_job(job_id: str):
 
 
 @router.get("/by-post/{post_id}")
-async def get_jobs_by_post(post_id: str):
+async def get_jobs_by_post(
+    post_id: str, current_user: Annotated[dict, Depends(get_current_user)] = None
+):
     """Get all jobs for a specific post."""
     jobs = []
     async for doc in jobs_col.find({"post_id": post_id}).sort("created_at", -1):
-        jobs.append({
-            "job_id": doc["job_id"],
-            "post_id": doc["post_id"],
-            "job_type": doc["job_type"],
-            "status": doc["status"],
-            "error": doc.get("error"),
-            "created_at": doc["created_at"].isoformat() if doc.get("created_at") else None,
-        })
+        jobs.append(
+            {
+                "job_id": doc["job_id"],
+                "post_id": doc["post_id"],
+                "job_type": doc["job_type"],
+                "status": doc["status"],
+                "error": doc.get("error"),
+                "created_at": doc["created_at"].isoformat()
+                if doc.get("created_at")
+                else None,
+            }
+        )
     return jobs

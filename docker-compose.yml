@@ -1,18 +1,4 @@
 services:
-  # mongodb:
-  #   image: mongo:7
-  #   container_name: wp-writer-mongodb
-  #   volumes:
-  #     - mongodb_data:/data/db
-  #   networks:
-  #     - wp-writer-net
-
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: wp-writer-redis
-  #   networks:
-  #     - wp-writer-net
-
   backend:
     build:
       context: ./backend

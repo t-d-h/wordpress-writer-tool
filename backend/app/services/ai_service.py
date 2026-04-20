@@ -11,17 +11,33 @@ from bson import ObjectId
 from app.database import ai_providers_col
 from openai import RateLimitError
 from anthropic import RateLimitError as AnthropicRateLimitError
+
 try:
     from google.api_core.exceptions import ResourceExhausted
 except ImportError:
+
     class ResourceExhausted(Exception):
         pass
 
+
 ALLOWED_TAGS = {
-    "h1", "h2", "h3", "h4", "h5", "h6",
-    "p", "strong", "em", "ul", "ol", "li", "a", "img",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "p",
+    "strong",
+    "em",
+    "ul",
+    "ol",
+    "li",
+    "a",
+    "img",
 }
 SAFE_ATTRS = {"a": {"href"}, "img": {"src"}}
+
 
 def clean_html(html: str) -> str:
     """Remove markdown artifacts and sanitize HTML to allowed tags whitelist."""
@@ -69,6 +85,7 @@ def clean_html(html: str) -> str:
 
     return result.strip()
 
+
 async def _get_provider(provider_id: str = None):
     """Get an AI provider by ID, or the first available if no ID provided."""
     if provider_id:
@@ -80,6 +97,7 @@ async def _get_provider(provider_id: str = None):
     if not doc:
         raise Exception("No AI provider configured. Please add one in Settings.")
     return doc
+
 
 async def _call_openai(
     api_key: str,
@@ -105,6 +123,7 @@ async def _call_openai(
     completion_tokens = response.usage.completion_tokens if response.usage else 0
     return response.choices[0].message.content, prompt_tokens, completion_tokens
 
+
 async def _call_gemini(
     api_key: str, prompt: str, system_prompt: str = ""
 ) -> tuple[str, int, int]:
@@ -123,6 +142,7 @@ async def _call_gemini(
         input_tokens = response.usage_metadata.prompt_token_count or 0
         output_tokens = response.usage_metadata.candidates_token_count or 0
     return response.text, input_tokens, output_tokens
+
 
 async def _call_anthropic(
     api_key: str, prompt: str, system_prompt: str = ""
@@ -143,6 +163,7 @@ async def _call_anthropic(
     output_tokens = response.usage.output_tokens
     return response.content[0].text, input_tokens, output_tokens
 
+
 async def _call_ai(
     prompt: str,
     system_prompt: str = "",
@@ -156,6 +177,7 @@ async def _call_ai(
     provider = await _get_provider(provider_id)
     provider_type = provider["provider_type"]
     api_key = provider["api_key"]
+    print(f"[DEBUG] provider_type: {repr(provider_type)}")
 
     for attempt in range(max_retries):
         try:
@@ -176,6 +198,28 @@ async def _call_ai(
                     base_url=api_url,
                     model_name=model_name or provider.get("model_name", "gpt-4o"),
                 )
+            elif provider_type == "openrouter":
+                api_url = provider.get("api_url", "https://openrouter.ai/api/v1/")
+                return await _call_openai(
+                    api_key,
+                    prompt,
+                    system_prompt,
+                    base_url=api_url,
+                    model_name=model_name
+                    or provider.get("model_name", "anthropic/claude-3.5-sonnet"),
+                )
+            elif provider_type == "nvidia_nim":
+                api_url = provider.get(
+                    "api_url", "https://integrate.api.nvidia.com/v1/"
+                )
+                return await _call_openai(
+                    api_key,
+                    prompt,
+                    system_prompt,
+                    base_url=api_url,
+                    model_name=model_name
+                    or provider.get("model_name", "meta/llama-3.1-405b-instruct"),
+                )
             else:
                 raise Exception(f"Unknown provider type: {provider_type}")
         except (RateLimitError, AnthropicRateLimitError, ResourceExhausted) as e:
@@ -194,6 +238,7 @@ async def _call_ai(
             raise Exception(
                 f"An unexpected error occurred while calling the AI provider: {e}"
             ) from e
+
 
 async def research_topic(
     topic: str,
@@ -229,7 +274,9 @@ Provide your research as JSON with these keys:
     "competitors_angle": "what competitors typically cover on this topic"
 }}"""
 
-    text, input_tokens, output_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    text, input_tokens, output_tokens = await _call_ai(
+        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
+    )
     try:
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
@@ -240,6 +287,7 @@ Provide your research as JSON with these keys:
     except (json.JSONDecodeError, IndexError):
         data = {"raw_research": text}
     return data, input_tokens, output_tokens
+
 
 async def generate_outline(
     topic: str,
@@ -296,7 +344,9 @@ Create an outline as JSON:
     ]
 }}"""
 
-    text, input_tokens, output_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    text, input_tokens, output_tokens = await _call_ai(
+        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
+    )
     try:
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
@@ -307,6 +357,7 @@ Create an outline as JSON:
     except json.JSONDecodeError:
         data = {"raw_outline": text}
     return data, input_tokens, output_tokens
+
 
 async def generate_section_content(
     topic: str,
@@ -357,12 +408,15 @@ Include relevant examples and practical advice.
 Do NOT include the section title itself — just the body content.
 Format in HTML."""
 
-    text, input_tokens, output_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    text, input_tokens, output_tokens = await _call_ai(
+        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
+    )
     try:
         cleaned = clean_html(text)
     except Exception:
         cleaned = text
     return cleaned, input_tokens, output_tokens
+
 
 async def generate_introduction(
     topic: str,
@@ -403,12 +457,15 @@ Write a compelling 150-300 word introduction that:
 3. Promises what the reader will learn
 Format in HTML."""
 
-    text, input_tokens, output_tokens = await _call_ai(prompt, system_prompt, provider_id, model_name, on_retry=on_retry)
+    text, input_tokens, output_tokens = await _call_ai(
+        prompt, system_prompt, provider_id, model_name, on_retry=on_retry
+    )
     try:
         cleaned = clean_html(text)
     except Exception:
         cleaned = text
     return cleaned, input_tokens, output_tokens
+
 
 async def generate_full_content(
     topic: str,
@@ -423,7 +480,7 @@ async def generate_full_content(
 ) -> tuple[str, list, int, int]:
     """Generate the full post content from an outline using parallel tasks."""
     outline_sections = outline.get("sections", [])
-    
+
     # Calculate target words per section if target_word_count is provided
     words_per_section = None
     if target_word_count and len(outline_sections) > 0:
@@ -436,37 +493,134 @@ async def generate_full_content(
 
     # Prepare all tasks
     tasks = [
-        generate_introduction(topic, outline, research_data, additional_requests, provider_id, model_name, language, on_retry)
+        generate_introduction(
+            topic,
+            outline,
+            research_data,
+            additional_requests,
+            provider_id,
+            model_name,
+            language,
+            on_retry,
+        )
     ]
     for sec in outline_sections:
         tasks.append(
             generate_section_content(
-                topic, sec.get("title", ""), sec.get("key_points", []),
-                outline, research_data, additional_requests,
-                provider_id, model_name, words_per_section, language, on_retry
+                topic,
+                sec.get("title", ""),
+                sec.get("key_points", []),
+                outline,
+                research_data,
+                additional_requests,
+                provider_id,
+                model_name,
+                words_per_section,
+                language,
+                on_retry,
             )
         )
 
     # Run all tasks in parallel
     results = await asyncio.gather(*tasks)
-    
+
     # Process results
     intro_html, i_in, i_out = results[0]
     input_tokens = i_in
     output_tokens = i_out
-    
+
     sections = []
     full_html = intro_html
-    
+
     for i, (sec_html, s_in, s_out) in enumerate(results[1:]):
         sec_title = outline_sections[i].get("title", "")
         input_tokens += s_in
         output_tokens += s_out
-        sections.append({
-            "title": sec_title,
-            "content": sec_html,
-            "image_url": None,
-        })
+        sections.append(
+            {
+                "title": sec_title,
+                "content": sec_html,
+                "image_url": None,
+            }
+        )
         full_html += f"\n<h2>{sec_title}</h2>\n{sec_html}"
 
     return full_html, sections, input_tokens, output_tokens
+
+
+async def verify_api_key(provider_type: str, api_key: str, api_url: str = "") -> dict:
+    """Verify an AI provider API key by making a simple test call."""
+    try:
+        if provider_type == "openai":
+            from openai import AsyncOpenAI
+
+            client = AsyncOpenAI(api_key=api_key)
+            await client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": "test"}],
+                max_tokens=1,
+            )
+            return {"ok": True, "message": "API key is valid"}
+        elif provider_type == "gemini":
+            from google import genai
+
+            client = genai.Client(api_key=api_key)
+            client.models.generate_content(model="gemini-2.0-flash", contents="test")
+            return {"ok": True, "message": "API key is valid"}
+        elif provider_type == "anthropic":
+            from anthropic import AsyncAnthropic
+
+            client = AsyncAnthropic(api_key=api_key)
+            await client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=1,
+                messages=[{"role": "user", "content": "test"}],
+            )
+            return {"ok": True, "message": "API key is valid"}
+        elif provider_type == "openai_compatible":
+            from openai import AsyncOpenAI
+
+            base = api_url.rstrip("/")
+            if not base.endswith("/v1"):
+                base = base + "/v1"
+            client = AsyncOpenAI(api_key=api_key, base_url=base)
+            await client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": "test"}],
+                max_tokens=1,
+            )
+            return {"ok": True, "message": "API key is valid"}
+        elif provider_type == "openrouter":
+            from openai import AsyncOpenAI
+
+            base = api_url.rstrip("/") if api_url else "https://openrouter.ai/api/v1"
+            if not base.endswith("/v1"):
+                base = base + "/v1"
+            client = AsyncOpenAI(api_key=api_key, base_url=base)
+            await client.chat.completions.create(
+                model="anthropic/claude-3.5-sonnet",
+                messages=[{"role": "user", "content": "test"}],
+                max_tokens=1,
+            )
+            return {"ok": True, "message": "API key is valid"}
+        elif provider_type == "nvidia_nim":
+            from openai import AsyncOpenAI
+
+            base = (
+                api_url.rstrip("/")
+                if api_url
+                else "https://integrate.api.nvidia.com/v1"
+            )
+            if not base.endswith("/v1"):
+                base = base + "/v1"
+            client = AsyncOpenAI(api_key=api_key, base_url=base)
+            await client.chat.completions.create(
+                model="meta/llama-3.1-405b-instruct",
+                messages=[{"role": "user", "content": "test"}],
+                max_tokens=1,
+            )
+            return {"ok": True, "message": "API key is valid"}
+        else:
+            return {"ok": False, "error": f"Unknown provider type: {provider_type}"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}

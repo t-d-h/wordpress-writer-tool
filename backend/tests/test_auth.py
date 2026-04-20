@@ -176,3 +176,54 @@ def test_refresh_token_invalid():
     )
     assert response.status_code == 401
     assert "Invalid refresh token" in response.json()["detail"]
+
+
+def test_change_password_success(test_user):
+    """Test successful password change."""
+    # Login to get token
+    login_response = client.post(
+        "/api/auth/login", data={"username": "testuser", "password": "TestPass123"}
+    )
+    token = login_response.json()["access_token"]
+
+    # Change password
+    response = client.post(
+        "/api/auth/change-password",
+        json={"current_password": "TestPass123", "new_password": "NewPass456"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert "Password changed successfully" in response.json()["message"]
+
+    # Verify new password works
+    login_response = client.post(
+        "/api/auth/login", data={"username": "testuser", "password": "NewPass456"}
+    )
+    assert login_response.status_code == 200
+
+
+def test_change_password_wrong_current(test_user):
+    """Test password change with wrong current password."""
+    # Login to get token
+    login_response = client.post(
+        "/api/auth/login", data={"username": "testuser", "password": "TestPass123"}
+    )
+    token = login_response.json()["access_token"]
+
+    # Try to change with wrong current password
+    response = client.post(
+        "/api/auth/change-password",
+        json={"current_password": "WrongPass", "new_password": "NewPass456"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 400
+    assert "Current password is incorrect" in response.json()["detail"]
+
+
+def test_change_password_without_token():
+    """Test password change without authentication."""
+    response = client.post(
+        "/api/auth/change-password",
+        json={"current_password": "TestPass123", "new_password": "NewPass456"},
+    )
+    assert response.status_code == 401

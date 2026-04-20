@@ -1,13 +1,14 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { HiOutlineHome, HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles, HiOutlineChatBubbleLeftRight, HiOutlineLogout } from 'react-icons/hi2'
+import { HiOutlineCog6Tooth, HiOutlineFolderOpen, HiOutlineCpuChip, HiOutlineGlobeAlt, HiOutlineChevronDown, HiOutlineChevronRight, HiOutlineSun, HiOutlineMoon, HiOutlineSparkles, HiOutlineChatBubbleLeftRight, HiOutlineNewspaper, HiOutlineKey } from 'react-icons/hi2'
 import { getProjects } from '../api/client'
 import { useAuth } from '../contexts/AuthContext'
 import Logout from './Logout'
+import ChangePasswordModal from './ChangePasswordModal'
+import Notification from './Notification'
 
 export default function Sidebar() {
   const location = useLocation()
-  const navigate = useNavigate()
   const { user } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(
     location.pathname.startsWith('/settings')
@@ -15,6 +16,8 @@ export default function Sidebar() {
   const [projectsOpen, setProjectsOpen] = useState(true)
   const [projects, setProjects] = useState([])
   const [isDark, setIsDark] = useState(true)
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -41,6 +44,11 @@ export default function Sidebar() {
     setIsDark(!isDark)
     document.documentElement.setAttribute('data-theme', newTheme)
     localStorage.setItem('theme', newTheme)
+  }
+
+  const handlePasswordChangeSuccess = () => {
+    setNotification({ type: 'success', message: 'Password changed successfully!' })
+    setTimeout(() => setNotification(null), 3000)
   }
 
   return (
@@ -111,6 +119,13 @@ export default function Sidebar() {
         </div>
 
         <div className="nav-section">
+          <NavLink to="/news" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+            <HiOutlineNewspaper className="nav-icon" />
+            <span>News</span>
+          </NavLink>
+        </div>
+
+        <div className="nav-section">
           <div className="nav-item" onClick={() => setSettingsOpen(!settingsOpen)}>
             <HiOutlineCog6Tooth className="nav-icon" />
             <span>Settings</span>
@@ -137,10 +152,20 @@ export default function Sidebar() {
 
       <div className="sidebar-footer" style={{ padding: '16px', borderTop: '1px solid var(--border-color)' }}>
         <div className="user-info" style={{ marginBottom: '12px' }}>
-          <span className="user-name">{user?.username || 'Guest'}</span>
-          <span className="user-role">{user?.role || ''}</span>
+          <span className="user-name" style={{ display: 'block', fontWeight: 600, color: 'var(--text-primary)' }}>{user?.username || 'Guest'}</span>
+          <span className="user-role" style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)' }}>{user?.role || ''}</span>
         </div>
-        <Logout />
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          <button
+            onClick={() => setShowChangePassword(true)}
+            className="btn btn-secondary btn-sm"
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+          >
+            <HiOutlineKey size={14} />
+            Change Password
+          </button>
+          <Logout />
+        </div>
         <a
           href="https://t.me/hoantdh"
           target="_blank"
@@ -160,6 +185,18 @@ export default function Sidebar() {
           <span>Nhắn tin cho Chồng iu</span>
         </a>
       </div>
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+      <ChangePasswordModal
+        isOpen={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+        onSuccess={handlePasswordChangeSuccess}
+      />
     </aside>
   )
 }

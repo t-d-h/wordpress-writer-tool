@@ -1,0 +1,143 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: W
+      - generic [ref=e7]:
+        - generic [ref=e8]: WP Management tool
+        - generic [ref=e9]: AI-Powered
+      - button "Switch to dark mode" [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+    - navigation [ref=e13]:
+      - generic [ref=e14]: Menu
+      - generic [ref=e15]:
+        - link "Projects" [ref=e16] [cursor=pointer]:
+          - /url: /projects
+          - img [ref=e17]
+          - generic [ref=e19]: Projects
+          - img [ref=e21]
+        - link "test.hoantran.me" [ref=e24] [cursor=pointer]:
+          - /url: /projects/69e49a548a261aed65d6ec50
+      - link "News" [ref=e26] [cursor=pointer]:
+        - /url: /news
+        - img [ref=e27]
+        - generic [ref=e29]: News
+      - generic [ref=e30]:
+        - generic [ref=e31] [cursor=pointer]:
+          - img [ref=e32]
+          - generic [ref=e35]: Settings
+          - img [ref=e36]
+        - generic [ref=e38]:
+          - link "AI Providers" [ref=e39] [cursor=pointer]:
+            - /url: /settings/ai-providers
+            - img [ref=e40]
+            - generic [ref=e42]: AI Providers
+          - link "WordPress Sites" [ref=e43] [cursor=pointer]:
+            - /url: /settings/wp-sites
+            - img [ref=e44]
+            - generic [ref=e46]: WordPress Sites
+          - link "Default Models" [ref=e47] [cursor=pointer]:
+            - /url: /settings/default-models
+            - img [ref=e48]
+            - generic [ref=e50]: Default Models
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]: admin
+        - generic [ref=e54]: admin
+      - generic [ref=e55]:
+        - button "Change Password" [ref=e56] [cursor=pointer]:
+          - img [ref=e57]
+          - text: Change Password
+        - button "Logout" [ref=e59] [cursor=pointer]
+      - link "Nhắn tin cho Chồng iu" [ref=e60] [cursor=pointer]:
+        - /url: https://t.me/hoantdh
+        - img [ref=e61]
+        - generic [ref=e63]: Nhắn tin cho Chồng iu
+  - main [ref=e64]:
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - heading "AI Providers" [level=1] [ref=e67]
+        - paragraph [ref=e68]: Manage your AI provider API keys
+      - button "Add Provider" [ref=e70] [cursor=pointer]:
+        - img [ref=e71]
+        - text: Add Provider
+      - table [ref=e74]:
+        - rowgroup [ref=e75]:
+          - row "Name Provider API Key Created Actions" [ref=e76]:
+            - columnheader "Name" [ref=e77]
+            - columnheader "Provider" [ref=e78]
+            - columnheader "API Key" [ref=e79]
+            - columnheader "Created" [ref=e80]
+            - columnheader "Actions" [ref=e81]
+        - rowgroup [ref=e82]:
+          - row "nvidia-nim-hoantd@coccoc.com Nvidia NIM ***Fcqo 19/04/2026" [ref=e83]:
+            - cell "nvidia-nim-hoantd@coccoc.com" [ref=e84]
+            - cell "Nvidia NIM" [ref=e85]:
+              - generic [ref=e86]: Nvidia NIM
+            - cell "***Fcqo" [ref=e87]
+            - cell "19/04/2026" [ref=e88]
+            - cell [ref=e89]:
+              - generic [ref=e90]:
+                - button "Edit" [active] [ref=e91] [cursor=pointer]:
+                  - img [ref=e92]
+                - button "Delete" [ref=e94] [cursor=pointer]:
+                  - img [ref=e95]
+          - row "hoantran OpenAI Compatible ***0523 19/04/2026" [ref=e97]:
+            - cell "hoantran" [ref=e98]
+            - cell "OpenAI Compatible" [ref=e99]:
+              - generic [ref=e100]: OpenAI Compatible
+            - cell "***0523" [ref=e101]
+            - cell "19/04/2026" [ref=e102]
+            - cell [ref=e103]:
+              - generic [ref=e104]:
+                - button "Edit" [ref=e105] [cursor=pointer]:
+                  - img [ref=e106]
+                - button "Delete" [ref=e108] [cursor=pointer]:
+                  - img [ref=e109]
+          - row "Openrouter OpenAI Compatible ***7f00 19/04/2026" [ref=e111]:
+            - cell "Openrouter" [ref=e112]
+            - cell "OpenAI Compatible" [ref=e113]:
+              - generic [ref=e114]: OpenAI Compatible
+            - cell "***7f00" [ref=e115]
+            - cell "19/04/2026" [ref=e116]
+            - cell [ref=e117]:
+              - generic [ref=e118]:
+                - button "Edit" [ref=e119] [cursor=pointer]:
+                  - img [ref=e120]
+                - button "Delete" [ref=e122] [cursor=pointer]:
+                  - img [ref=e123]
+      - generic [ref=e126]:
+        - generic [ref=e127]:
+          - heading "Edit AI Provider" [level=2] [ref=e128]
+          - button [ref=e129] [cursor=pointer]:
+            - img [ref=e130]
+        - generic [ref=e132]:
+          - generic [ref=e133]:
+            - generic [ref=e134]: Name
+            - textbox "e.g. My Gemini Key" [ref=e135]: nvidia-nim-hoantd@coccoc.com
+          - generic [ref=e136]:
+            - generic [ref=e137]: Provider
+            - combobox [ref=e138] [cursor=pointer]:
+              - option "Gemini"
+              - option "OpenAI"
+              - option "Anthropic"
+              - option "OpenAI Compatible"
+              - option "OpenRouter"
+              - option "Nvidia NIM" [selected]
+          - generic [ref=e139]:
+            - generic [ref=e140]: API URL
+            - textbox "e.g. https://api.groq.com/openai/v1" [ref=e141]: https://integrate.api.nvidia.com/v1/
+          - generic [ref=e142]:
+            - generic [ref=e143]: Model Name
+            - textbox "e.g. meta/llama-3.1-405b-instruct" [ref=e144]
+            - generic [ref=e145]: Enter model name manually (e.g., meta/llama-3.1-405b-instruct)
+          - generic [ref=e146]:
+            - generic [ref=e147]: API Key
+            - generic [ref=e148]:
+              - textbox "Leave blank to keep current" [ref=e149]
+              - button [ref=e150] [cursor=pointer]:
+                - img [ref=e151]
+          - generic [ref=e154]:
+            - button "Cancel" [ref=e155] [cursor=pointer]
+            - button "Test API Key" [ref=e156] [cursor=pointer]
+            - button "Fetch Models" [ref=e157] [cursor=pointer]
+            - button "Update" [ref=e158] [cursor=pointer]

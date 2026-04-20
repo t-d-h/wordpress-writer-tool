@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from typing import Annotated
 from bson import ObjectId
 from app.utils.time_utils import get_now
 from app.database import wp_sites_col, projects_col
 from app.models.wp_site import WPSiteCreate, WPSiteUpdate, WPSiteResponse
+from app.dependencies.auth import get_current_user
 
 router = APIRouter(prefix="/api/wp-sites", tags=["WordPress Sites"])
 
@@ -22,7 +24,7 @@ def format_site(doc: dict) -> dict:
 
 
 @router.get("")
-async def list_sites():
+async def list_sites(current_user: Annotated[dict, Depends(get_current_user)]):
     sites = []
     async for doc in wp_sites_col.find().sort("created_at", -1):
         sites.append(format_site(doc))
@@ -30,7 +32,9 @@ async def list_sites():
 
 
 @router.post("/verify")
-async def verify_site(data: WPSiteCreate):
+async def verify_site(
+    data: WPSiteCreate, current_user: Annotated[dict, Depends(get_current_user)]
+):
     """Verify WordPress site connectivity and credentials before saving."""
     from app.services.wp_service import verify_wp_site
 
@@ -41,7 +45,9 @@ async def verify_site(data: WPSiteCreate):
 
 
 @router.get("/{site_id}")
-async def get_site(site_id: str):
+async def get_site(
+    site_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
     doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Site not found")
@@ -49,13 +55,15 @@ async def get_site(site_id: str):
 
 
 @router.get("/{site_id}/info")
-async def get_site_info(site_id: str):
+async def get_site_info(
+    site_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
     from app.services.wp_service import get_wp_site_info
 
     doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Site not found")
-    
+
     result = await get_wp_site_info(site_id)
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
@@ -63,7 +71,9 @@ async def get_site_info(site_id: str):
 
 
 @router.post("", status_code=201)
-async def create_site(data: WPSiteCreate):
+async def create_site(
+    data: WPSiteCreate, current_user: Annotated[dict, Depends(get_current_user)]
+):
     from app.services.wp_service import verify_wp_site
 
     result = await verify_wp_site(data.url, data.username, data.api_key)
@@ -79,10 +89,27 @@ async def create_site(data: WPSiteCreate):
 
 
 @router.put("/{site_id}")
-async def update_site(site_id: str, data: WPSiteUpdate):
+async def update_site(
+    site_id: str,
+    data: WPSiteUpdate,
+    current_user: Annotated[dict, Depends(get_current_user)],
+):
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
+
+    existing = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Site not found")
+
+    if (
+        current_user.get("id") != existing.get("created_by")
+        and current_user.get("role") != "admin"
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the user who created the site or an admin can update it",
+        )
 
     if any(k in update_data for k in ("url", "username", "api_key")):
         existing = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
@@ -107,7 +134,22 @@ async def update_site(site_id: str, data: WPSiteUpdate):
 
 
 @router.delete("/{site_id}")
-async def delete_site(site_id: str):
+async def delete_site(
+    site_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
+    existing = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Site not found")
+
+    if (
+        current_user.get("id") != existing.get("created_by")
+        and current_user.get("role") != "admin"
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the user who created the site or an admin can delete it",
+        )
+
     result = await wp_sites_col.delete_one({"_id": ObjectId(site_id)})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Site not found")
@@ -124,6 +166,7 @@ async def get_site_posts(
     orderby: str = "date",
     order: str = "desc",
     categories: str = None,
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
 ):
     """Fetch posts from a WordPress site with search, sort, and pagination."""
     from app.services.wp_service import get_wp_posts
@@ -162,9 +205,55 @@ async def get_site_posts(
     if search:
         print(f"[CACHE] Search query - bypassing cache, hitting WordPress API")
         result = await get_wp_posts(
-            str(project["_id"]), per_page, page, status, search, orderby, order, categories
+            str(project["_id"]),
+            per_page,
+            page,
+            status,
+            search,
+            orderby,
+            order,
+            categories,
         )
         return result
+
+    # Hybrid pagination: cache first, WordPress API fallback
+    cache_service = WPCacheService()
+    cache_key = cache_service.get_cache_key(
+        str(project["_id"]), per_page, page, status, orderby, order, categories
+    )
+
+    try:
+        # Check cache for existing data
+        cached = await cache_service.get_cached_posts(cache_key)
+        if cached:
+            # Check if cache is stale
+            is_stale = await cache_service.is_cache_stale(
+                cache_key, str(project["_id"])
+            )
+            if not is_stale:
+                print(f"[CACHE] Cache hit for key {cache_key}")
+                return cached
+            else:
+                print(f"[CACHE] Cache stale for key {cache_key}, fetching fresh data")
+        else:
+            print(f"[CACHE] Cache miss for key {cache_key}")
+    except Exception as e:
+        print(f"[CACHE_ERROR] Failed to retrieve cache: {str(e)}")
+        # Fall back to WordPress API
+
+    # Fetch from WordPress API
+    result = await get_wp_posts(
+        str(project["_id"]), per_page, page, status, search, orderby, order, categories
+    )
+
+    # Update cache
+    try:
+        await cache_service.cache_posts(cache_key, result["posts"], result["total"])
+    except Exception as e:
+        print(f"[CACHE_ERROR] Failed to update cache: {str(e)}")
+        # Non-critical, continue
+
+    return result
 
     # Hybrid pagination: cache first, WordPress API fallback
     cache_service = WPCacheService()
@@ -215,6 +304,7 @@ async def refresh_site_posts_cache(
     orderby: str = "date",
     order: str = "desc",
     categories: str = None,
+    current_user: Annotated[dict, Depends(get_current_user)] = None,
 ):
     """Manually refresh cached WordPress posts for a site."""
     from app.services.wp_cache_service import WPCacheService
@@ -232,19 +322,29 @@ async def refresh_site_posts_cache(
     # Refresh cache
     cache_service = WPCacheService()
     result = await cache_service.refresh_cache(
-        str(project["_id"]), per_page, page, status, orderby, order, search=None, categories=categories
+        str(project["_id"]),
+        per_page,
+        page,
+        status,
+        orderby,
+        order,
+        search=None,
+        categories=categories,
     )
 
     return result
 
+
 @router.get("/{site_id}/categories")
-async def get_site_categories(site_id: str):
+async def get_site_categories(
+    site_id: str, current_user: Annotated[dict, Depends(get_current_user)]
+):
     from app.services.wp_service import get_wp_categories
 
     doc = await wp_sites_col.find_one({"_id": ObjectId(site_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Site not found")
-    
+
     result = await get_wp_categories(site_id)
     if isinstance(result, dict) and "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])

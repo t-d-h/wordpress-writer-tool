@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
-import { HiOutlineSparkles, HiOutlineCheck, HiOutlineXMark } from 'react-icons/hi2'
+import { HiOutlineSparkles } from 'react-icons/hi2'
 import { getProviders, getDefaultModels, updateDefaultModels, getProviderModels } from '../../api/client'
+import Notification from '../Notification'
 
 export default function DefaultModels() {
   const [providers, setProviders] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [notification, setNotification] = useState(null)
   const [defaults, setDefaults] = useState({
     writing_provider_id: '',
     writing_model_name: '',
@@ -13,6 +15,8 @@ export default function DefaultModels() {
     image_model_name: '',
     video_provider_id: '',
     video_model_name: '',
+    writing_input_price_per_m_tokens: 0,
+    writing_output_price_per_m_tokens: 0,
   })
   const [availableModels, setAvailableModels] = useState({})
   const [fetchingModels, setFetchingModels] = useState({})
@@ -33,6 +37,8 @@ export default function DefaultModels() {
               image_model_name: data.image_model_name || '',
               video_provider_id: data.video_provider_id || '',
               video_model_name: data.video_model_name || '',
+              writing_input_price_per_m_tokens: data.writing_input_price_per_m_tokens || 0,
+              writing_output_price_per_m_tokens: data.writing_output_price_per_m_tokens || 0,
             })
 
             // Now fetch models for the loaded defaults
@@ -41,7 +47,7 @@ export default function DefaultModels() {
               const provId = data[`${section}_provider_id`]
               if (provId) {
                 const provider = provs.find(p => p.id === provId)
-                if (provider && provider.provider_type === 'openai_compatible') {
+                if (provider && (provider.provider_type === 'openai_compatible' || provider.provider_type === 'openrouter' || provider.provider_type === 'nvidia_nim')) {
                   setFetchingModels(prev => ({ ...prev, [section]: true }))
                   try {
                     const { data: mData } = await getProviderModels(provId)
@@ -73,9 +79,10 @@ export default function DefaultModels() {
     setSaving(true)
     try {
       await updateDefaultModels(defaults)
-      alert('Default models saved successfully!')
+      setNotification({ type: 'success', message: 'Default models saved successfully!' })
+      setTimeout(() => setNotification(null), 3000)
     } catch (e) {
-      alert('Error: ' + (e.response?.data?.detail || e.message))
+      setNotification({ type: 'error', message: 'Error: ' + (e.response?.data?.detail || e.message) })
     } finally {
       setSaving(false)
     }
@@ -92,13 +99,24 @@ export default function DefaultModels() {
       image: 'image_model_name',
       video: 'video_model_name',
     }
-    
-    setDefaults({
+
+    const newDefaults = {
       ...defaults,
       [fieldMap[section]]: providerId,
       [modelFieldMap[section]]: '',
-    })
-    
+    }
+
+    if (providerId && section === 'writing') {
+      const provider = providers.find(p => p.id === providerId)
+      if (provider) {
+        const defaultPricing = getDefaultPricingForProvider(provider.provider_type)
+        newDefaults.writing_input_price_per_m_tokens = defaultPricing.input
+        newDefaults.writing_output_price_per_m_tokens = defaultPricing.output
+      }
+    }
+
+    setDefaults(newDefaults)
+
     if (providerId) {
       await fetchModelsForProvider(providerId, section)
     }
@@ -106,7 +124,7 @@ export default function DefaultModels() {
 
   const fetchModelsForProvider = async (providerId, section) => {
     const provider = providers.find(p => p.id === providerId)
-    if (!provider || provider.provider_type !== 'openai_compatible') {
+    if (!provider || (provider.provider_type !== 'openai_compatible' && provider.provider_type !== 'openrouter' && provider.provider_type !== 'nvidia_nim')) {
       setAvailableModels(prev => ({ ...prev, [section]: [] }))
       return
     }
@@ -125,11 +143,23 @@ export default function DefaultModels() {
 
   const getProvider = (providerId) => providers.find(p => p.id === providerId)
 
+  const getDefaultPricingForProvider = (providerType) => {
+    const pricingMap = {
+      'openai': { input: 30, output: 60 },
+      'anthropic': { input: 3, output: 15 },
+      'gemini': { input: 0.5, output: 1.5 },
+      'openai_compatible': { input: 0.5, output: 1.5 },
+      'openrouter': { input: 0.5, output: 1.5 },
+      'nvidia_nim': { input: 0.5, output: 1.5 },
+    }
+    return pricingMap[providerType] || { input: 0, output: 0 }
+  }
+
   const renderSection = (title, icon, sectionKey) => {
     const providerIdField = `${sectionKey}_provider_id`
     const modelNameField = `${sectionKey}_model_name`
     const provider = getProvider(defaults[providerIdField])
-    const showModelName = provider && provider.provider_type === 'openai_compatible'
+    const showModelName = provider && (provider.provider_type === 'openai_compatible' || provider.provider_type === 'openrouter' || provider.provider_type === 'nvidia_nim')
 
     return (
       <div key={sectionKey} style={{ marginBottom: 32, paddingBottom: 24, borderBottom: '1px solid var(--border)' }}>
@@ -215,7 +245,7 @@ export default function DefaultModels() {
               </div>
             </div>
             <small style={{ color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-              Used to calculate total project costs in the dashboard.
+              Used to calculate total project costs in the dashboard. Typical pricing: OpenAI GPT-4 ($30/$60), Anthropic Claude ($3/$15), Gemini ($0.5/$1.5).
             </small>
           </div>
         )}
@@ -231,6 +261,14 @@ export default function DefaultModels() {
         <h1 className="page-title">Default Models</h1>
         <p className="page-description">Configure default AI models for content generation</p>
       </div>
+
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
 
       <form onSubmit={handleSave}>
         {renderSection('Writing', <HiOutlineSparkles size={20} />, 'writing')}

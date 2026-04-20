@@ -1,0 +1,62 @@
+[     200ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=97aa3f09:21550
+[    8851ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:5173/settings/ai-providers:0
+[   61511ms] [ERROR] Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s nvidia/nemotron-3-super-120b-a12b 
+    at select
+    at div
+    at form
+    at div
+    at div
+    at div
+    at AIProviders (http://localhost:5173/src/components/Settings/AIProviders.jsx:26:37)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:6419:26)
+    at Outlet (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7207:26)
+    at main
+    at div
+    at Layout
+    at ProtectedRoute (http://localhost:5173/src/components/ProtectedRoute.jsx:20:27)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:6419:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7286:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7216:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:10514:3)
+    at AuthProvider (http://localhost:5173/src/contexts/AuthContext.jsx:29:32)
+    at App @ http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=97aa3f09:520
+[   61512ms] [ERROR] Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s openai/gpt-oss-120b 
+    at select
+    at div
+    at form
+    at div
+    at div
+    at div
+    at AIProviders (http://localhost:5173/src/components/Settings/AIProviders.jsx:26:37)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:6419:26)
+    at Outlet (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7207:26)
+    at main
+    at div
+    at Layout
+    at ProtectedRoute (http://localhost:5173/src/components/ProtectedRoute.jsx:20:27)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:6419:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7286:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7216:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:10514:3)
+    at AuthProvider (http://localhost:5173/src/contexts/AuthContext.jsx:29:32)
+    at App @ http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=97aa3f09:520
+[   61512ms] [ERROR] Warning: Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.%s openai/gpt-oss-20b 
+    at select
+    at div
+    at form
+    at div
+    at div
+    at div
+    at AIProviders (http://localhost:5173/src/components/Settings/AIProviders.jsx:26:37)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:6419:26)
+    at Outlet (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7207:26)
+    at main
+    at div
+    at Layout
+    at ProtectedRoute (http://localhost:5173/src/components/ProtectedRoute.jsx:20:27)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:6419:26)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7286:3)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:7216:13)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=d588f17d:10514:3)
+    at AuthProvider (http://localhost:5173/src/contexts/AuthContext.jsx:29:32)
+    at App @ http://localhost:5173/node_modules/.vite/deps/chunk-PJEEZAML.js?v=97aa3f09:520
