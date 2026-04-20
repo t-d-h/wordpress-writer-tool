@@ -1,16 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: Initial Admin Account on First Startup
-status: in_progress
-last_updated: "2026-04-20T09:38:59.000Z"
-last_activity: 2026-04-20 -- Milestone v1.4 started
+milestone: v1.0
+milestone_name: milestone
+status: planning
+last_updated: "2026-04-20T03:08:35.676Z"
+last_activity: 2026-04-20 — Roadmap created for v1.4 milestone
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 0
 ---
 
 # WordPress Writer Tool - State
