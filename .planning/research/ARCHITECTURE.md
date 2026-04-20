@@ -1,536 +1,419 @@
-# Architecture Patterns
+# Architecture Research
 
-**Domain:** User Management and Authentication
-**Researched:** 2026-04-18
+**Domain:** Initial Admin Account Creation for WordPress Writer Tool
+**Researched:** 2026-04-20
+**Confidence:** HIGH
 
-## Recommended Architecture
+## Standard Architecture
+
+### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Frontend (React)                         │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │  Login Page  │───▶│ AuthContext  │───▶│ Protected    │      │
-│  │              │    │  (Provider)  │    │   Routes     │      │
-│  └──────────────┘    └──────────────┘    └──────────────┘      │
-│         │                   │                    │               │
-│         │                   │                    │               │
-│         ▼                   ▼                    ▼               │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │              API Client (axios interceptor)              │   │
-│  │  - Adds Authorization: Bearer <token> to all requests    │   │
-│  │  - Handles 401 responses (redirect to login)             │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              │ HTTPS + JWT
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      Backend (FastAPI)                           │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │  /token      │    │  /api/users  │    │  All /api/*  │      │
-│  │  (login)     │    │  (CRUD)      │    │  (protected) │      │
-│  └──────────────┘    └──────────────┘    └──────────────┘      │
-│         │                   │                    │               │
-│         │                   │                    │               │
-│         ▼                   ▼                    ▼               │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │              Auth Middleware (Depends)                     │   │
-│  │  - get_current_user() dependency                         │   │
-│  │  - Validates JWT token                                    │   │
-│  │  - Returns User object to route handlers                 │   │
-│  └──────────────────────────────────────────────────────────┘   │
-│         │                   │                    │               │
-│         ▼                   ▼                    ▼               │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │              User Service                                 │   │
-│  │  - authenticate_user()                                    │   │
-│  │  - create_user()                                          │   │
-│  │  - get_user()                                              │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      Database (MongoDB)                          │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │  users      │    │  projects    │    │  posts       │      │
-│  │  collection │    │  collection  │    │  collection  │      │
-│  └──────────────┘    └──────────────┘    └──────────────┘      │
-│         │                   │                    │               │
-│         └───────────────────┴────────────────────┘               │
-│                           │                                        │
-│                           ▼                                        │
-│              All data scoped by user_id                          │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Application Startup Layer                  │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              FastAPI Startup Event Handler          │    │
+│  │  (main.py: @app.on_event("startup"))                 │    │
+│  └────────────────────┬────────────────────────────────┘    │
+│                       │                                        │
+├───────────────────────┴──────────────────────────────────────┤
+│                    Configuration Layer                        │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │  .env File   │  │  Environment │  │  Settings    │      │
+│  │  (INIT_USER) │  │  Variables   │  │  Class       │      │
+│  │  (INIT_PASS) │  │  (os.getenv) │  │  (config.py) │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+├─────────────────────────────────────────────────────────────┤
+│                    Service Layer                              │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │         User Service (user_service.py)               │    │
+│  │  - create_admin_account()                            │    │
+│  │  - Check if admin exists                             │    │
+│  │  - Create admin with env credentials                 │    │
+│  └────────────────────┬────────────────────────────────┘    │
+│                       │                                        │
+│  ┌────────────────────┴────────────────────────────────┐     │
+│  │         Auth Service (auth_service.py)              │     │
+│  │  - hash_password() (Argon2id)                       │     │
+│  │  - verify_password()                                │     │
+│  └─────────────────────────────────────────────────────┘     │
+├─────────────────────────────────────────────────────────────┤
+│                    Data Layer                                 │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              MongoDB (users collection)              │    │
+│  │  - Unique index on username                          │    │
+│  │  - Stores: username, password_hash, role, timestamps │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Component Boundaries
+### Component Responsibilities
 
-| Component | Responsibility | Communicates With |
-|-----------|---------------|-------------------|
-| **AuthContext** (Frontend) | Manages authentication state, token storage, login/logout | All React components, API client |
-| **ProtectedRoute** (Frontend) | Route wrapper that checks auth before rendering | React Router, AuthContext |
-| **Login** (Frontend) | Login form, calls /token endpoint | AuthContext, API client |
-| **API Client** (Frontend) | Axios instance with token interceptor | Backend API, localStorage |
-| **Auth Router** (Backend) | /token endpoint, /api/users CRUD | User service, MongoDB |
-| **Auth Middleware** (Backend) | JWT validation, user context injection | All routers, User service |
-| **User Service** (Backend) | User CRUD, password hashing, authentication | MongoDB, pwdlib |
-| **Users Collection** (Database) | Stores user credentials and metadata | User service |
+| Component | Responsibility | Typical Implementation |
+|-----------|----------------|------------------------|
+| **FastAPI Startup Event** | Execute initialization logic before app accepts requests | `@app.on_event("startup")` in main.py |
+| **Settings Class** | Load and validate environment variables | Pydantic Settings with `os.getenv()` |
+| **User Service** | Manage user account creation and lifecycle | Async functions with MongoDB operations |
+| **Auth Service** | Handle password hashing and verification | Argon2id with constant-time comparison |
+| **MongoDB** | Persist user accounts with unique constraints | Motor async driver with unique indexes |
 
-### Data Flow
+## Recommended Project Structure
 
-#### Login Flow
 ```
-1. User enters credentials in Login component
-2. Login component calls POST /token with form data
-3. Backend authenticates user (User service)
-4. Backend generates JWT token (signed with SECRET_KEY)
-5. Backend returns { access_token, token_type: "bearer" }
-6. Frontend stores token in localStorage
-7. AuthContext updates state: isAuthenticated = true
-8. User redirected to protected route
-```
-
-#### Authenticated Request Flow
-```
-1. Component makes API call (e.g., getProjects())
-2. Axios interceptor adds Authorization: Bearer <token> header
-3. Request sent to backend
-4. FastAPI Depends(get_current_user) extracts token
-5. Token validated (JWT decode, signature check)
-6. User fetched from MongoDB by username
-7. User object injected into route handler
-8. Route handler uses user.user_id to filter data
-9. Response returned to frontend
+backend/app/
+├── config.py              # Environment variable configuration (MODIFY)
+│   └── Add INIT_USER, INIT_PASSWORD fields
+├── main.py                # FastAPI application entry point (MODIFY)
+│   └── Update startup event to call create_admin_account()
+├── services/
+│   ├── user_service.py    # User account management (MODIFY)
+│   │   └── Update create_admin_account() to use env variables
+│   └── auth_service.py    # Authentication utilities (NO CHANGE)
+│       └── Password hashing and verification already implemented
+├── models/
+│   └── user.py            # User Pydantic models (NO CHANGE)
+│       └── UserCreate, UserUpdate, UserResponse already defined
+├── database.py            # MongoDB connection and collections (NO CHANGE)
+│   └── users_col already defined with unique index
+└── routers/
+    ├── auth.py            # Authentication endpoints (NO CHANGE)
+    └── users.py           # User management endpoints (NO CHANGE)
 ```
 
-#### Logout Flow
-```
-1. User clicks logout button
-2. AuthContext clears token from localStorage
-3. AuthContext updates state: isAuthenticated = false
-4. User redirected to /login
-5. Subsequent API calls fail with 401
-6. Axios interceptor redirects to login
-```
+### Structure Rationale
 
-## Patterns to Follow
+- **config.py:** Centralized configuration management ensures environment variables are loaded once and validated at startup
+- **user_service.py:** Business logic for user operations keeps database operations isolated from API layer
+- **auth_service.py:** Separation of authentication concerns allows reuse across different user operations
+- **main.py:** Startup event is the appropriate place for one-time initialization tasks
 
-### Pattern 1: FastAPI Dependency Injection for Auth
+## Architectural Patterns
 
-**What:** Use FastAPI's `Depends()` to inject authentication into route handlers
+### Pattern 1: Startup Event Initialization
 
-**When:** All protected routes need user context
+**What:** Execute one-time initialization tasks when the application starts, before accepting requests
+
+**When to use:** Database seeding, cache warming, resource allocation, default account creation
+
+**Trade-offs:**
+- ✅ Ensures initialization happens exactly once before any requests
+- ✅ Clean separation from request handling logic
+- ⚠️ Startup failures prevent application from starting
+- ⚠️ Deprecated in favor of `lifespan` context manager (but still functional)
 
 **Example:**
 ```python
-# backend/app/auth/dependencies.py
-from typing import Annotated
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jwt.exceptions import InvalidTokenError
-from app.auth.service import get_user_by_username
+# backend/app/main.py
+from fastapi import FastAPI
+from app.services.user_service import create_admin_account
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+app = FastAPI()
 
-async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)]
-) -> User:
-    """Validate JWT token and return current user."""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except InvalidTokenError:
-        raise credentials_exception
-
-    user = await get_user_by_username(username)
-    if user is None:
-        raise credentials_exception
-    return user
-
-# Usage in routers
-@router.get("/projects")
-async def get_projects(
-    current_user: Annotated[User, Depends(get_current_user)]
-):
-    """Get all projects for current user."""
-    projects = await projects_col.find({"user_id": current_user.id}).to_list(None)
-    return projects
+@app.on_event("startup")
+async def startup_event():
+    """Create admin account on first startup."""
+    await create_admin_account()
 ```
 
-### Pattern 2: React Context for Auth State
+### Pattern 2: Environment-Driven Configuration
 
-**What:** Use React Context to manage authentication state globally
+**What:** Use environment variables for configuration that varies across environments
 
-**When:** Multiple components need access to auth state
+**When to use:** Secrets, database URLs, feature flags, deployment-specific settings
+
+**Trade-offs:**
+- ✅ No sensitive data in code
+- ✅ Easy to change between environments
+- ✅ Standard practice for containerized deployments
+- ⚠️ Requires documentation of required variables
+- ⚠️ Missing variables cause runtime errors
 
 **Example:**
-```javascript
-// frontend/src/contexts/AuthContext.jsx
-import { createContext, useContext, useState } from 'react'
+```python
+# backend/app/config.py
+import os
 
-const AuthContext = createContext(null)
+class Settings:
+    INIT_USER: str = os.getenv("INIT_USER", "admin")
+    INIT_PASSWORD: str = os.getenv("INIT_PASSWORD", "admin123")
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [token, setToken] = useState(localStorage.getItem('token'))
+settings = Settings()
+```
 
-  const login = async (username, password) => {
-    const formData = new FormData()
-    formData.append('username', username)
-    formData.append('password', password)
+### Pattern 3: Idempotent Initialization
 
-    const response = await fetch('/token', {
-      method: 'POST',
-      body: formData
-    })
+**What:** Initialization logic that can be run multiple times without side effects
 
-    if (response.ok) {
-      const data = await response.json()
-      localStorage.setItem('token', data.access_token)
-      setToken(data.access_token)
-      setUser({ username })
-      return true
+**When to use:** Database seeding, cache warming, resource setup
+
+**Trade-offs:**
+- ✅ Safe to run on every startup
+- ✅ Handles container restarts gracefully
+- ✅ No need for "already initialized" tracking
+- ⚠️ Slightly more complex logic (check before create)
+
+**Example:**
+```python
+# backend/app/services/user_service.py
+async def create_admin_account():
+    """Create admin account on first startup if it doesn't exist."""
+    existing_admin = await users_col.find_one({"username": settings.INIT_USER})
+    if existing_admin:
+        return  # Already exists, do nothing
+
+    admin_data = {
+        "username": settings.INIT_USER,
+        "password_hash": hash_password(settings.INIT_PASSWORD),
+        "role": "admin",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "last_login_at": None,
     }
-    return false
-  }
+    await users_col.insert_one(admin_data)
+```
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    setToken(null)
-    setUser(null)
-  }
+## Data Flow
 
-  return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
-      {children}
-    </AuthContext.Provider>
-  )
+### Startup Flow
+
+```
+[Docker Compose starts containers]
+    ↓
+[Backend container starts]
+    ↓
+[FastAPI application initializes]
+    ↓
+[Startup event triggers]
+    ↓
+[create_admin_account() called]
+    ↓
+[Check if admin exists in MongoDB]
+    ↓
+[If exists → Return early]
+    ↓
+[If not exists → Read INIT_USER, INIT_PASSWORD from settings]
+    ↓
+[Hash password using Argon2id]
+    ↓
+[Insert admin document into users collection]
+    ↓
+[Application ready to accept requests]
+```
+
+### Authentication Flow (Existing)
+
+```
+[User submits credentials]
+    ↓
+[POST /auth/login endpoint]
+    ↓
+[authenticate_user() in auth_service.py]
+    ↓
+[get_user() from MongoDB or Redis cache]
+    ↓
+[verify_password() with Argon2id]
+    ↓
+[create_access_token() with JWT]
+    ↓
+[Return token to client]
+```
+
+### Key Data Flows
+
+1. **Initial Admin Creation:** Environment variables → Settings → User Service → MongoDB
+2. **User Authentication:** Request → Auth Service → MongoDB/Redis Cache → JWT Token
+3. **Password Verification:** Plain password → Argon2id hash → Constant-time comparison
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-1k users | Current architecture is sufficient — single admin account, no scaling needed |
+| 1k-100k users | Current architecture is sufficient — admin account is static, no scaling impact |
+| 100k+ users | Current architecture is sufficient — admin account is not a scaling bottleneck |
+
+### Scaling Priorities
+
+1. **First bottleneck:** Not applicable — admin account creation is a one-time operation at startup
+2. **Second bottleneck:** Not applicable — admin account is static after creation
+
+**Note:** The initial admin account creation feature has minimal scaling impact because:
+- It runs only once at application startup
+- The admin account is a single static entity
+- No dynamic scaling or load balancing considerations
+- Authentication system (JWT tokens) already scales horizontally
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Hardcoded Credentials
+
+**What people do:** Hardcode admin username and password in the code
+
+**Why it's wrong:**
+- Credentials exposed in version control
+- Cannot change between environments without code changes
+- Security vulnerability if code is leaked
+
+**Do this instead:**
+```python
+# ❌ BAD
+async def create_admin_account():
+    admin_data = {
+        "username": "admin",  # Hardcoded
+        "password_hash": hash_password("admin123"),  # Hardcoded
+    }
+
+# ✅ GOOD
+async def create_admin_account():
+    admin_data = {
+        "username": settings.INIT_USER,  # From environment
+        "password_hash": hash_password(settings.INIT_PASSWORD),  # From environment
+    }
+```
+
+### Anti-Pattern 2: Non-Idempotent Initialization
+
+**What people do:** Create admin account without checking if it already exists
+
+**Why it's wrong:**
+- Causes duplicate key errors on container restart
+- Application fails to start if admin already exists
+- Requires manual intervention to fix
+
+**Do this instead:**
+```python
+# ❌ BAD
+async def create_admin_account():
+    admin_data = {"username": "admin", ...}
+    await users_col.insert_one(admin_data)  # Fails if admin exists
+
+# ✅ GOOD
+async def create_admin_account():
+    existing_admin = await users_col.find_one({"username": settings.INIT_USER})
+    if existing_admin:
+        return  # Already exists, safe to skip
+    admin_data = {"username": settings.INIT_USER, ...}
+    await users_col.insert_one(admin_data)
+```
+
+### Anti-Pattern 3: Plain Text Password Storage
+
+**What people do:** Store passwords in plain text in the database
+
+**Why it's wrong:**
+- Security vulnerability if database is compromised
+- Violates security best practices
+- Existing codebase already uses Argon2id hashing
+
+**Do this instead:**
+```python
+# ❌ BAD
+admin_data = {
+    "username": "admin",
+    "password": "admin123",  # Plain text!
 }
 
-export const useAuth = () => useContext(AuthContext)
-```
-
-### Pattern 3: Axios Interceptor for Token Injection
-
-**What:** Use axios interceptor to automatically add auth headers
-
-**When:** All API calls need authentication
-
-**Example:**
-```javascript
-// frontend/src/api/client.js
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: `${API_BASE}/api`,
-  headers: { 'Content-Type': 'application/json' },
-})
-
-// Request interceptor: add token to all requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
-
-// Response interceptor: handle 401 errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
-)
-
-export default api
-```
-
-### Pattern 4: Protected Routes with React Router
-
-**What:** Create a wrapper component to protect routes
-
-**When:** Routes should only be accessible to authenticated users
-
-**Example:**
-```javascript
-// frontend/src/components/ProtectedRoute.jsx
-import { Navigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-
-export default function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth()
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
-
-  return children
+# ✅ GOOD
+from app.services.auth_service import hash_password
+admin_data = {
+    "username": "admin",
+    "password_hash": hash_password("admin123"),  # Hashed with Argon2id
 }
-
-// Usage in App.jsx
-<Route
-  path="/projects"
-  element={
-    <ProtectedRoute>
-      <ProjectList />
-    </ProtectedRoute>
-  }
-/>
 ```
 
-### Pattern 5: User-Scoped Data Queries
+### Anti-Pattern 4: Missing Environment Variable Validation
 
-**What:** Filter all database queries by user_id
+**What people do:** Use environment variables without validation or defaults
 
-**When:** Any data retrieval or modification
+**Why it's wrong:**
+- Application crashes with cryptic errors if variables are missing
+- Difficult to debug in production
+- Poor developer experience
 
-**Example:**
+**Do this instead:**
 ```python
-# Backend: All queries include user_id filter
-@router.get("/projects")
-async def get_projects(current_user: User = Depends(get_current_user)):
-    projects = await projects_col.find({"user_id": current_user.id}).to_list(None)
-    return projects
+# ❌ BAD
+class Settings:
+    INIT_USER: str = os.getenv("INIT_USER")  # None if not set
+    INIT_PASSWORD: str = os.getenv("INIT_PASSWORD")  # None if not set
 
-@router.post("/projects")
-async def create_project(
-    project: ProjectCreate,
-    current_user: User = Depends(get_current_user)
-):
-    project_dict = project.model_dump()
-    project_dict["user_id"] = current_user.id
-    result = await projects_col.insert_one(project_dict)
-    return {**project_dict, "id": str(result.inserted_id)}
-
-@router.get("/projects/{project_id}")
-async def get_project(
-    project_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    project = await projects_col.find_one({
-        "_id": ObjectId(project_id),
-        "user_id": current_user.id
-    })
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return project
+# ✅ GOOD
+class Settings:
+    INIT_USER: str = os.getenv("INIT_USER", "admin")  # Default value
+    INIT_PASSWORD: str = os.getenv("INIT_PASSWORD", "admin123")  # Default value
 ```
 
-## Anti-Patterns to Avoid
+## Integration Points
 
-### Anti-Pattern 1: Storing Passwords in Plain Text
+### External Services
 
-**What:** Storing user passwords without hashing
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| MongoDB | Motor async driver | Users collection already exists with unique index on username |
+| Redis | Async client | Used for user caching (15-minute TTL) — existing infrastructure |
+| Environment Variables | os.getenv() | Loaded from .env file via docker-compose |
 
-**Why bad:** If database is compromised, all user passwords are exposed
+### Internal Boundaries
 
-**Instead:** Use password hashing with Argon2 (via pwdlib)
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| main.py ↔ user_service.py | Direct function call | Startup event calls create_admin_account() |
+| user_service.py ↔ auth_service.py | Direct function call | Uses hash_password() for password hashing |
+| user_service.py ↔ database.py | Direct MongoDB operations | Uses users_col for CRUD operations |
+| config.py ↔ All modules | Global settings object | Settings imported wherever needed |
 
-```python
-# BAD
-user_dict["password"] = password  # Never do this!
+### New vs Modified Components
 
-# GOOD
-from pwdlib import PasswordHash
-password_hash = PasswordHash.recommended()
-user_dict["hashed_password"] = password_hash.hash(password)
-```
-
-### Anti-Pattern 2: Hardcoded Secret Keys
-
-**What:** Hardcoding JWT secret keys in source code
-
-**Why bad:** If code is exposed, anyone can forge tokens
-
-**Instead:** Use environment variables
-
-```python
-# BAD
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-
-# GOOD
-from app.config import settings
-SECRET_KEY = settings.SECRET_KEY  # Loaded from environment
-```
-
-### Anti-Pattern 3: Missing User Context in Routes
-
-**What:** Routes that don't validate user context
-
-**Why bad:** Users can access other users' data
-
-**Instead:** Always use `Depends(get_current_user)` on protected routes
-
-```python
-# BAD
-@router.get("/projects/{project_id}")
-async def get_project(project_id: str):
-    project = await projects_col.find_one({"_id": ObjectId(project_id)})
-    return project  # Anyone can access any project!
-
-# GOOD
-@router.get("/projects/{project_id}")
-async def get_project(
-    project_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    project = await projects_col.find_one({
-        "_id": ObjectId(project_id),
-        "user_id": current_user.id  # User-scoped query
-    })
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return project
-```
-
-### Anti-Pattern 4: Token Storage in Cookies Without HttpOnly
-
-**What:** Storing JWT tokens in cookies without HttpOnly flag
-
-**Why bad:** Vulnerable to XSS attacks
-
-**Instead:** Use localStorage with proper security, or HttpOnly cookies
-
-```javascript
-// BAD (if using cookies without HttpOnly)
-document.cookie = `token=${token}`  # Vulnerable to XSS
-
-// GOOD
-localStorage.setItem('token', token)  # Better, but still vulnerable to XSS
-// OR use HttpOnly cookies (set by backend)
-```
-
-### Anti-Pattern 5: Global Auth Middleware Without Granularity
-
-**What:** Applying auth to all routes without exceptions
-
-**Why bad:** Public endpoints (like /token) become inaccessible
-
-**Instead:** Use per-route dependencies or exclude public routes
-
-```python
-# BAD
-app.add_middleware(AuthMiddleware)  # Blocks /token endpoint!
-
-# GOOD
-@router.post("/token")  # Public endpoint, no auth
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    ...
-
-@router.get("/projects")  # Protected endpoint
-async def get_projects(current_user: User = Depends(get_current_user)):
-    ...
-```
-
-## Scalability Considerations
-
-| Concern | At 10 users | At 100 users | At 1,000 users |
-|---------|-------------|--------------|----------------|
-| **JWT Token Storage** | localStorage (client-side) | localStorage (client-side) | localStorage (client-side) - no server storage needed |
-| **Password Hashing** | Argon2 (CPU-intensive) | Argon2 (consider caching) | Argon2 with optimized parameters or bcrypt |
-| **User Queries** | Direct MongoDB queries | Add index on user_id | Add index on user_id, consider read replicas |
-| **Token Validation** | JWT decode per request | JWT decode per request (fast) | JWT decode per request (fast) - stateless scales well |
-| **Session Management** | Stateless (JWT) | Stateless (JWT) | Stateless (JWT) - no session storage needed |
-
-**Key insight:** JWT-based authentication is stateless and scales horizontally without additional infrastructure. The main bottleneck is password hashing during login, which can be optimized with caching or parameter tuning.
-
-## Integration Points with Existing Architecture
-
-### Backend Integration Points
-
-| Existing Component | Integration Required | Changes Needed |
-|-------------------|---------------------|----------------|
-| **All Routers** (ai_providers, wp_sites, projects, posts, jobs) | Add auth dependency | Add `current_user: User = Depends(get_current_user)` to all routes |
-| **All Services** (ai_service, wp_service) | Add user context | Pass user_id to service methods for data filtering |
-| **Database Queries** | Add user_id filter | All queries must include `{"user_id": current_user.id}` filter |
-| **Worker Tasks** (tasks.py) | Add user context | Pass user_id with job data, validate on task execution |
-| **MongoDB Collections** | Add user_id field | Add `user_id` to all existing documents (migration needed) |
-
-### Frontend Integration Points
-
-| Existing Component | Integration Required | Changes Needed |
-|-------------------|---------------------|----------------|
-| **App.jsx** | Wrap with AuthProvider | Add `<AuthProvider>` around `<Routes>` |
-| **All Routes** | Add ProtectedRoute wrapper | Wrap all existing routes with `<ProtectedRoute>` |
-| **API Client** (client.js) | Add token interceptor | Add request/response interceptors for JWT |
-| **All Components** | Add auth checks | Redirect to login if not authenticated |
-| **Sidebar** | Add logout button | Add logout button that calls `useAuth().logout()` |
-
-### Data Migration Requirements
-
-**Existing collections need user_id field:**
-- `ai_providers` - Add `user_id` field
-- `wp_sites` - Add `user_id` field
-- `projects` - Add `user_id` field
-- `posts` - Add `user_id` field
-- `jobs` - Add `user_id` field
-- `default_models` - Add `user_id` field (or make global)
-
-**Migration strategy:**
-1. Create admin user from `ADMIN_PASSWORD` env var
-2. Assign all existing data to admin user
-3. Add unique index on `(user_id, resource_id)` for each collection
-4. Update all queries to include user_id filter
+| Component | Status | Changes Required |
+|-----------|--------|------------------|
+| **config.py** | MODIFY | Add INIT_USER and INIT_PASSWORD fields |
+| **user_service.py** | MODIFY | Update create_admin_account() to use env variables |
+| **main.py** | NO CHANGE | Already calls create_admin_account() in startup event |
+| **auth_service.py** | NO CHANGE | Password hashing already implemented |
+| **database.py** | NO CHANGE | Users collection already exists |
+| **models/user.py** | NO CHANGE | User models already defined |
+| **routers/auth.py** | NO CHANGE | Authentication endpoints already exist |
+| **routers/users.py** | NO CHANGE | User management endpoints already exist |
 
 ## Build Order
 
-### Phase 1: Backend Foundation (No Breaking Changes)
-1. **User Service** - Create user CRUD, password hashing, JWT generation
-2. **Auth Router** - Create `/token` endpoint, `/api/users` CRUD
-3. **Auth Dependencies** - Create `get_current_user()` dependency
-4. **Database Migration** - Add `users` collection, add `user_id` to existing collections
+### Phase 1: Configuration Layer
+1. **Update config.py** to add INIT_USER and INIT_PASSWORD environment variables
+   - Add fields to Settings class
+   - Provide sensible defaults
+   - Ensure .env file is updated with new variables
 
-### Phase 2: Backend Integration (Breaking Changes)
-5. **Update All Routers** - Add `current_user` dependency to all routes
-6. **Update All Services** - Pass user_id to service methods
-7. **Update Worker Tasks** - Add user context to job processing
-8. **Test Backend** - Verify all endpoints require auth
+### Phase 2: Service Layer
+2. **Update user_service.py** to use environment variables
+   - Modify create_admin_account() to use settings.INIT_USER and settings.INIT_PASSWORD
+   - Ensure idempotent behavior (check if admin exists before creating)
+   - Add logging for debugging
 
-### Phase 3: Frontend Foundation
-9. **AuthContext** - Create authentication context provider
-10. **Login Component** - Create login form
-11. **API Client Interceptor** - Add token injection and 401 handling
-12. **ProtectedRoute Component** - Create route wrapper
+### Phase 3: Testing
+3. **Test the integration**
+   - Verify admin account is created on first startup
+   - Verify admin account is not recreated on subsequent startups
+   - Verify admin can authenticate with the configured credentials
+   - Test with missing environment variables (should use defaults)
 
-### Phase 4: Frontend Integration
-13. **Wrap App with AuthProvider** - Add context to App.jsx
-14. **Add Login Route** - Add `/login` route to App.jsx
-15. **Wrap All Routes** - Add ProtectedRoute to all existing routes
-16. **Add Logout Button** - Add logout to Sidebar
-
-### Phase 5: Testing & Validation
-17. **End-to-End Testing** - Test login flow, protected routes, data isolation
-18. **Security Testing** - Test token validation, user isolation, password hashing
-19. **Performance Testing** - Verify JWT validation doesn't impact performance
+### Phase 4: Documentation
+4. **Update documentation**
+   - Document required environment variables
+   - Update deployment instructions
+   - Add troubleshooting guide
 
 ## Sources
 
-- FastAPI Security Tutorial: https://fastapi.tiangolo.com/tutorial/security/ (HIGH confidence - official docs)
-- FastAPI Dependencies: https://fastapi.tiangolo.com/tutorial/dependencies/ (HIGH confidence - official docs)
-- FastAPI OAuth2 with JWT: https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/ (HIGH confidence - official docs)
-- pwdlib Documentation: https://pwdlib.readthedocs.io/ (HIGH confidence - official docs)
-- PyJWT Documentation: https://pyjwt.readthedocs.io/ (HIGH confidence - official docs)
-- React Context API: https://react.dev/learn/scaling-up-with-reducer-and-context (HIGH confidence - official docs)
-- Axios Interceptors: https://axios-http.com/docs/interceptors (HIGH confidence - official docs)
-- MongoDB Indexing: https://www.mongodb.com/docs/manual/indexes/ (HIGH confidence - official docs)
+- **FastAPI Lifespan Events Documentation:** https://fastapi.tiangolo.com/advanced/events/ (HIGH confidence — official docs)
+- **FastAPI Settings and Environment Variables:** https://fastapi.tiangolo.com/advanced/settings/ (HIGH confidence — official docs)
+- **FastAPI Security Documentation:** https://fastapi.tiangolo.com/tutorial/security/ (HIGH confidence — official docs)
+- **Existing Codebase Analysis:** backend/app/main.py, backend/app/config.py, backend/app/services/user_service.py, backend/app/services/auth_service.py (HIGH confidence — direct inspection)
+- **Argon2 Password Hashing:** passlib library documentation (MEDIUM confidence — standard library)
+- **MongoDB Unique Indexes:** Motor driver documentation (MEDIUM confidence — standard driver)
+
+---
+*Architecture research for: Initial Admin Account Creation for WordPress Writer Tool*
+*Researched: 2026-04-20*
