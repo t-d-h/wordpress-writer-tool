@@ -28,9 +28,9 @@
 
 ### MongoDB Storage (MONGO)
 
-- [ ] **MONGO-01**: System stores admin account in MongoDB users collection
-- [ ] **MONGO-02**: System uses existing users collection schema for admin account
-- [ ] **MONGO-03**: System ensures username uniqueness in users collection
+- [x] **MONGO-01**: System stores admin account in MongoDB users collection
+- [x] **MONGO-02**: System uses existing users collection schema for admin account
+- [x] **MONGO-03**: System ensures username uniqueness in users collection
 
 ### Configuration File Updates (CONFIG)
 
@@ -75,9 +75,9 @@ Explicitly excluded from this milestone:
 | IDEMP-01 | Phase 19 | Complete |
 | IDEMP-02 | Phase 19 | Complete |
 | IDEMP-03 | Phase 19 | Complete |
-| MONGO-01 | Phase 20 | Pending |
-| MONGO-02 | Phase 20 | Pending |
-| MONGO-03 | Phase 20 | Pending |
+| MONGO-01 | Phase 20 | Complete |
+| MONGO-02 | Phase 20 | Complete |
+| MONGO-03 | Phase 20 | Complete |
 | CONFIG-01 | Phase 17 | Pending |
 | CONFIG-02 | Phase 17 | Pending |
 | CONFIG-03 | Phase 17 | Pending |
