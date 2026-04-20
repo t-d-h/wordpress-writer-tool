@@ -1,4 +1,7 @@
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Settings:
@@ -19,10 +22,12 @@ class Settings:
     def validate(self) -> bool:
         """Validate that required configuration fields are present and non-empty."""
         if not self.INIT_USER:
+            logger.error("INIT_USER environment variable is missing or empty")
             raise ValueError(
                 "INIT_USER environment variable is required and cannot be empty"
             )
         if not self.INIT_PASSWORD:
+            logger.error("INIT_PASSWORD environment variable is missing or empty")
             raise ValueError(
                 "INIT_PASSWORD environment variable is required and cannot be empty"
             )
