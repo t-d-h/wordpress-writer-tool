@@ -56,7 +56,7 @@
 <details>
 <summary>🔄 v1.4 Initial Admin Account on First Startup (Phases 17-20) — IN PROGRESS</summary>
 
- - [ ] Phase 17: Configuration Layer (1 plan) — planned
+ - [x] Phase 17: Configuration Layer (1 plan) — planned (completed 2026-04-20)
  - [ ] Phase 18: Environment Variable Validation (TBD plans) — not started
  - [ ] Phase 19: Admin Account Creation (TBD plans) — not started
  - [ ] Phase 20: MongoDB Storage Integration (TBD plans) — not started
@@ -76,7 +76,7 @@
   4. System loads INIT_USER from environment variable or uses default
   5. System loads INIT_PASSWORD from environment variable or uses default
 **Plans**: 1 plan
-- [ ] 17-01-PLAN.md — Add INIT_USER and INIT_PASSWORD fields to config.py with validation on startup
+- [x] 17-01-PLAN.md — Add INIT_USER and INIT_PASSWORD fields to config.py with validation on startup
 
 ### Phase 18: Environment Variable Validation
 **Goal**: Validate environment variables and provide sensible defaults
