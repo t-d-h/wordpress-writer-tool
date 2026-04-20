@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: complete
-last_updated: "2026-04-18T19:30:00.000Z"
-last_activity: 2026-04-18 -- Phase 20 execution completed
+milestone: v1.4
+milestone_name: Initial Admin Account on First Startup
+status: in_progress
+last_updated: "2026-04-20T09:38:59.000Z"
+last_activity: 2026-04-20 -- Milestone v1.4 started
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # WordPress Writer Tool - State
@@ -19,29 +19,29 @@ progress:
 
 **Core Value**: Validate WordPress site connectivity and credentials before saving, so users know immediately if their site is configured correctly -- not after wasting time creating content that can't be published.
 
-**Current Focus**: Phase 17: Backend Authentication Foundation
+**Current Focus**: Defining requirements for v1.4 milestone
 
-**Milestone**: v1.4 (In progress - 4 phases defined)
+**Milestone**: v1.4 (In progress - defining requirements)
 
 **Tech Stack**: Python/FastAPI backend, MongoDB, Redis, React frontend
 
-**Constraints**: MVP stage, pragmatism over engineering, JWT-based authentication with Argon2 password hashing
+**Constraints**: MVP stage, pragmatism over engineering, initial admin account creation on first startup
 
 ## Current Position
 
-Phase: 20 (Security Integration) — COMPLETE
-Plan: 1 of 1
-Status: All phases complete
-Last activity: 2026-04-18 -- Phase 20 execution completed
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-20 — Milestone v1.4 started
 
-[████████████████] 100% (20/20 phases complete)
+[░░░░░░░░░░░░░░░░░░░░] 0% (0/0 phases complete)
 
 ## Performance Metrics
 
 | Metric | Value |
 |--------|-------|
-| Phase Progress | 20/20 (overall) |
-| Total Plans Complete | 54 (v1.0-v1.4) |
+| Phase Progress | 0/0 (v1.4) |
+| Total Plans Complete | 54 (v1.0-v1.3) |
 | Plans Pending | 0 (v1.4) |
 
 **By Phase (v1.0-v1.3):**
@@ -69,10 +69,7 @@ Last activity: 2026-04-18 -- Phase 20 execution completed
 
 | Phase | Plans | Status |
 |-------|-------|--------|
-| 17 | 1 | Complete |
-| 18 | 1 | Complete |
-| 19 | 1 | Complete |
-| 20 | 1 | Complete |
+| — | — | Not started |
 
 ## Accumulated Context
 
@@ -113,6 +110,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-**Last Session**: 2026-04-18 19:30 — Phase 20 execution completed, all phases complete
+**Last Session**: 2026-04-20 09:38 — Milestone v1.4 started, defining requirements
 
-**Next Session**: Run milestone audit → complete → cleanup
+**Next Session**: Define requirements → create roadmap → plan phases

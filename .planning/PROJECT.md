@@ -83,16 +83,16 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 None — all v1.4 requirements to be defined
 
-## Current Milestone: v1.4 User Management
+## Current Milestone: v1.4 Initial Admin Account on First Startup
 
-**Goal:** Add authentication and user management to protect the service.
+**Goal:** Create an initial admin user account automatically on first application startup using environment variables for credentials.
 
 **Target features:**
-- First account will be admin with password from ADMIN_PASSWORD environment variable
-- Service will be protected, users must login to use
-- Admin can create users with passwords
-- New MongoDB collections to store accounts
-- Authentication required for all service access
+- Read username from INIT_USER environment variable
+- Read password from INIT_PASSWORD environment variable
+- Create admin account with these credentials on first startup
+- Admin account has full permissions/role
+- Prompt for credentials if environment variables not provided (optional)
 
 ## Current State
 
@@ -237,6 +237,6 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-**Last updated:** 2026-04-18 (v1.4 milestone started)
+**Last updated:** 2026-04-20 (v1.4 milestone updated - Initial Admin Account on First Startup)
 
 </details>
