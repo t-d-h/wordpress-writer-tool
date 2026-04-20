@@ -12,7 +12,7 @@
 - [ ] **CONF-02**: System reads INIT_PASSWORD environment variable for admin password
 - [ ] **CONF-03**: System validates that INIT_USER is provided (non-empty string)
 - [ ] **CONF-04**: System validates that INIT_PASSWORD is provided (non-empty string)
-- [ ] **CONF-05**: System provides sensible default values if environment variables are missing
+- [ ] **CONF-05**: System fails fast if INIT_USER or INIT_PASSWORD are missing or empty (no default values)
 
 ### Admin Account Creation (ADMIN)
 
