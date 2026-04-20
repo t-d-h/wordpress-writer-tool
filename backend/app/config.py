@@ -13,6 +13,8 @@ class Settings:
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120")
     )
     ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin123")
+    INIT_USER: str = os.getenv("INIT_USER")
+    INIT_PASSWORD: str = os.getenv("INIT_PASSWORD")
 
 
 settings = Settings()
