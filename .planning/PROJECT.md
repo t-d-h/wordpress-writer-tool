@@ -10,7 +10,7 @@ Validate WordPress site connectivity and credentials before saving, so users kno
 
 ## Current State
 
-**Version:** v1.4 (in progress)
+**Version:** v1.4 (shipped 2026-04-20)
 
 **Shipped Features (v1.3 Content Quality Improvements):**
 - HTML cleaning foundation with 5-stage algorithm
@@ -26,14 +26,14 @@ Validate WordPress site connectivity and credentials before saving, so users kno
   - Unit tests for word count validation
   - Bug fixed: HTML tag stripping now correctly handles tags with attributes
 
-**Known Limitations:**
-- No authentication or user management (current milestone)
-- Word count validation not yet integrated into content generation pipeline
-- Section count validation not yet implemented
-- Validation results display UI not yet implemented
-- Validation warnings system not yet implemented
-- Research data utilization not yet implemented
-- Research context in prompts not yet implemented
+**Shipped Features (v1.4 Initial Admin Account on First Startup):**
+- Configuration layer with INIT_USER and INIT_PASSWORD fields
+- Fail-fast validation on startup for required environment variables
+- Error logging for missing environment variables
+- Idempotent admin account creation on first startup
+- Username conflict prevention (INIT_USER cannot be 'admin')
+- MongoDB storage integration with automated test suite
+- Comprehensive logging for all scenarios (error, create, skip)
 
 **Next Milestone Goals (v1.5):**
 - TBD after v1.4 completion
@@ -189,12 +189,13 @@ This is a brownfield project with existing codebase mapped in `.planning/codebas
 - Phases 17-21 deferred to v1.4
 
 **v1.4 Initial Admin Account on First Startup State:**
-- 2 phases completed, 2 plans executed
+- 4 phases completed, 4 plans executed
 - Configuration layer with INIT_USER and INIT_PASSWORD fields
 - Fail-fast validation on startup for required environment variables
 - Error logging for missing environment variables
-- Phase 17 complete — configuration infrastructure ready for admin account creation
-- Phase 18 complete — environment variable validation with error logging
+- Idempotent admin account creation with username conflict prevention
+- MongoDB storage integration with automated test suite
+- All 15 requirements satisfied (CONF-01 through CONF-05, ADMIN-01 through ADMIN-03, IDEMP-01 through IDEMP-03, MONGO-01 through MONGO-03, CONFIG-01 through CONFIG-03)
 
 **Known Issues:**
 - Plain-text credential storage (deferred for security milestone)
@@ -245,6 +246,6 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-**Last updated:** 2026-04-20 (v1.4 milestone - Phase 18 complete)
+**Last updated:** 2026-04-20 (v1.4 milestone shipped)
 
 </details>
