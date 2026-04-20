@@ -6,22 +6,40 @@ from app.database import users_col
 from app.services.auth_service import hash_password, verify_password
 from app.redis_client import redis_client
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def create_admin_account():
     """Create admin account on first startup if it doesn't exist."""
-    existing_admin = await users_col.find_one({"username": "admin"})
+    # Prevent INIT_USER from being 'admin' to avoid username conflict
+    if settings.INIT_USER == "admin":
+        logger.error(
+            "INIT_USER cannot be 'admin' — this username is reserved for the existing admin account"
+        )
+        raise ValueError(
+            "INIT_USER cannot be 'admin' — this username is reserved for the existing admin account"
+        )
+
+    # Check if admin account already exists
+    existing_admin = await users_col.find_one({"username": settings.INIT_USER})
     if existing_admin:
+        logger.info(
+            f"Admin account '{settings.INIT_USER}' already exists, skipping creation"
+        )
         return
 
+    # Create admin account with INIT_USER and hashed INIT_PASSWORD
     admin_data = {
-        "username": "admin",
-        "password_hash": hash_password(settings.ADMIN_PASSWORD),
+        "username": settings.INIT_USER,
+        "password_hash": hash_password(settings.INIT_PASSWORD),
         "role": "admin",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "last_login_at": None,
     }
     await users_col.insert_one(admin_data)
+    logger.info(f"Admin account '{settings.INIT_USER}' created successfully")
 
 
 async def create_user(username: str, password: str, role: str = "user") -> dict:
