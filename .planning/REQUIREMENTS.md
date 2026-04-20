@@ -1,92 +1,90 @@
 # Requirements
 
 **Project:** WordPress Writer Tool
-**Milestone:** v1.4 User Management
-**Last Updated:** 2026-04-18
+**Milestone:** v1.4 Initial Admin Account on First Startup
+**Last Updated:** 2026-04-20
 
 ## Milestone v1.4 Requirements
 
-### Authentication (AUTH)
+### Configuration (CONF)
 
-- [ ] **AUTH-01**: User can login with username and password
-- [ ] **AUTH-02**: System generates JWT token on successful login
-- [ ] **AUTH-03**: System validates JWT token on protected API requests
-- [ ] **AUTH-04**: System rejects requests with invalid or expired tokens
-- [ ] **AUTH-05**: User can logout by clearing token from localStorage
-- [ ] **AUTH-06**: System hashes passwords using Argon2 before storage
-- [ ] **AUTH-07**: System stores JWT token in localStorage on frontend
+- [ ] **CONF-01**: System reads INIT_USER environment variable for admin username
+- [ ] **CONF-02**: System reads INIT_PASSWORD environment variable for admin password
+- [ ] **CONF-03**: System validates that INIT_USER is provided (non-empty string)
+- [ ] **CONF-04**: System validates that INIT_PASSWORD is provided (non-empty string)
+- [ ] **CONF-05**: System provides sensible default values if environment variables are missing
 
-### User Management (USER)
+### Admin Account Creation (ADMIN)
 
-- [ ] **USER-01**: System creates admin account on first startup using ADMIN_PASSWORD environment variable
-- [ ] **USER-02**: Admin can create new user accounts with username and password
-- [ ] **USER-03**: Admin can list all user accounts
-- [ ] **USER-04**: Admin can delete user accounts
-- [ ] **USER-05**: System stores user accounts in MongoDB users collection
-- [ ] **USER-06**: System validates username uniqueness on user creation
-- [ ] **USER-07**: System validates password strength on user creation
+- [ ] **ADMIN-01**: System creates admin account on first application startup
+- [ ] **ADMIN-02**: Admin account uses username from INIT_USER environment variable
+- [ ] **ADMIN-03**: Admin account uses password from INIT_PASSWORD environment variable
 
-### Security (SEC)
+### Idempotent Initialization (IDEMP)
 
-- [ ] **SEC-01**: System requires authentication for all API endpoints
-- [ ] **SEC-02**: System injects user context into protected route handlers
-- [ ] **SEC-03**: Frontend redirects unauthenticated users to login page
-- [ ] **SEC-04**: Frontend protects all routes with authentication check
-- [ ] **SEC-05**: System uses SECRET_KEY environment variable for JWT signing
-- [ ] **SEC-06**: System sets ACCESS_TOKEN_EXPIRE_MINUTES for token lifetime
-- [ ] **SEC-07**: Frontend automatically injects JWT token in API requests via axios interceptor
+- [ ] **IDEMP-01**: System checks if admin account already exists before creating
+- [ ] **IDEMP-02**: System handles container restarts gracefully without duplicate key errors
+- [ ] **IDEMP-03**: System logs when admin account already exists (skip creation)
+
+### MongoDB Storage (MONGO)
+
+- [ ] **MONGO-01**: System stores admin account in MongoDB users collection
+- [ ] **MONGO-02**: System uses existing users collection schema for admin account
+- [ ] **MONGO-03**: System ensures username uniqueness in users collection
+
+### Configuration File Updates (CONFIG)
+
+- [ ] **CONFIG-01**: config.py includes INIT_USER field with default value
+- [ ] **CONFIG-02**: config.py includes INIT_PASSWORD field with default value
+- [ ] **CONFIG-03**: config.py validates INIT_USER and INIT_PASSWORD on startup
 
 ## Future Requirements
 
 Deferred to future milestones:
 
-- Multi-tenant data isolation (user_id scoping, data migration)
-- User profile management
-- Password reset functionality
-- User role management (beyond admin/user)
-- Session management (multiple active sessions)
-- Two-factor authentication
+- Admin role assignment and permissions
+- Interactive credential prompt when environment variables not provided
+- Password hashing integration with existing Argon2id infrastructure
+- JWT token integration with existing authentication system
+- Service layer updates to use environment variables
+- Testing and validation of admin account creation
+- Documentation of required environment variables
 
 ## Out of Scope
 
-Explicitly excluded from this milestone with reasoning:
+Explicitly excluded from this milestone:
 
-- **Multi-tenant data isolation**: User will create multiple service instances for different organizations instead of implementing user_id scoping
-- **User profile management**: Not required for MVP, users only need login credentials
-- **Password reset functionality**: Admin can reset passwords directly for MVP
-- **User role management**: Only admin and user roles needed for MVP
-- **Session management**: Single session per user sufficient for MVP
-- **Two-factor authentication**: Not needed for MVP, network-level isolation provides sufficient security
+- User authentication and login functionality (already implemented in previous v1.4 work)
+- Multi-tenant data isolation (deferred to future milestone)
+- User management UI (deferred to future milestone)
+- Password reset functionality (deferred to future milestone)
+- User account CRUD operations (deferred to future milestone)
 
 ## Traceability
 
-| REQ-ID | Phase | Status |
-|--------|-------|--------|
-| AUTH-01 | Phase 17 | Pending |
-| AUTH-02 | Phase 17 | Pending |
-| AUTH-03 | Phase 17 | Pending |
-| AUTH-04 | Phase 17 | Pending |
-| AUTH-05 | Phase 19 | Pending |
-| AUTH-06 | Phase 17 | Pending |
-| AUTH-07 | Phase 19 | Pending |
-| USER-01 | Phase 18 | Pending |
-| USER-02 | Phase 18 | Pending |
-| USER-03 | Phase 18 | Pending |
-| USER-04 | Phase 18 | Pending |
-| USER-05 | Phase 18 | Pending |
-| USER-06 | Phase 18 | Pending |
-| USER-07 | Phase 18 | Pending |
-| SEC-01 | Phase 20 | Pending |
-| SEC-02 | Phase 20 | Pending |
-| SEC-03 | Phase 19 | Pending |
-| SEC-04 | Phase 19 | Pending |
-| SEC-05 | Phase 17 | Pending |
-| SEC-06 | Phase 17 | Pending |
-| SEC-07 | Phase 20 | Pending |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CONF-01 | TBD | Pending |
+| CONF-02 | TBD | Pending |
+| CONF-03 | TBD | Pending |
+| CONF-04 | TBD | Pending |
+| CONF-05 | TBD | Pending |
+| ADMIN-01 | TBD | Pending |
+| ADMIN-02 | TBD | Pending |
+| ADMIN-03 | TBD | Pending |
+| IDEMP-01 | TBD | Pending |
+| IDEMP-02 | TBD | Pending |
+| IDEMP-03 | TBD | Pending |
+| MONGO-01 | TBD | Pending |
+| MONGO-02 | TBD | Pending |
+| MONGO-03 | TBD | Pending |
+| CONFIG-01 | TBD | Pending |
+| CONFIG-02 | TBD | Pending |
+| CONFIG-03 | TBD | Pending |
 
 ---
 
-**Total Requirements:** 21
-**In Scope:** 21
-**Future:** 0
-**Out of Scope:** 6
+**Total Requirements:** 15
+**In Scope:** 15
+**Future:** 7
+**Out of Scope:** 5
