@@ -188,6 +188,12 @@ This is a brownfield project with existing codebase mapped in `.planning/codebas
 - Comprehensive test coverage for HTML cleaning and validation
 - Phases 17-21 deferred to v1.4
 
+**v1.4 Initial Admin Account on First Startup State:**
+- 1 phase completed, 1 plan executed
+- Configuration layer with INIT_USER and INIT_PASSWORD fields
+- Fail-fast validation on startup for required environment variables
+- Phase 17 complete — configuration infrastructure ready for admin account creation
+
 **Known Issues:**
 - Plain-text credential storage (deferred for security milestone)
 - URL format validation gap (minor, not blocking)
@@ -237,6 +243,6 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-**Last updated:** 2026-04-20 (v1.4 milestone updated - Initial Admin Account on First Startup)
+**Last updated:** 2026-04-20 (v1.4 milestone - Phase 17 complete)
 
 </details>
